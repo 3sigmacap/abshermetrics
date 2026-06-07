@@ -36,7 +36,6 @@ tbody td{padding:11px 14px;border-bottom:1px solid #142219;text-align:right;font
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover{background:#10201766;}
 td.cl{text-align:left;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;color:var(--ink);}
-td.mk{text-align:left;font-size:13px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
 td.num{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--dim);}
 tr.gaprow td{padding:0;border-bottom:none;}
 tr.gaprow:hover{background:transparent;}
@@ -54,8 +53,9 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 .card a.go{display:inline-block;margin-top:12px;font-family:'IBM Plex Mono';font-size:11px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
 .note{margin-top:14px;font-size:13px;color:var(--dim2);font-family:'IBM Plex Mono',monospace;line-height:1.6;}
 @media(max-width:760px){
-  .nav{padding:11px 14px;gap:0;flex-wrap:wrap;}
-  .nav a.tab{font-size:11px;padding:7px 10px;}
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
   .page{padding:22px 14px 56px;}
   .lead{font-size:16px;}
   .stats-strip{gap:18px 24px;}
@@ -94,150 +94,139 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <div style="overflow-x:auto;">
 <table>
 <thead><tr>
-<th>Club</th><th>Model</th><th>Loft</th><th>Carry</th><th>&plusmn;SD</th>
+<th>Club</th><th>Loft</th><th>Carry</th><th>&plusmn;SD</th>
 <th class="hide-sm">Ball</th><th class="hide-sm">Launch</th>
 <th class="hide-sm">Spin</th><th class="hide-sm">Apex</th><th>Lateral SD</th>
 </tr></thead>
 <tbody><tr>
 <td class="cl">3 Wood</td>
-<td class="mk">TaylorMade (fairway wood)</td>
 <td class="num">15°</td>
 <td class="num big2">269</td>
 <td class="num">&plusmn;11.6</td>
-<td class="num">163</td>
-<td class="num">12.4°</td>
-<td class="num">3,215</td>
-<td class="num">114</td>
+<td class="hide-sm num">163</td>
+<td class="hide-sm num">12.4°</td>
+<td class="hide-sm num">3,215</td>
+<td class="hide-sm num">114</td>
 <td class="num" style="color:#ff9d9d">&plusmn;38.9</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>44</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>44</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">3 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">20°</td>
 <td class="num big2">225</td>
 <td class="num">&plusmn;5.9</td>
-<td class="num">142</td>
-<td class="num">13.5°</td>
-<td class="num">3,938</td>
-<td class="num">102</td>
+<td class="hide-sm num">142</td>
+<td class="hide-sm num">13.5°</td>
+<td class="hide-sm num">3,938</td>
+<td class="hide-sm num">102</td>
 <td class="num">&plusmn;17.3</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">4 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">23°</td>
 <td class="num big2">213</td>
 <td class="num">&plusmn;6.4</td>
-<td class="num">139</td>
-<td class="num">14.6°</td>
-<td class="num">4,487</td>
-<td class="num">106</td>
+<td class="hide-sm num">139</td>
+<td class="hide-sm num">14.6°</td>
+<td class="hide-sm num">4,487</td>
+<td class="hide-sm num">106</td>
 <td class="num">&plusmn;14.8</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">5 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">26°</td>
 <td class="num big2">201</td>
 <td class="num">&plusmn;5.1</td>
-<td class="num">134</td>
-<td class="num">17.4°</td>
-<td class="num">5,115</td>
-<td class="num">121</td>
+<td class="hide-sm num">134</td>
+<td class="hide-sm num">17.4°</td>
+<td class="hide-sm num">5,115</td>
+<td class="hide-sm num">121</td>
 <td class="num">&plusmn;12.7</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>14</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>14</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">6 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">30°</td>
 <td class="num big2">187</td>
 <td class="num">&plusmn;3.7</td>
-<td class="num">131</td>
-<td class="num">19.2°</td>
-<td class="num">6,188</td>
-<td class="num">126</td>
+<td class="hide-sm num">131</td>
+<td class="hide-sm num">19.2°</td>
+<td class="hide-sm num">6,188</td>
+<td class="hide-sm num">126</td>
 <td class="num">&plusmn;11.3</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>17</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>17</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">7 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">34°</td>
 <td class="num big2">170</td>
 <td class="num">&plusmn;5.3</td>
-<td class="num">124</td>
-<td class="num">22.6°</td>
-<td class="num">7,121</td>
-<td class="num">133</td>
+<td class="hide-sm num">124</td>
+<td class="hide-sm num">22.6°</td>
+<td class="hide-sm num">7,121</td>
+<td class="hide-sm num">133</td>
 <td class="num">&plusmn;10.2</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">8 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">39°</td>
 <td class="num big2">158</td>
 <td class="num">&plusmn;2.5</td>
-<td class="num">119</td>
-<td class="num">24.6°</td>
-<td class="num">8,033</td>
-<td class="num">132</td>
+<td class="hide-sm num">119</td>
+<td class="hide-sm num">24.6°</td>
+<td class="hide-sm num">8,033</td>
+<td class="hide-sm num">132</td>
 <td class="num">&plusmn;12.4</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>15</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>15</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">9 Iron</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">42.5°</td>
 <td class="num big2">143</td>
 <td class="num">&plusmn;3.7</td>
-<td class="num">111</td>
-<td class="num">26.9°</td>
-<td class="num">8,677</td>
-<td class="num">126</td>
+<td class="hide-sm num">111</td>
+<td class="hide-sm num">26.9°</td>
+<td class="hide-sm num">8,677</td>
+<td class="hide-sm num">126</td>
 <td class="num">&plusmn;8.5</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>15</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>15</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">Pitching Wedge</td>
-<td class="mk">TaylorMade P7MB</td>
 <td class="num">47°</td>
 <td class="num big2">128</td>
 <td class="num">&plusmn;3.2</td>
-<td class="num">104</td>
-<td class="num">29.5°</td>
-<td class="num">9,270</td>
-<td class="num">118</td>
+<td class="hide-sm num">104</td>
+<td class="hide-sm num">29.5°</td>
+<td class="hide-sm num">9,270</td>
+<td class="hide-sm num">118</td>
 <td class="num">&plusmn;6.3</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>20</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>20</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">Gap Wedge</td>
-<td class="mk">Wedge (52°)</td>
 <td class="num">52°</td>
 <td class="num big2">108</td>
 <td class="num">&plusmn;4.1</td>
-<td class="num">90</td>
-<td class="num">34.2°</td>
-<td class="num">8,098</td>
-<td class="num">104</td>
+<td class="hide-sm num">90</td>
+<td class="hide-sm num">34.2°</td>
+<td class="hide-sm num">8,098</td>
+<td class="hide-sm num">104</td>
 <td class="num" style="color:#ff9d9d">&plusmn;20.5</td>
 </tr>
-<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>9</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr class="gaprow"><td colspan="9"><div class="gapbar"><span class="ln"></span><span class="val"><b>9</b> yd gap</span><span class="ln"></span></div></td></tr>
 <tr>
 <td class="cl">Sand Wedge</td>
-<td class="mk">Wedge (56°)</td>
 <td class="num">56°</td>
 <td class="num big2">99</td>
 <td class="num">&plusmn;3.6</td>
-<td class="num">87</td>
-<td class="num">35.8°</td>
-<td class="num">9,004</td>
-<td class="num">100</td>
+<td class="hide-sm num">87</td>
+<td class="hide-sm num">35.8°</td>
+<td class="hide-sm num">9,004</td>
+<td class="hide-sm num">100</td>
 <td class="num">&plusmn;5</td>
 </tr></tbody>
 </table>
