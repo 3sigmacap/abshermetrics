@@ -39,7 +39,11 @@ h1 span{color:var(--accent);}
 .gb.on{background:var(--accent);color:#0a120d;border-color:var(--accent);}
 h2{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:1px;margin:8px 0 6px;text-transform:uppercase;}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:22px;}
-svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
+/* Fixed stage heights so zooming happens INSIDE a stable frame — the SVG fills
+   the box and the viewBox change from zoom no longer resizes the element. */
+.stage.s-top{height:520px;}
+.stage.s-side{height:300px;}
+svg{display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
 svg:active{cursor:grabbing;}
 .zreset{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px 9px;margin-left:8px;cursor:pointer;vertical-align:middle;}
 .zreset:hover{color:var(--accent);border-color:var(--line2);}
@@ -58,13 +62,12 @@ svg:active{cursor:grabbing;}
   .controls{gap:5px;}
   .chip{font-size:12px;padding:5px 8px;}
   /* on mobile the charts start zoomed (see initialMobileZoom in JS) so they
-     fill the screen instead of sitting as a letterboxed sliver; pinch/drag
-     to explore, reset zoom to fit everything */
+     fill the screen instead of sitting as a letterboxed sliver; the stage
+     heights are fixed so zooming never resizes the frame */
   .stage{margin-bottom:16px;}
-  #top{min-height:300px;}
-  #side{min-height:150px;}
+  .stage.s-top{height:60vh;max-height:520px;}
+  .stage.s-side{height:46vh;max-height:340px;}
   .zreset{font-size:10px;padding:4px 10px;}
-  .stage{margin-bottom:16px;}
   #tip{font-size:12px;max-width:200px;padding:9px 11px;}
   .note{font-size:11px;}
 }
@@ -83,9 +86,9 @@ svg:active{cursor:grabbing;}
 <div class="controls" id="chips"></div>
 <div class="opts"><button class="gb on" id="shotBtn">Individual shots</button></div>
 <h2>Top-down &mdash; view from directly above (fit to data) <button class="zreset" data-target="top">reset zoom</button></h2>
-<div class="stage"><svg id="top" viewBox="0 0 1000 520"></svg></div>
+<div class="stage s-top"><svg id="top" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet"></svg></div>
 <h2>Side view &mdash; height vs carry (height exaggerated 3&times; for readability) <button class="zreset" data-target="side">reset zoom</button></h2>
-<div class="stage"><svg id="side" viewBox="0 0 1000 300"></svg></div>
+<div class="stage s-side"><svg id="side" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet"></svg></div>
 <div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
 </div>
 </div>
@@ -338,6 +341,14 @@ function makeZoomable(svg){
     cur={x:base.x+fx*base.w, y:base.y+fy*base.h, w:fw*base.w, h:fh*base.h};
     clamp();apply();
   };
+  // set viewBox to FULL height with a width matching `aspect` (w/h), centered,
+  // so the chart fills a fixed frame of that aspect with no letterboxing
+  svg._fitAspect=function(aspect){
+    let h=base.h, w=h*aspect;
+    if(w>base.w){w=base.w;h=w/aspect;}      // never exceed full extent
+    cur={x:base.x+(base.w-w)/2, y:base.y+(base.h-h)/2, w:w, h:h};
+    clamp();apply();
+  };
 
   // wheel / trackpad zoom
   svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY>0?1.12:0.89);},{passive:false});
@@ -408,19 +419,22 @@ document.querySelectorAll('.zreset').forEach(btn=>{
    than sitting as a letterboxed strip. The top-down centers on the landing
    area; the side view zooms into the apex-to-landing band. Pinch/drag to
    explore, or tap "reset zoom" to see everything. */
+function fitToFrame(svg){
+  // Make the viewBox aspect match the SVG element's actual pixel box so the
+  // chart fills its fixed-height frame (no letterbox). Shows full height and a
+  // horizontal slice; user pans to see the rest. No-op on wide screens.
+  if(window.innerWidth>760){svg._resetZoom();return;}
+  const r=svg.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  const frameAspect=r.width/r.height;
+  svg._fitAspect(frameAspect);
+}
 function initialMobileZoom(){
   if(window.innerWidth>760)return;
-  const screenAspect=window.innerWidth/Math.min(window.innerHeight*0.6,520);
-  // TOP-DOWN (viewBox 1000x520): show full height, width sized to the screen's
-  // aspect so dots are large; centered on the data. Swipe left/right to scan.
-  const tfw=Math.min(1,Math.max(0.35,(520*screenAspect)/1000));
-  topSvg._zoomTo((1-tfw)/2,0,tfw,1);
-  // SIDE (viewBox 1000x300): show FULL height (the whole arc) but a narrow
-  // width window so it fills the screen tall; swipe right to follow the flight.
-  const sfw=Math.min(1,Math.max(0.30,(300*screenAspect)/1000));
-  side._zoomTo(0,0,sfw,1);
+  fitToFrame(topSvg);
+  fitToFrame(side);
 }
-initialMobileZoom();
+requestAnimationFrame(()=>requestAnimationFrame(initialMobileZoom));
 // Re-fit only on a genuine orientation change (width actually changes).
 // Mobile address-bar show/hide fires 'resize' with height-only changes — we
 // ignore those so they don't reset the user's zoom or jump the scroll position.
