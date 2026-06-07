@@ -24,7 +24,7 @@ h1.big span{color:var(--accent);}
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--bg:#070d0a;--panel:#0d1712;--line:#243c2e;--txt:#e8f0ea;--dim:#7a9486;--accent:#d4ff4f;}
-body{background:radial-gradient(ellipse 80% 60% at 30% 0%,#13241a 0%,transparent 60%),var(--bg);color:var(--txt);font-family:'Barlow Condensed',sans-serif;padding:26px 20px 60px;}
+body{background:radial-gradient(ellipse 80% 60% at 30% 0%,#13241a 0%,transparent 60%),var(--bg);color:var(--txt);font-family:'Barlow Condensed',sans-serif;}
 .wrap{max-width:1120px;margin:0 auto;}
 header{border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;}
 h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,5vw,48px);letter-spacing:1.4px;}
@@ -54,10 +54,10 @@ svg:active{cursor:grabbing;}
 .page2{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:26px;}
 
 @media(max-width:760px){
-  .nav{padding:11px 14px;gap:0;flex-wrap:wrap;}
-  .nav a.tab{font-size:11px;padding:7px 10px;}
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
   .page2{padding:16px 12px 48px;}
-  body{padding:0;}
   header{margin-bottom:12px;}
   .controls{gap:5px;}
   .chip{font-size:12px;padding:5px 8px;}
