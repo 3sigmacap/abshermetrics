@@ -39,7 +39,10 @@ h1 span{color:var(--accent);}
 .gb.on{background:var(--accent);color:#0a120d;border-color:var(--accent);}
 h2{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:1px;margin:8px 0 6px;text-transform:uppercase;}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:22px;}
-svg{display:block;width:100%;height:auto;}
+svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
+svg:active{cursor:grabbing;}
+.zreset{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px 9px;margin-left:8px;cursor:pointer;vertical-align:middle;}
+.zreset:hover{color:var(--accent);border-color:var(--line2);}
 .note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--dim);line-height:1.6;}
 .note b{color:var(--txt);}
 
@@ -54,8 +57,13 @@ svg{display:block;width:100%;height:auto;}
   header{margin-bottom:12px;}
   .controls{gap:5px;}
   .chip{font-size:12px;padding:5px 8px;}
-  /* keep the true-1:1 top-down plot from collapsing to a thin strip */
+  /* on mobile the charts start zoomed (see initialMobileZoom in JS) so they
+     fill the screen instead of sitting as a letterboxed sliver; pinch/drag
+     to explore, reset zoom to fit everything */
+  .stage{margin-bottom:16px;}
   #top{min-height:300px;}
+  #side{min-height:150px;}
+  .zreset{font-size:10px;padding:4px 10px;}
   .stage{margin-bottom:16px;}
   #tip{font-size:12px;max-width:200px;padding:9px 11px;}
   .note{font-size:11px;}
@@ -74,11 +82,11 @@ svg{display:block;width:100%;height:auto;}
 <header><h1>2D <span>DISPERSION</span> VIEWS</h1><div class="s">SIDE PROFILE + TOP-DOWN &middot; TRUE 1:1 SCALE</div></header>
 <div class="controls" id="chips"></div>
 <div class="opts"><button class="gb on" id="shotBtn">Individual shots</button></div>
-<h2>Top-down &mdash; view from directly above (fit to data)</h2>
+<h2>Top-down &mdash; view from directly above (fit to data) <button class="zreset" data-target="top">reset zoom</button></h2>
 <div class="stage"><svg id="top" viewBox="0 0 1000 520"></svg></div>
-<h2>Side view &mdash; height vs carry (height exaggerated 3&times; for readability)</h2>
+<h2>Side view &mdash; height vs carry (height exaggerated 3&times; for readability) <button class="zreset" data-target="side">reset zoom</button></h2>
 <div class="stage"><svg id="side" viewBox="0 0 1000 300"></svg></div>
-<div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point. <b>Hover or tap a landing dot</b> for that shot's full ball data.</div>
+<div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
 </div>
 </div>
 <script type="module">let DATA;
@@ -289,6 +297,134 @@ DATA.forEach(d=>{const c=document.createElement('button');c.className='chip';c.d
   function st(){if(state[d.club]){c.style.background=d.color;c.style.borderColor=d.color;c.style.color='#0a120d';c.querySelector('.sw').style.background='#0a120d';}else{c.style.background='var(--panel)';c.style.borderColor='var(--line)';c.style.color='var(--dim)';c.querySelector('.sw').style.background=d.color;}}
   c.onclick=()=>{state[d.club]=!state[d.club];st();drawAll();};st();});
 document.getElementById('shotBtn').onclick=function(){showShots=!showShots;this.classList.toggle('on',showShots);drawAll();};
+
+/* ---- Pinch-to-zoom + drag-to-pan for each chart (mobile + desktop) ----
+   Operates on the SVG viewBox so existing hit-targets and tooltips keep working.
+   - Pinch (two fingers) or wheel/⌥-scroll to zoom
+   - One-finger drag (or mouse drag) to pan when zoomed in
+   - Double-tap / double-click, or the Reset button, to return to full view      */
+function makeZoomable(svg){
+  const vb=svg.getAttribute('viewBox').split(/\s+/).map(Number);
+  const base={x:vb[0],y:vb[1],w:vb[2],h:vb[3]};
+  let cur={...base};
+  const MIN_W=base.w/8;            // max zoom-in = 8x
+  function apply(){svg.setAttribute('viewBox',cur.x+' '+cur.y+' '+cur.w+' '+cur.h);}
+  function clamp(){
+    if(cur.w>base.w)cur.w=base.w; if(cur.h>base.h)cur.h=base.h;
+    if(cur.w<MIN_W){cur.w=MIN_W;cur.h=MIN_W*(base.h/base.w);}
+    if(cur.x<base.x)cur.x=base.x;
+    if(cur.y<base.y)cur.y=base.y;
+    if(cur.x+cur.w>base.x+base.w)cur.x=base.x+base.w-cur.w;
+    if(cur.y+cur.h>base.y+base.h)cur.y=base.y+base.h-cur.h;
+  }
+  // convert a client point to current viewBox coords
+  function toVB(clientX,clientY){
+    const r=svg.getBoundingClientRect();
+    return {x:cur.x+(clientX-r.left)/r.width*cur.w, y:cur.y+(clientY-r.top)/r.height*cur.h};
+  }
+  function zoomAt(clientX,clientY,factor){
+    const p=toVB(clientX,clientY);
+    let nw=cur.w*factor;
+    if(nw>base.w)nw=base.w; if(nw<MIN_W)nw=MIN_W;
+    const nh=nw*(base.h/base.w);
+    cur.x=p.x-(p.x-cur.x)*(nw/cur.w);
+    cur.y=p.y-(p.y-cur.y)*(nh/cur.h);
+    cur.w=nw;cur.h=nh;clamp();apply();
+  }
+  function reset(){cur={...base};apply();}
+  svg._resetZoom=reset;
+  // zoom to a sub-rectangle of the base view (fractions 0..1), used for mobile default
+  svg._zoomTo=function(fx,fy,fw,fh){
+    cur={x:base.x+fx*base.w, y:base.y+fy*base.h, w:fw*base.w, h:fh*base.h};
+    clamp();apply();
+  };
+
+  // wheel / trackpad zoom
+  svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY>0?1.12:0.89);},{passive:false});
+
+  // mouse drag to pan
+  let mDown=false,mx=0,my=0;
+  svg.addEventListener('mousedown',e=>{if(cur.w>=base.w)return;mDown=true;mx=e.clientX;my=e.clientY;});
+  window.addEventListener('mousemove',e=>{
+    if(!mDown)return;
+    const r=svg.getBoundingClientRect();
+    cur.x-=(e.clientX-mx)/r.width*cur.w; cur.y-=(e.clientY-my)/r.height*cur.h;
+    mx=e.clientX;my=e.clientY;clamp();apply();
+  });
+  window.addEventListener('mouseup',()=>{mDown=false;});
+
+  // touch: one-finger pan, two-finger pinch
+  let pts=new Map(),startDist=0,startW=0,startMid=null,startVB=null,panStart=null,lastTap=0;
+  svg.addEventListener('touchstart',e=>{
+    for(const t of e.changedTouches)pts.set(t.identifier,{x:t.clientX,y:t.clientY});
+    if(pts.size===2){
+      const[a,b]=[...pts.values()];
+      startDist=Math.hypot(a.x-b.x,a.y-b.y);
+      startW=cur.w;startVB={...cur};
+      startMid=toVB((a.x+b.x)/2,(a.y+b.y)/2);
+    }else if(pts.size===1){
+      const t=e.changedTouches[0];
+      panStart={cx:t.clientX,cy:t.clientY,vx:cur.x,vy:cur.y};
+      // double-tap to reset
+      const now=Date.now();
+      if(now-lastTap<300)reset();
+      lastTap=now;
+    }
+  },{passive:false});
+  svg.addEventListener('touchmove',e=>{
+    for(const t of e.changedTouches)if(pts.has(t.identifier))pts.set(t.identifier,{x:t.clientX,y:t.clientY});
+    if(pts.size===2){
+      e.preventDefault();
+      const[a,b]=[...pts.values()];
+      const dist=Math.hypot(a.x-b.x,a.y-b.y);
+      let nw=startW*(startDist/Math.max(dist,1));
+      if(nw>base.w)nw=base.w; if(nw<MIN_W)nw=MIN_W;
+      const nh=nw*(base.h/base.w);
+      cur.x=startMid.x-(startMid.x-startVB.x)*(nw/startVB.w);
+      cur.y=startMid.y-(startMid.y-startVB.y)*(nh/startVB.h);
+      cur.w=nw;cur.h=nh;clamp();apply();
+    }else if(pts.size===1&&panStart&&cur.w<base.w){
+      e.preventDefault();
+      const t=e.changedTouches[0];const r=svg.getBoundingClientRect();
+      cur.x=panStart.vx-(t.clientX-panStart.cx)/r.width*cur.w;
+      cur.y=panStart.vy-(t.clientY-panStart.cy)/r.height*cur.h;
+      clamp();apply();
+    }
+  },{passive:false});
+  function endTouch(e){for(const t of e.changedTouches)pts.delete(t.identifier);if(pts.size<2)startDist=0;if(pts.size===0)panStart=null;}
+  svg.addEventListener('touchend',endTouch);
+  svg.addEventListener('touchcancel',endTouch);
+
+  // double-click (desktop) resets
+  svg.addEventListener('dblclick',e=>{e.preventDefault();reset();});
+}
+makeZoomable(topSvg);
+makeZoomable(side);
+document.querySelectorAll('.zreset').forEach(btn=>{
+  btn.onclick=()=>{const s=document.getElementById(btn.dataset.target);if(s&&s._resetZoom)s._resetZoom();};
+});
+
+/* On narrow phones, open each chart pre-zoomed so it fills the screen rather
+   than sitting as a letterboxed strip. The top-down centers on the landing
+   area; the side view zooms into the apex-to-landing band. Pinch/drag to
+   explore, or tap "reset zoom" to see everything. */
+function initialMobileZoom(){
+  if(window.innerWidth>760)return;
+  const screenAspect=window.innerWidth/Math.min(window.innerHeight*0.6,520);
+  // TOP-DOWN (viewBox 1000x520): show full height, width sized to the screen's
+  // aspect so dots are large; centered on the data. Swipe left/right to scan.
+  const tfw=Math.min(1,Math.max(0.35,(520*screenAspect)/1000));
+  topSvg._zoomTo((1-tfw)/2,0,tfw,1);
+  // SIDE (viewBox 1000x300): show FULL height (the whole arc) but a narrow
+  // width window so it fills the screen tall; swipe right to follow the flight.
+  const sfw=Math.min(1,Math.max(0.30,(300*screenAspect)/1000));
+  side._zoomTo(0,0,sfw,1);
+}
+initialMobileZoom();
+window.addEventListener('resize',()=>{ // re-fit if rotated
+  topSvg._resetZoom();side._resetZoom();initialMobileZoom();
+});
+
 drawAll();
 </script>
 </body></html>
