@@ -84,7 +84,7 @@ svg:active{cursor:grabbing;}
 <div id="tip" style="position:fixed;pointer-events:none;z-index:50;display:none;background:#0a1610ee;border:1px solid #2a4736;border-radius:6px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#cfe3d6;line-height:1.5;box-shadow:0 4px 16px #000a;max-width:240px;"></div>
 <header><h1>2D <span>DISPERSION</span> VIEWS</h1><div class="s">SIDE PROFILE + TOP-DOWN &middot; TRUE 1:1 SCALE</div></header>
 <div class="controls" id="chips"></div>
-<div class="opts"><button class="gb on" id="shotBtn">Individual shots</button></div>
+<div class="opts"><button class="gb on" id="shotBtn">Individual shots</button><button class="gb" id="allOnBtn">All clubs on</button><button class="gb" id="allOffBtn">All clubs off</button></div>
 <h2>Top-down &mdash; view from directly above (fit to data) <button class="zreset" data-target="top">reset zoom</button></h2>
 <div class="stage s-top"><svg id="top" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet"></svg></div>
 <h2>Side view &mdash; height vs carry (height exaggerated 3&times; for readability) <button class="zreset" data-target="side">reset zoom</button></h2>
@@ -294,12 +294,17 @@ function sideDraw(){
 function drawAll(){topDraw();sideDraw();}
 
 const chips=document.getElementById('chips');
+const chipRefresh=[];   // collect each chip's visual-refresh fn for bulk toggles
 DATA.forEach(d=>{const c=document.createElement('button');c.className='chip';c.dataset.club=d.club;
   c.innerHTML='<span class="sw" style="background:'+d.color+'"></span>'+d.club+' <span style="opacity:.6;font-family:monospace;font-size:11px">'+d.ell.rz+'y</span>';
   chips.appendChild(c);
   function st(){if(state[d.club]){c.style.background=d.color;c.style.borderColor=d.color;c.style.color='#0a120d';c.querySelector('.sw').style.background='#0a120d';}else{c.style.background='var(--panel)';c.style.borderColor='var(--line)';c.style.color='var(--dim)';c.querySelector('.sw').style.background=d.color;}}
+  chipRefresh.push(st);
   c.onclick=()=>{state[d.club]=!state[d.club];st();drawAll();};st();});
 document.getElementById('shotBtn').onclick=function(){showShots=!showShots;this.classList.toggle('on',showShots);drawAll();};
+function setAllClubs(on){DATA.forEach(d=>state[d.club]=on);chipRefresh.forEach(fn=>fn());drawAll();}
+document.getElementById('allOnBtn').onclick=()=>setAllClubs(true);
+document.getElementById('allOffBtn').onclick=()=>setAllClubs(false);
 
 /* ---- Pinch-to-zoom + drag-to-pan for each chart (mobile + desktop) ----
    Operates on the SVG viewBox so existing hit-targets and tooltips keep working.
