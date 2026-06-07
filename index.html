@@ -30,6 +30,8 @@ h1.big span{color:var(--accent);}
 .thead h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;font-weight:400;}
 .thead .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);}
 table{width:100%;border-collapse:collapse;font-size:15px;}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.swipehint{display:none;margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;opacity:.7;}
 thead th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:500;}
 thead th:first-child,thead th:nth-child(2){text-align:left;}
 tbody td{padding:11px 14px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
@@ -60,8 +62,9 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
   .lead{font-size:16px;}
   .stats-strip{gap:18px 24px;}
   .stat .v{font-size:32px;}
-  table{font-size:12px;}
-  .hide-sm{display:none;}
+  table{font-size:12px;min-width:680px;}
+  .hide-sm{display:table-cell;}
+  .swipehint{display:inline;}
   thead th,tbody td{padding:8px 8px;}
   td.cl{font-size:17px;}
   .gapbar{padding:3px 8px;gap:8px;}
@@ -90,8 +93,8 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 </div>
 
 <div class="tablewrap">
-<div class="thead"><h2>CLUB SUMMARY</h2><span class="sub">carry &amp; gapping &middot; averages per club</span></div>
-<div style="overflow-x:auto;">
+<div class="thead"><h2>CLUB SUMMARY</h2><span class="sub">carry &amp; gapping &middot; averages per club</span><span class="swipehint">swipe &rarr;</span></div>
+<div class="tscroll">
 <table>
 <thead><tr>
 <th>Club</th><th>Loft</th><th>Carry</th><th>&plusmn;SD</th>

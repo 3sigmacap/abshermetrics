@@ -6,7 +6,17 @@ A static 3-page site visualizing my bag:
 - `top-down.html` — 2D top-down (true 1:1) + side flight profile, hover any dot for shot stats
 - `flight-3d.html` — interactive 3D ball flight (drag to orbit, scroll to zoom)
 
-All data is embedded directly in the HTML — there is **no build step and no backend**. Just static files.
+All shot data lives in one file, **`shots.json`**, which every page loads at runtime with `fetch()`. There is **no build step and no backend** — just static files.
+
+### `shots.json` structure
+A JSON array of 11 club objects. Each club holds:
+- **Raw Garmin R50 data** — `stats`: one object per shot (`bs` ball speed, `la` launch angle, `ld` launch direction, `bspin`/`sspin`/`spin`, `axis`, `carry`, `total`, `dev` deviation, `apex`).
+- **Physics-model flight paths** — `mean` (the average trajectory) and `shots` (one trajectory per shot), each a flat list of `x,y,z` points in yards.
+- **Summary/meta** — `club`, `color`, `carry`, `apex`, `descent`, `n`, `ell` (dispersion ellipse), `spinaxis`.
+
+To update with a new R50 session: add the raw shots to each club's `stats`, regenerate the matching `mean`/`shots` trajectories from the physics model, and save `shots.json`. All three pages pick up the change automatically — no HTML edits needed.
+
+> Because the pages use `fetch('shots.json')`, they must be served over http (the local server below, or Render), not opened as a `file://` path.
 
 ## Deploy to Render.com
 
