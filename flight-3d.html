@@ -76,14 +76,15 @@ canvas{display:block;}
 /* ---- Mobile (<=760px): side panel becomes a bottom drawer ---- */
 #drawerTab{display:none;}
 @media(max-width:760px){
-  .nav{padding:11px 14px;gap:0;flex-wrap:wrap;}
-  .nav a.tab{font-size:11px;padding:7px 10px;}
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
   #app{flex-direction:column;height:calc(100vh - 52px);position:relative;}
   #scene{flex:1;width:100%;}
   /* drawer */
   #side{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:72vh;
     border-left:none;border-top:1px solid var(--line2);
-    transform:translateY(calc(100% - 46px));transition:transform .28s ease;z-index:30;
+    transform:translateY(calc(100% - 46px));transition:transform .28s ease;z-index:45;
     box-shadow:0 -10px 30px #000a;}
   #side.open{transform:translateY(0);}
   /* grab handle / toggle that's always visible at the top of the drawer */
@@ -97,13 +98,15 @@ canvas{display:block;}
   .list{max-height:38vh;}
   .foot{display:none;}            /* long help text hidden on mobile */
   /* controls: stack the view buttons into a scrollable strip, keep launch reachable */
-  .cambar{left:8px;right:8px;bottom:8px;max-width:none;gap:5px;overflow-x:auto;
-    flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+  /* controls sit ABOVE the collapsed 46px drawer handle so it never hides them */
+  .cambar{left:8px;right:8px;bottom:100px;max-width:none;gap:5px;overflow-x:auto;
+    flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;z-index:32;}
   .cambar .gb{flex:0 0 auto;white-space:nowrap;}
   .camlbl{display:none;}
-  .launchbar{right:8px;bottom:52px;}
+  .launchbar{left:8px;right:8px;bottom:54px;justify-content:center;z-index:32;}
   .launchbar .fire{font-size:18px;padding:8px 18px;}
-  #hint{left:8px;right:8px;bottom:92px;font-size:9px;text-align:center;}
+  .launchbar .gb{white-space:nowrap;}
+  #hint{left:8px;right:8px;bottom:148px;font-size:9px;text-align:center;z-index:31;}
   .tag{display:none;}
   #hud .big{font-size:46px;}
   #rdg{display:none;}             /* hover readout is desktop-only */
