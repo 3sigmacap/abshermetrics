@@ -73,6 +73,42 @@ canvas{display:block;}
 .launchbar .gb.on{color:var(--accent);border-color:var(--accent);background:#13261b;}
 .camlbl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;align-self:center;margin-right:2px;}
 
+/* ---- Mobile (<=760px): side panel becomes a bottom drawer ---- */
+#drawerTab{display:none;}
+@media(max-width:760px){
+  .nav{padding:11px 14px;gap:0;flex-wrap:wrap;}
+  .nav a.tab{font-size:11px;padding:7px 10px;}
+  #app{flex-direction:column;height:calc(100vh - 52px);position:relative;}
+  #scene{flex:1;width:100%;}
+  /* drawer */
+  #side{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:72vh;
+    border-left:none;border-top:1px solid var(--line2);
+    transform:translateY(calc(100% - 46px));transition:transform .28s ease;z-index:30;
+    box-shadow:0 -10px 30px #000a;}
+  #side.open{transform:translateY(0);}
+  /* grab handle / toggle that's always visible at the top of the drawer */
+  #drawerTab{display:flex;align-items:center;justify-content:center;gap:10px;height:46px;
+    cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;
+    text-transform:uppercase;color:var(--dim2);border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#0e1a14,#0b1410);}
+  #drawerTab .grip{width:34px;height:4px;border-radius:3px;background:var(--line2);}
+  #drawerTab b{color:var(--accent);font-weight:500;}
+  .hd{display:none;}              /* title lives in nav already */
+  .list{max-height:38vh;}
+  .foot{display:none;}            /* long help text hidden on mobile */
+  /* controls: stack the view buttons into a scrollable strip, keep launch reachable */
+  .cambar{left:8px;right:8px;bottom:8px;max-width:none;gap:5px;overflow-x:auto;
+    flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+  .cambar .gb{flex:0 0 auto;white-space:nowrap;}
+  .camlbl{display:none;}
+  .launchbar{right:8px;bottom:52px;}
+  .launchbar .fire{font-size:18px;padding:8px 18px;}
+  #hint{left:8px;right:8px;bottom:92px;font-size:9px;text-align:center;}
+  .tag{display:none;}
+  #hud .big{font-size:46px;}
+  #rdg{display:none;}             /* hover readout is desktop-only */
+}
+
 </style></head><body>
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>BAG<b>METRICS</b></a>
@@ -85,7 +121,7 @@ canvas{display:block;}
 <div id="rdg"></div>
 <div id="hud"></div>
 <div class="tag">PHYSICS SIM (Re+spin aero) &middot; 237 SHOTS</div>
-<div id="hint"><b>drag</b> orbit &middot; <b>scroll</b> zoom &middot; <b>space</b> launch &middot; <b>1-4</b> views &middot; <b>A</b> auto</div>
+<div id="hint"><b>drag</b> orbit &middot; <b>pinch</b> zoom &middot; <b>Launch</b> to fire</div>
 <div class="cambar">
 <span class="camlbl">View</span>
 <button class="gb on" data-cam="free">Free</button>
@@ -101,6 +137,7 @@ canvas{display:block;}
 </div>
 </div>
 <div id="side">
+<div id="drawerTab"><span class="grip"></span><span>Clubs &amp; options &middot; <b>tap</b></span></div>
 <div class="hd"><h1>SHOT <span>DISPERSION</span></h1><div class="s">3D BALL FLIGHT &middot; FITTED TO YOUR DATA</div></div>
 <div class="tog"><button class="gb on" id="tShots">Show shots</button><button class="gb on" id="tMean">Show mean</button></div>
 <div class="glob"><button class="gb" id="gAll">All</button><button class="gb" id="gNone">None</button><button class="gb" id="gIron">Irons</button><button class="gb" id="gWedge">Wedges</button></div>
@@ -304,6 +341,18 @@ addEventListener('touchend',()=>drag=null);
 
 // ---- club list UI ----
 const list=document.getElementById('list');
+/* mobile drawer toggle */
+(function(){
+  const side=document.getElementById('side');
+  const tab=document.getElementById('drawerTab');
+  if(tab){
+    tab.addEventListener('click',()=>{
+      side.classList.toggle('open');
+      // refit the canvas once the slide finishes
+      setTimeout(()=>{try{resize();}catch(e){}},300);
+    });
+  }
+})();
 let showShots=true,showMean=true,soloClub=null,showOverlay=false;
 DATA.forEach(d=>{
   const row=document.createElement('div');row.className='row';row.dataset.club=d.club;
