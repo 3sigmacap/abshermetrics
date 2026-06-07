@@ -421,8 +421,15 @@ function initialMobileZoom(){
   side._zoomTo(0,0,sfw,1);
 }
 initialMobileZoom();
-window.addEventListener('resize',()=>{ // re-fit if rotated
-  topSvg._resetZoom();side._resetZoom();initialMobileZoom();
+// Re-fit only on a genuine orientation change (width actually changes).
+// Mobile address-bar show/hide fires 'resize' with height-only changes — we
+// ignore those so they don't reset the user's zoom or jump the scroll position.
+let _lastW=window.innerWidth, _rzTimer=null;
+window.addEventListener('resize',()=>{
+  if(window.innerWidth===_lastW)return;   // height-only jitter: ignore
+  _lastW=window.innerWidth;
+  clearTimeout(_rzTimer);
+  _rzTimer=setTimeout(()=>{ topSvg._resetZoom();side._resetZoom();initialMobileZoom(); },250);
 });
 
 drawAll();
