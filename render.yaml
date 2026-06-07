@@ -1,0 +1,16 @@
+# Render.com Blueprint — static site
+# Deploy: push this folder to a Git repo, then in Render: New → Blueprint → pick the repo.
+services:
+  - type: web
+    name: bagmetrics
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600

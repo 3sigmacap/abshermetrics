@@ -1,0 +1,239 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BagMetrics — My Bag</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px 26px 80px;}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(46px,9vw,104px);line-height:.92;letter-spacing:1px;margin:10px 0;}
+h1.big span{color:var(--accent);}
+.lead{font-size:19px;color:var(--dim);max-width:680px;font-weight:300;line-height:1.5;}
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+.hero{display:flex;flex-direction:column;gap:8px;margin-bottom:44px;}
+.stats-strip{display:flex;gap:30px;flex-wrap:wrap;margin-top:26px;}
+.stat{font-family:'IBM Plex Mono',monospace;}
+.stat .v{font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--accent);line-height:1;}
+.stat .l{font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+.tablewrap{margin-top:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1410cc;}
+.thead{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;}
+.thead h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;font-weight:400;}
+.thead .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:15px;}
+thead th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:500;}
+thead th:first-child,thead th:nth-child(2){text-align:left;}
+tbody td{padding:11px 14px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#10201766;}
+td.cl{text-align:left;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;color:var(--ink);}
+td.mk{text-align:left;font-size:13px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+td.num{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--dim);}
+tr.gaprow td{padding:0;border-bottom:none;}
+tr.gaprow:hover{background:transparent;}
+.gapbar{display:flex;align-items:center;gap:10px;padding:3px 14px;}
+.gapbar .ln{flex:1;height:1px;background:linear-gradient(90deg,transparent,#1d3327 20%,#1d3327 80%,transparent);}
+.gapbar .val{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.5px;color:var(--dim2);white-space:nowrap;text-transform:uppercase;}
+.gapbar .val b{color:var(--dim);font-weight:500;}
+td.big2{color:var(--accent);font-size:17px;font-weight:500;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:40px;}
+.card{border:1px solid var(--line);border-radius:12px;padding:22px;background:#0b1410cc;transition:.18s;}
+.card:hover{border-color:var(--line2);transform:translateY(-2px);}
+.card .ic{font-family:'Bebas Neue';font-size:30px;color:var(--accent);}
+.card h3{font-family:'Bebas Neue';font-size:22px;letter-spacing:.5px;font-weight:400;margin:6px 0;}
+.card p{font-size:14.5px;color:var(--dim);font-weight:300;line-height:1.5;}
+.card a.go{display:inline-block;margin-top:12px;font-family:'IBM Plex Mono';font-size:11px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;}
+.note{margin-top:14px;font-size:13px;color:var(--dim2);font-family:'IBM Plex Mono',monospace;line-height:1.6;}
+@media(max-width:760px){table{font-size:12px;}.hide-sm{display:none;}thead th,tbody td{padding:8px 8px;}}
+</style></head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>BAG<b>METRICS</b></a>
+<a href="index.html" class="tab on">Overview</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+</div>
+<div class="page">
+<div class="hero">
+<div class="kicker">Launch-monitor analysis &middot; 11 clubs &middot; 237 shots</div>
+<h1 class="big">MY <span>BAG</span>, BY THE NUMBERS</h1>
+<p class="lead">Every carry, gap, and miss pattern from my range sessions — modeled through real ball-flight physics. TaylorMade P7MB blades through the bag.</p>
+<div class="stats-strip">
+<div class="stat"><div class="v">269</div><div class="l">Longest carry (3W)</div></div>
+<div class="stat"><div class="v">99</div><div class="l">Shortest carry (SW)</div></div>
+<div class="stat"><div class="v">11</div><div class="l">Clubs tracked</div></div>
+<div class="stat"><div class="v">237</div><div class="l">Shots analyzed</div></div>
+</div>
+</div>
+
+<div class="tablewrap">
+<div class="thead"><h2>CLUB SUMMARY</h2><span class="sub">carry &amp; gapping &middot; averages per club</span></div>
+<div style="overflow-x:auto;">
+<table>
+<thead><tr>
+<th>Club</th><th>Model</th><th>Loft</th><th>Carry</th><th>&plusmn;SD</th>
+<th class="hide-sm">Ball</th><th class="hide-sm">Launch</th>
+<th class="hide-sm">Spin</th><th class="hide-sm">Apex</th><th>Lateral SD</th>
+</tr></thead>
+<tbody><tr>
+<td class="cl">3 Wood</td>
+<td class="mk">TaylorMade (fairway wood)</td>
+<td class="num">15°</td>
+<td class="num big2">269</td>
+<td class="num">&plusmn;11.6</td>
+<td class="num">163</td>
+<td class="num">12.4°</td>
+<td class="num">3,215</td>
+<td class="num">114</td>
+<td class="num" style="color:#ff9d9d">&plusmn;38.9</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>44</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">3 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">20°</td>
+<td class="num big2">225</td>
+<td class="num">&plusmn;5.9</td>
+<td class="num">142</td>
+<td class="num">13.5°</td>
+<td class="num">3,938</td>
+<td class="num">102</td>
+<td class="num">&plusmn;17.3</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">4 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">23°</td>
+<td class="num big2">213</td>
+<td class="num">&plusmn;6.4</td>
+<td class="num">139</td>
+<td class="num">14.6°</td>
+<td class="num">4,487</td>
+<td class="num">106</td>
+<td class="num">&plusmn;14.8</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">5 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">26°</td>
+<td class="num big2">201</td>
+<td class="num">&plusmn;5.1</td>
+<td class="num">134</td>
+<td class="num">17.4°</td>
+<td class="num">5,115</td>
+<td class="num">121</td>
+<td class="num">&plusmn;12.7</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>14</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">6 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">30°</td>
+<td class="num big2">187</td>
+<td class="num">&plusmn;3.7</td>
+<td class="num">131</td>
+<td class="num">19.2°</td>
+<td class="num">6,188</td>
+<td class="num">126</td>
+<td class="num">&plusmn;11.3</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>17</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">7 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">34°</td>
+<td class="num big2">170</td>
+<td class="num">&plusmn;5.3</td>
+<td class="num">124</td>
+<td class="num">22.6°</td>
+<td class="num">7,121</td>
+<td class="num">133</td>
+<td class="num">&plusmn;10.2</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>12</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">8 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">39°</td>
+<td class="num big2">158</td>
+<td class="num">&plusmn;2.5</td>
+<td class="num">119</td>
+<td class="num">24.6°</td>
+<td class="num">8,033</td>
+<td class="num">132</td>
+<td class="num">&plusmn;12.4</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>15</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">9 Iron</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">42.5°</td>
+<td class="num big2">143</td>
+<td class="num">&plusmn;3.7</td>
+<td class="num">111</td>
+<td class="num">26.9°</td>
+<td class="num">8,677</td>
+<td class="num">126</td>
+<td class="num">&plusmn;8.5</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>15</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">Pitching Wedge</td>
+<td class="mk">TaylorMade P7MB</td>
+<td class="num">47°</td>
+<td class="num big2">128</td>
+<td class="num">&plusmn;3.2</td>
+<td class="num">104</td>
+<td class="num">29.5°</td>
+<td class="num">9,270</td>
+<td class="num">118</td>
+<td class="num">&plusmn;6.3</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>20</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">Gap Wedge</td>
+<td class="mk">Wedge (52°)</td>
+<td class="num">52°</td>
+<td class="num big2">108</td>
+<td class="num">&plusmn;4.1</td>
+<td class="num">90</td>
+<td class="num">34.2°</td>
+<td class="num">8,098</td>
+<td class="num">104</td>
+<td class="num" style="color:#ff9d9d">&plusmn;20.5</td>
+</tr>
+<tr class="gaprow"><td colspan="10"><div class="gapbar"><span class="ln"></span><span class="val"><b>9</b> yd gap</span><span class="ln"></span></div></td></tr>
+<tr>
+<td class="cl">Sand Wedge</td>
+<td class="mk">Wedge (56°)</td>
+<td class="num">56°</td>
+<td class="num big2">99</td>
+<td class="num">&plusmn;3.6</td>
+<td class="num">87</td>
+<td class="num">35.8°</td>
+<td class="num">9,004</td>
+<td class="num">100</td>
+<td class="num">&plusmn;5</td>
+</tr></tbody>
+</table>
+</div>
+</div>
+<div class="note">Carry &amp; apex in yards/feet &middot; ball speed mph &middot; spin rpm &middot; lateral SD = sideways spread (1&sigma;). The bar between two clubs is the carry gap separating them. Red lateral values flag the two-way-miss clubs (3-Wood, Gap Wedge).</div>
+
+<div class="cards">
+<div class="card"><div class="ic">2D</div><h3>Top-Down &amp; Side</h3><p>True 1:1 dispersion from above plus the side flight profile. Hover any landing dot for that shot's full ball data.</p><a class="go" href="top-down.html">Open 2D &rarr;</a></div>
+<div class="card"><div class="ic">3D</div><h3>Ball Flight</h3><p>Orbit the full trajectories in 3D, fitted to your launch numbers with a drag + Magnus model. Isolate any club.</p><a class="go" href="flight-3d.html">Open 3D &rarr;</a></div>
+<div class="card"><div class="ic">i</div><h3>About the model</h3><p>Carries are measured; curves come from physics (Reynolds- and spin-dependent drag &amp; lift), not anchored to the data. One Gap-Wedge session was realigned for a target-aim offset.</p></div>
+</div>
+<div class="foot"><span>BAGMETRICS &middot; launch-monitor analysis &middot; 237 shots</span><span>physics model: drag + Magnus, Re &amp; spin-rate dependent</span></div>
+</div></body></html>

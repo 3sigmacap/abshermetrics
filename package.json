@@ -1,0 +1,9 @@
+{
+  "name": "bagmetrics",
+  "version": "1.0.0",
+  "description": "Static golf launch-monitor visualization site",
+  "scripts": {
+    "start": "python3 -m http.server ${PORT:-8000}"
+  },
+  "private": true
+}
