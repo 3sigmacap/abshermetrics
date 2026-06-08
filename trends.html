@@ -49,6 +49,18 @@ table.t td:first-child{text-align:left;color:var(--dim);font-family:'IBM Plex Mo
 table.t td.d-up{color:var(--up);} table.t td.d-down{color:var(--down);} table.t td.d-flat{color:var(--dim2);}
 .empty{padding:30px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .note{font-size:13px;color:var(--dim);margin-top:14px;line-height:1.4;}
+.attr{display:flex;flex-direction:column;gap:11px;}
+.attr-row{display:grid;grid-template-columns:160px 1fr 78px;align-items:center;gap:12px;}
+.attr-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);line-height:1.25;}
+.attr-name .attr-sub{display:block;font-size:10px;color:var(--dim2);margin-top:2px;}
+.attr-track{position:relative;height:10px;background:#0e1a14;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+.attr-fill{position:absolute;top:0;bottom:0;border-radius:6px;}
+.attr-fill.pos{left:0;} .attr-fill.neg2{right:0;}
+.attr-val{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;font-variant-numeric:tabular-nums;}
+@media(max-width:760px){
+  .attr-row{grid-template-columns:110px 1fr 66px;gap:8px;}
+  .attr-name{font-size:11px;}
+}
 
 @media(max-width:760px){
   .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
@@ -84,6 +96,7 @@ table.t td.d-up{color:var(--up);} table.t td.d-down{color:var(--down);} table.t 
 </div>
 
 <script type="module">
+import { attributeCarryChange, simulateFlight } from './flight-engine.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
 const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
 
@@ -214,6 +227,77 @@ function lineChart(serie,m,color,W=720,H=240){
   return `<svg viewBox="0 0 ${W} ${H}">${grid}<path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>${dots}${xl}</svg>`;
 }
 
+// ---- WHY did carry change? Physics-based attribution (uses flight-engine.js) ----
+// Compares the club's FIRST session vs its LATEST session. Takes each session's
+// mean ball speed / launch / spin, asks the engine how much of the modeled
+// carry change each input is responsible for (Shapley split, parts sum to total).
+function carryAttribution(club){
+  const sess=SESSIONS.filter(s=>SHOTS.some(x=>x.club===club&&x.session===s.id));
+  if(sess.length<2) return null;
+  const agg=sid=>{
+    const v=SHOTS.filter(x=>x.club===club&&x.session===sid);
+    const m=k=>mean(v.map(x=>x[k]).filter(x=>x!=null));
+    return {ballSpeedMph:m('bs'), launchDeg:m('la'), spinRpm:m('spin'), n:v.length};
+  };
+  const A=agg(sess[0].id), B=agg(sess[sess.length-1].id);
+  if([A.ballSpeedMph,A.launchDeg,A.spinRpm,B.ballSpeedMph,B.launchDeg,B.spinRpm].some(x=>Number.isNaN(x))) return null;
+  let r;
+  try{ r=attributeCarryChange(A,B); }catch(e){ return null; }
+  return {A,B,r,firstLabel:sess[0].label,lastLabel:sess[sess.length-1].label};
+}
+
+// also report the MEASURED carry change (from the data) alongside the modeled one
+function measuredCarryChange(club){
+  const sess=SESSIONS.filter(s=>SHOTS.some(x=>x.club===club&&x.session===s.id));
+  if(sess.length<2)return null;
+  const cm=sid=>{const v=SHOTS.filter(x=>x.club===club&&x.session===sid&&x.carry!=null);return v.length?mean(v.map(x=>x.carry)):null;};
+  const a=cm(sess[0].id), b=cm(sess[sess.length-1].id);
+  return (a==null||b==null)?null:{first:a,last:b,delta:b-a};
+}
+
+function attributionPanel(club,color){
+  const at=carryAttribution(club);
+  if(!at) return '';
+  const {A,B,r}=at;
+  const meas=measuredCarryChange(club);
+  // bar widths from |contribution| share
+  const parts=[
+    {k:'ballSpeed',label:'Ball speed',d:r.parts.ballSpeed,from:A.ballSpeedMph,to:B.ballSpeedMph,unit:'mph',dp:1},
+    {k:'launch',   label:'Launch angle',d:r.parts.launch,  from:A.launchDeg,   to:B.launchDeg,   unit:'°',  dp:1},
+    {k:'spin',     label:'Spin',        d:r.parts.spin,    from:A.spinRpm,     to:B.spinRpm,     unit:'rpm',dp:0},
+  ];
+  const maxAbs=Math.max(...parts.map(p=>Math.abs(p.d)),0.1);
+  const sign=x=>x>0?'+':'';
+  const col=d=>Math.abs(d)<0.3?'var(--dim)':(d>0?'var(--up)':'var(--down)');
+  const rows=parts.map(p=>{
+    const w=Math.abs(p.d)/maxAbs*100;
+    const pos=p.d>=0;
+    return `<div class="attr-row">
+      <div class="attr-name">${p.label}
+        <span class="attr-sub">${fmt(p.from,p.dp)} → ${fmt(p.to,p.dp)} ${p.unit}</span>
+      </div>
+      <div class="attr-bar"><div class="attr-track">
+        <div class="attr-fill ${pos?'pos':'neg2'}" style="width:${w}%;background:${col(p.d)}"></div>
+      </div></div>
+      <div class="attr-val" style="color:${col(p.d)}">${sign(p.d)}${p.d.toFixed(1)} yd</div>
+    </div>`;
+  }).join('');
+  const totCol=Math.abs(r.total)<0.3?'var(--dim)':(r.total>0?'var(--up)':'var(--down)');
+  const lead = Math.abs(r.total)<0.5
+    ? `Carry is essentially unchanged (${sign(r.total)}${r.total.toFixed(1)} yd modeled). The inputs below mostly cancel out.`
+    : `Your carry ${r.total>0?'gained':'lost'} <b style="color:${totCol}">${sign(r.total)}${r.total.toFixed(1)} yd</b> between the first and latest session. Here's what the physics model says drove it:`;
+  const measNote = meas
+    ? `<div class="note" style="margin-top:12px">Measured carry moved ${sign(meas.delta)}${meas.delta.toFixed(1)} yd (${fmt(meas.first,1)} → ${fmt(meas.last,1)}). The model attributes the change purely to launch-condition shifts; any gap vs measured is normal scatter, contact quality, or conditions the model doesn't see.</div>`
+    : '';
+  return `<div class="panel">
+    <h2 style="color:${color}">Why ${club}'s carry changed</h2>
+    <div class="hint">first session → latest · physics attribution via drag + Magnus flight model</div>
+    <p class="desc" style="font-size:14.5px;color:var(--dim);margin:2px 0 14px;line-height:1.5">${lead}</p>
+    <div class="attr">${rows}</div>
+    ${measNote}
+  </div>`;
+}
+
 function render(){
   if(!current){document.getElementById('content').innerHTML='<div class="panel empty">No club data.</div>';return;}
   const color=COLORS[current]||'#d4ff4f';
@@ -269,6 +353,7 @@ function render(){
 
   document.getElementById('content').innerHTML=`
     <div class="insights">${cards}</div>
+    ${attributionPanel(current,color)}
     <div class="panel">
       <h2 style="color:${color}">${current} — Metric Over Time</h2>
       <div class="hint">first to latest session · dots show session average · n = shots that session</div>
