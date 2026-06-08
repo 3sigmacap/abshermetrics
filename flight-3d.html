@@ -272,7 +272,7 @@ DATA.forEach(d=>{
 
   const meanPts=toPts(d.mean);
   const curve=new THREE.CatmullRomCurve3(meanPts);
-  const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,80,1.15,8,false),new THREE.MeshBasicMaterial({color:col}));
+  const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,80,0.805,8,false),new THREE.MeshBasicMaterial({color:col}));
   // The mean path is already anchored to the measured carry (see normalizeCarries),
   // so the animated ball simply follows it and lands on the measured distance.
   const flightPts=meanPts.map(p=>new THREE.Vector3(p.x,p.y,p.z));
