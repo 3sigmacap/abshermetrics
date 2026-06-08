@@ -1,0 +1,241 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — The Model</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;white-space:nowrap;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:34px 26px 90px;}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,8vw,86px);line-height:.92;letter-spacing:1px;margin:10px 0;}
+h1.big span{color:var(--accent);}
+.lead{font-size:19px;color:var(--dim);max-width:680px;font-weight:300;line-height:1.55;}
+h2{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.5px;font-weight:400;margin:46px 0 6px;color:var(--ink);}
+h2 .n{color:var(--accent);font-size:20px;margin-right:10px;}
+h3{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin:26px 0 8px;font-weight:500;}
+p{font-size:16px;color:var(--ink);font-weight:300;line-height:1.65;margin:10px 0;}
+p.muted{color:var(--dim);}
+.page ul{margin:10px 0 10px 4px;list-style:none;}
+.page ul li{font-size:15.5px;color:var(--ink);font-weight:300;line-height:1.6;padding-left:18px;position:relative;margin:5px 0;}
+.page ul li::before{content:"\2192";position:absolute;left:0;color:var(--accent);}
+code{font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:#0c1812;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--accent2);}
+.eq{background:#0b1410;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 18px;margin:16px 0;overflow-x:auto;}
+.eq .cap{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2);margin-bottom:6px;}
+.panel{background:#0b1410cc;border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:18px 0;}
+.note{background:#0e1a1466;border:1px solid var(--line2);border-radius:8px;padding:13px 16px;margin:16px 0;font-size:14.5px;color:var(--dim);line-height:1.6;}
+.note b{color:var(--ink);font-weight:500;}
+table.coef{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0;}
+table.coef th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);font-weight:500;}
+table.coef td{padding:7px 10px;border-bottom:1px solid #142219;font-family:'IBM Plex Mono',monospace;color:var(--dim);font-size:12.5px;}
+table.coef td:first-child{color:var(--ink);}
+.steps{counter-reset:step;margin:14px 0;}
+.step{position:relative;padding:10px 0 10px 44px;border-bottom:1px solid #142219;}
+.step:last-child{border-bottom:none;}
+.step::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.step b{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);letter-spacing:.3px;}
+.step p{margin:3px 0 0;font-size:14.5px;color:var(--dim);}
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);line-height:1.7;}
+.foot a{color:var(--accent2);}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 8px;}
+.toc a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.5px;padding:6px 12px;border:1px solid var(--line2);border-radius:16px;color:var(--dim);transition:.15s;}
+.toc a:hover{color:var(--accent);border-color:var(--accent);}
+mjx-container{color:var(--ink);}
+@media(max-width:760px){.nav{padding:10px 14px 8px;gap:6px 4px;}.nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}.nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}.page{padding:24px 16px 70px;}h2{font-size:25px;}p{font-size:15px;}}
+</style>
+<script>
+window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'},chtml:{scale:1.0}};
+</script>
+<script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+</head><body>
+
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="club-detail.html" class="tab ">Club Detail</a>
+<a href="trends.html" class="tab ">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+<a href="raw-data.html" class="tab ">Raw Data</a>
+</div>
+
+<div class="page">
+<div class="kicker">The Engine</div>
+<h1 class="big">From launch numbers to <span>ball flight</span></h1>
+<p class="lead">Your launch monitor measures only the moment of impact — how fast the ball leaves, at what angle, and how it spins. Everything you see plotted on this site (carry, apex, descent, dispersion, roll-out) is <b style="color:var(--ink)">computed from those launch numbers by integrating the physics of flight</b>. This page documents exactly how, with the real equations.</p>
+
+<div class="toc">
+<a href="#inputs">What the R50 gives us</a>
+<a href="#philosophy">Launch-data-only</a>
+<a href="#setup">Air &amp; launch vectors</a>
+<a href="#forces">Forces in flight</a>
+<a href="#coeffs">Drag &amp; lift coefficients</a>
+<a href="#integrate">Integration</a>
+<a href="#ground">Bounce &amp; roll</a>
+<a href="#correction">Our one tweak</a>
+<a href="#provenance">Sources</a>
+</div>
+
+<h2 id="inputs"><span class="n">01</span>What the launch monitor actually measures</h2>
+<p>The Garmin Approach R50 reports a set of <b style="color:var(--ink)">launch</b> quantities — the ball's state in the first instants after impact:</p>
+<ul>
+<li><b>Ball speed</b> — how fast the ball is travelling (mph)</li>
+<li><b>Launch angle</b> — vertical angle of the initial flight (degrees)</li>
+<li><b>Launch direction</b> — horizontal angle relative to target (degrees)</li>
+<li><b>Backspin &amp; sidespin</b> (or total spin + spin axis) — the spin vector (rpm)</li>
+</ul>
+<p>The R50 also reports its own estimate of carry, apex, and total. <b style="color:var(--ink)">We do not use those for anything plotted.</b> They appear only on the Raw Data page, for reference. Every curve on this site is rebuilt from the launch quantities above.</p>
+
+<h2 id="philosophy"><span class="n">02</span>Why launch-data-only</h2>
+<p>A launch monitor measures launch conditions extremely well but <em>infers</em> carry and apex from a short observation window. By taking only the directly measured launch state and integrating the flight ourselves, every downstream number comes from one transparent, reproducible physics model rather than a black box. The trade-off is honesty: if the model and the monitor disagree, you can see exactly why, in the equations below.</p>
+
+<h2 id="setup"><span class="n">03</span>Setting up: air, launch velocity, and spin</h2>
+<p>Before any forces act, the model converts launch conditions into vectors and folds the atmosphere into two scalars.</p>
+
+<h3>Air density</h3>
+<p>Density is computed from temperature, pressure, elevation, and humidity (the site uses a fixed standard atmosphere: 70&deg;F, 29.92&nbsp;inHg, sea level, 50% RH):</p>
+<div class="eq"><div class="cap">air density (kg/m³), with humidity &amp; elevation correction</div>
+\[ \rho = \rho_0 \,\frac{273.15}{T_K}\cdot\frac{P\,e^{-\beta h} - 0.3783\,\phi\,(\text{SVP}/100)}{P_0} \]
+</div>
+<p class="muted">where \(\rho_0=1.2929\) kg/m³, \(T_K\) is temperature in kelvin, \(P\) barometric pressure (mmHg), \(P_0=760\) mmHg, \(\beta=1.217\times10^{-4}\), \(h\) elevation (m), \(\phi\) relative humidity, and SVP the saturation vapor pressure of water.</p>
+
+<h3>The lumped drag scalar</h3>
+<p>Rather than carry area and mass through every step, libgolf folds them — with density — into a single coefficient \(c_0\) that turns a coefficient and speed directly into an acceleration in ft/s²:</p>
+<div class="eq"><div class="cap">lumped aerodynamic constant</div>
+\[ c_0 = 0.07182\;\rho_{\text{imp}}\;\frac{m_{\text{ref}}}{m}\left(\frac{C}{C_{\text{ref}}}\right)^{2} \]
+</div>
+<p class="muted">\(\rho_{\text{imp}}\) is density in lb/ft³, \(m\) the ball mass (1.62 oz), \(C\) its circumference (5.277 in), and \(m_{\text{ref}}=5.125\) oz, \(C_{\text{ref}}=9.125\) in are libgolf's reference normalizers.</p>
+
+<h3>Reynolds number reference</h3>
+<p>Air viscosity follows Sutherland's law; a reference Reynolds number is taken at 100&nbsp;mph and then scaled by the instantaneous speed during flight:</p>
+<div class="eq"><div class="cap">Sutherland viscosity &amp; reference Reynolds number</div>
+\[ \mu = \frac{1.512\times10^{-6}\,T_K^{1.5}}{T_K + 120}, \qquad Re_{100} = \frac{\rho\,(44.7)\,d}{\mu} \]
+</div>
+<p class="muted">\(d\) is the ball diameter in metres. During flight the working Reynolds number scales linearly with speed: \(Re = (v_{\text{mph}}/100)\,Re_{100}\).</p>
+
+<h3>Launch velocity and spin vectors</h3>
+<p>With launch angle \(\theta\), direction \(\psi\), and ball speed \(v_0\) (converted to ft/s), the initial velocity is</p>
+<div class="eq"><div class="cap">launch velocity vector (ft/s) — x lateral, y downrange, z vertical</div>
+\[ \mathbf{v}_0 = v_0\big(\cos\theta\sin\psi,\;\cos\theta\cos\psi,\;\sin\theta\big) \]
+</div>
+<p>and the spin vector is built from backspin \(\omega_b\) and sidespin \(\omega_s\) (rpm → rad/s):</p>
+<div class="eq"><div class="cap">spin vector (rad/s)</div>
+\[ \boldsymbol{\omega} = \tfrac{\pi}{30}\big(\omega_b\cos\psi - \omega_s\sin\theta\sin\psi,\;\; -\omega_b\sin\psi - \omega_s\sin\theta\cos\psi,\;\; \omega_s\cos\theta\big) \]
+</div>
+
+<h2 id="forces"><span class="n">04</span>The forces in flight</h2>
+<p>Once airborne, three accelerations act on the ball: gravity, aerodynamic drag (opposing motion), and the Magnus force (from spin, perpendicular to motion — this is what curves the ball and holds it up).</p>
+
+<h3>Drag</h3>
+<p>Drag points opposite the ball's velocity relative to the air, \(\mathbf{v}_{\text{rel}}=\mathbf{v}-\mathbf{w}\) (with wind \(\mathbf{w}\)):</p>
+<div class="eq"><div class="cap">drag acceleration (ft/s²)</div>
+\[ \mathbf{a}_{\text{drag}} = -\,c_0\,C_d\,\lVert\mathbf{v}_{\text{rel}}\rVert\;\mathbf{v}_{\text{rel}} \]
+</div>
+
+<h3>Magnus (lift)</h3>
+<p>The Magnus acceleration is proportional to the lift coefficient and to the cross product of spin and velocity — a full 3D treatment, which is exactly why sidespin and a tilted spin axis produce slice/hook curvature, not just height:</p>
+<div class="eq"><div class="cap">Magnus acceleration (ft/s²)</div>
+\[ \mathbf{a}_{\text{Magnus}} = c_0\,\frac{C_l}{\lVert\boldsymbol{\omega}\rVert}\,\lVert\mathbf{v}_{\text{rel}}\rVert\;\big(\boldsymbol{\omega}\times\mathbf{v}_{\text{rel}}\big) \]
+</div>
+
+<h3>Total acceleration</h3>
+<div class="eq"><div class="cap">net acceleration each step</div>
+\[ \mathbf{a} = \mathbf{a}_{\text{drag}} + \mathbf{a}_{\text{Magnus}} - g\,\hat{\mathbf{z}}, \qquad g = 32.174\ \text{ft/s}^2 \]
+</div>
+
+<h3>Spin decay</h3>
+<p>Spin bleeds off exponentially in flight with a speed-dependent time constant:</p>
+<div class="eq"><div class="cap">spin decay per step</div>
+\[ \tau = \frac{r}{\lambda\,v},\quad \lambda=2\times10^{-5}; \qquad \boldsymbol{\omega} \leftarrow \boldsymbol{\omega}\,e^{-\Delta t/\tau} \]
+</div>
+
+<h2 id="coeffs"><span class="n">05</span>The drag &amp; lift coefficients</h2>
+<p>\(C_d\) and \(C_l\) are not constants — they depend on the Reynolds number \(Re\) (binned, in units of \(10^5\)) and the spin ratio \(S = \omega r / v\). These fits trace to dimpled-sphere wind-tunnel data (Bearman &amp; Harvey) and a Washington State University study (Lyu et&nbsp;al.), as used by Nathan's trajectory calculator.</p>
+
+<h3>Drag coefficient</h3>
+<div class="eq"><div class="cap">C_d — piecewise in Reynolds, with a spin term</div>
+\[ C_d = \begin{cases} 0.500 + 0.180\,S, & Re \le 0.5\\[4pt] 0.500 - 0.300\,\dfrac{Re-0.5}{0.5} + 0.180\,S, & 0.5 < Re < 1.0\\[8pt] 0.200 + 0.180\,S, & Re \ge 1.0 \end{cases} \]
+</div>
+<p class="muted">A faster ball (higher \(Re\)) has lower drag — the classic "drag crisis" of a dimpled sphere — and more spin adds a little drag.</p>
+
+<h3>Lift coefficient</h3>
+<p>\(C_l\) interpolates between four spin-ratio polynomials keyed to Reynolds bins (\(Re\) at 50k, 60k, 65k, 70k), capped by a spin-dependent maximum \(C_{l,\max}\):</p>
+<div class="eq"><div class="cap">lift polynomials (argument is spin ratio S)</div>
+\[
+\begin{aligned}
+C_l^{50k}(S) &= 0.0472 + 2.848\,S - 23.434\,S^2 + 45.485\,S^3\\
+C_l^{60k}(S) &= 0.3205 - 4.703\,S + 14.061\,S^2\\
+C_l^{65k}(S) &= 0.2667 - 4.000\,S + 13.333\,S^2\\
+C_l^{70k}(S) &= 0.0496 + 0.00211\,S + 2.342\,S^2
+\end{aligned}
+\]
+</div>
+<p>Below \(Re=0.3\) there is no lift; above \(Re=0.7\) a saturating spin-gain form is used; in between the model blends the bracketing polynomials linearly. The cap rises with spin ratio:</p>
+<div class="eq"><div class="cap">spin-dependent lift ceiling and high-Re form</div>
+\[ C_{l,\max}(S) = \begin{cases}0.268, & S\le0.35\\ \text{lerp to }0.320, & 0.35<S<0.50\\ 0.320,& S\ge0.50\end{cases} \qquad C_l^{\,Re\ge0.7} = C_{l,\max}\,\frac{16\,S}{1+16\,S} \]
+</div>
+
+<table class="coef">
+<thead><tr><th>Reynolds bin (×10⁵)</th><th>Lift behaviour</th></tr></thead>
+<tbody>
+<tr><td>Re &le; 0.3</td><td>no lift (\(C_l = 0\))</td></tr>
+<tr><td>0.3 – 0.5</td><td>smoothstep ramp into \(C_l^{50k}\)</td></tr>
+<tr><td>0.5 – 0.7</td><td>linear blend across the 50k / 60k / 65k / 70k polynomials</td></tr>
+<tr><td>Re &ge; 0.7</td><td>saturating form \(C_{l,\max}\cdot 16S/(1+16S)\)</td></tr>
+</tbody>
+</table>
+
+<h2 id="integrate"><span class="n">06</span>Integrating the trajectory</h2>
+<p>With the forces defined, the ball's path is advanced in small time steps using semi-implicit (symplectic) Euler integration — velocity is updated, then position uses the updated terms. The step is <code>dt = 0.01 s</code>.</p>
+<div class="eq"><div class="cap">per-step update</div>
+\[ \mathbf{x} \leftarrow \mathbf{x} + \mathbf{v}\,\Delta t + \tfrac{1}{2}\mathbf{a}\,\Delta t^2, \qquad \mathbf{v} \leftarrow \mathbf{v} + \mathbf{a}\,\Delta t \]
+</div>
+<p>Each step: decay the spin, recompute \(Re\) and \(S\), look up \(C_d\) and \(C_l\), form the net acceleration, and advance. The loop ends when the ball crosses the ground (\(z\le0\)); the exact landing point is found by linear interpolation across that final step. From the path the model reads off:</p>
+<ul>
+<li><b>Carry</b> — downrange distance at first landing</li>
+<li><b>Apex</b> — maximum height reached</li>
+<li><b>Lateral</b> — sideways deviation at landing (curvature from spin)</li>
+<li><b>Descent angle</b> — flight-path angle at landing</li>
+<li><b>Flight time</b> — used to pace the 3D animation in real time</li>
+</ul>
+
+<h2 id="ground"><span class="n">07</span>Bounce &amp; roll (the roll-out)</h2>
+<p>For total distance, the model continues past landing through bounce and roll on a fairway-like surface. The bounce uses the Penner (2003) model: a spin-and-velocity-dependent coefficient of restitution governs the vertical rebound, while the tangential response depends on impact angle.</p>
+<div class="eq"><div class="cap">effective restitution at impact</div>
+\[ e_{\text{eff}} = e_0\big(1 - f_{\text{spin}}(\omega)\,f_{\text{vel}}(v_\perp)\big) \]
+</div>
+<p>A steep, energetic impact with high backspin produces the <b style="color:var(--ink)">spin-back / check</b> you see on wedges, via a tangential spin-back term:</p>
+<div class="eq"><div class="cap">Penner tangential speed after a steep, energetic bounce</div>
+\[ v_{t}' = R_{\text{ret}}\,v\,\sin(\alpha-\alpha_c) - \frac{2\,r\,\omega_{\text{back}}}{7} \]
+</div>
+<p class="muted">\(\alpha\) is the impact angle, \(\alpha_c=15^\circ\) the surface's critical angle, \(R_{\text{ret}}\) a spin-scaled retention factor. Shallow or low-energy impacts instead release forward with simple friction. Once the ball is moving slowly enough, Coulomb friction rolls it to rest. This is why on the 3D page a wedge can roll <em>backward</em> while a 3&nbsp;wood releases forward.</p>
+<div class="note">Carry (the first landing) does not depend on the ground surface at all — only the post-landing roll does. The default surface is a typical fairway (restitution 0.40, static/dynamic friction 0.50/0.20, firmness 0.80, spin retention 0.75).</div>
+
+<h2 id="correction"><span class="n">08</span>The one place we depart from the library</h2>
+<p>Every coefficient above is copied verbatim from the published library. There is exactly one addition: a small <b style="color:var(--ink)">low-spin drag correction</b>. The published \(C_d\) fit slightly over-drags in the low-spin-ratio regime (long fairway woods and low-spin drivers, \(S\) below ~0.20), where measured carries ran longer than the unmodified model predicted. We apply a smooth, drag-only reduction that fades in below \(S=0.20\) and saturates at \(S=0.06\):</p>
+<div class="eq"><div class="cap">low-spin drag correction (smoothstep ramp on spin ratio)</div>
+\[ C_d \leftarrow C_d\big(1 - 0.16\,\,\text{smoothstep}(u)\big),\qquad u = \frac{0.20 - S}{0.20 - 0.06},\quad S<0.20 \]
+</div>
+<p class="muted">It is drag-only on purpose — adding lift instead fixed the distance but ballooned the apex into an unphysical shape. This single change improves bag-wide carry accuracy (RMSE ~5.95&nbsp;→&nbsp;~4.2&nbsp;yd) and leaves every club at \(S\ge0.20\) — the entire 4-iron-through-wedge set — untouched. Setting the gain to zero restores the pure library model.</p>
+
+<h2 id="provenance"><span class="n">09</span>Sources &amp; provenance</h2>
+<div class="panel">
+<p style="margin-top:0">The flight engine is a faithful JavaScript port of the aerial, bounce, and roll physics in <b style="color:var(--ink)">libgolf</b> by Gabriel DiFiore, whose in-air aerodynamics are based on the work of <b style="color:var(--ink)">Prof. Alan M. Nathan</b> (University of Illinois Urbana-Champaign). The drag and lift coefficient fits trace to dimpled-sphere wind-tunnel data (Bearman &amp; Harvey) and a Washington State University study (Lyu et&nbsp;al.).</p>
+<p class="muted">Coefficients are copied verbatim from libgolf's <code>DefaultAerodynamicModel</code>, <code>DefaultBounceModel</code>, <code>DefaultRollModel</code>, <code>physics_constants</code>, <code>ShotPhysicsContext</code>, and <code>DefaultIntegrator</code> — with the single documented low-spin drag tweak above. The bounce model follows Penner (2003).</p>
+</div>
+
+<div class="foot">
+ABSHERMETRICS · the model behind every curve<br>
+libgolf — <a href="https://github.com/gdifiore/libgolf" target="_blank" rel="noopener">github.com/gdifiore/libgolf</a> · physics after Prof. Alan M. Nathan (U. Illinois)<br>
+Internal units are feet, ft/s, and rad/s; outputs are converted to yards and feet to match the rest of the site.
+</div>
+
+</div>
+</body></html>

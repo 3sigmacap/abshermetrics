@@ -148,8 +148,18 @@ inserts the flag as a minimal diff.)
    **"In Model" column**: red "Excluded" badge + dimmed row for the 8 dropped shots (reads the
    `excluded` flag from raw-shots.json), included shots show a ✓. Count pill notes "N excluded".
 
-All pages share an identical sticky `.nav`. Adding a page = add its tab to ALL pages, set
-`class="tab on"` only on the active one.
+**model.html** — "The Model" reference page (NOT in the main nav — it's a secondary sub-page
+   linked from the Overview "About the model" card via `href="model.html"`). A long-form
+   explanation of how launch data becomes ball flight, with the ACTUAL engine equations rendered
+   via MathJax (cdnjs, tex-mml-chtml 3.2.2): air density / lumped c0 / Reynolds setup, launch &
+   spin vectors, drag + Magnus + spin-decay, the Cd/Cl coefficient fits (verbatim values), the
+   semi-implicit Euler integrator, Penner bounce + roll, and the one low-spin Cd tweak. It carries
+   the standard `.nav` (so it feels native) but intentionally has NO active tab. Pulls its numbers
+   from flight-engine.js — if engine coefficients change, update this page's equations too.
+
+All pages share an identical sticky `.nav`. Adding a primary TAB page = add its tab to ALL pages,
+set `class="tab on"` only on the active one. (model.html is the one deliberate exception: it's a
+linked sub-page, not a tab, to keep the nav uncluttered — its nav shows no active tab.)
 
 ## raw-shots.json  (raw R50 data — drives raw-data + trends)
 `{ club_order:[...], sessions:[...], colors:{club:hex}, shots:[...] }`
@@ -207,6 +217,12 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **Added model.html "The Model" page (this session):** new physics/math reference page documenting
+  the full launch-data -> ball-flight derivation with the actual engine equations (MathJax via
+  cdnjs). Linked from the Overview "About the model" card (`href="model.html"`); NOT added as a nav
+  tab (kept as a linked sub-page). Also corrected that card's stale text — it said "Carries are
+  measured" which is no longer true (carries are engine-computed). Page mirrors flight-engine.js;
+  keep equations in sync if coefficients change.
 - **Trends coloring fix (this session):** insight cards + All-Metrics table were coloring every
   change by raw direction (down=red), so improvements in dispersion/consistency (Lateral Spread,
   Carry Consistency — both `better:'down'`) showed red even though down is GOOD. Now color follows
