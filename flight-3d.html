@@ -103,13 +103,17 @@ canvas{display:block;}
     flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;z-index:32;}
   .cambar .gb{flex:0 0 auto;white-space:nowrap;}
   .camlbl{display:none;}
-  .launchbar{left:8px;right:8px;bottom:54px;justify-content:center;z-index:32;}
-  .launchbar .fire{font-size:18px;padding:8px 18px;}
+  .launchbar{left:8px;right:8px;bottom:60px;justify-content:center;z-index:48;}
+  .launchbar .fire{font-size:18px;padding:11px 26px;}
   .launchbar .gb{white-space:nowrap;}
-  #hint{left:8px;right:8px;bottom:148px;font-size:9px;text-align:center;z-index:31;}
+  #hint{left:8px;right:8px;bottom:154px;font-size:9px;text-align:center;z-index:31;}
   .tag{display:none;}
   #hud .big{font-size:46px;}
   #rdg{display:none;}             /* hover readout is desktop-only */
+  /* when the clubs drawer is open it owns the screen — hide the floating
+     control bars so the launch button doesn't hover confusingly over it */
+  body.drawer-open .cambar,body.drawer-open .launchbar,body.drawer-open #hint{
+    opacity:0;pointer-events:none;transition:opacity .18s;}
 }
 
 </style></head><body>
@@ -352,6 +356,7 @@ const list=document.getElementById('list');
   if(tab){
     tab.addEventListener('click',()=>{
       side.classList.toggle('open');
+      document.body.classList.toggle('drawer-open',side.classList.contains('open'));
       // refit the canvas once the slide finishes
       setTimeout(()=>{try{resize();}catch(e){}},300);
     });
@@ -409,11 +414,21 @@ function launchVisible(){
   });
   if(hud)hud.style.opacity=1;
 }
+// Animation pacing: play the shot in real flight-time, scaled so it's watchable
+// while preserving the TRUE relative pacing between clubs (a 3W hangs visibly
+// longer than a wedge) and the natural deceleration (the mean points are sampled
+// uniformly in TIME by the engine, so stepping through them on a real-time clock
+// makes the ball slow down toward apex/landing exactly as the physics dictates).
+const TIMESCALE=0.46;          // real seconds -> animation seconds (~half-speed)
+const MIN_DUR=1100, MAX_DUR=3600;  // clamp so wedges aren't too quick / woods too long
 function startFlight(o){
-  const pts=o.flightPts;const dur=1500;const t0=performance.now();
+  const pts=o.flightPts;
+  const ftReal=(o.data.flightTime||3.2);            // engine hang time, seconds
+  const dur=Math.max(MIN_DUR,Math.min(MAX_DUR,ftReal*1000*TIMESCALE));
+  const t0=performance.now();
   o.ball.visible=true;o.trail.visible=true;o.ball.material.color.set(o.col);
   flying++;
-  o.anim={pts,t0,dur,onflight:true,trailPos:[]};
+  o.anim={pts,t0,dur,ftReal,onflight:true,trailPos:[],lastPos:null,lastT:t0,speed:0};
 }
 function stepFlights(now){
   let liveStats=null;
@@ -421,11 +436,28 @@ function stepFlights(now){
     const o=clubObjs[d.club];if(!o.anim)return;
     const a=o.anim;let u=(now-a.t0)/a.dur;
     if(u>=1){u=1;}
-    // sample along mean polyline by index
+    // sample along mean polyline by index (points are time-uniform from the
+    // engine, so equal steps of u = equal steps of REAL time -> correct deceleration)
     const idx=u*(a.pts.length-1);const i0=Math.floor(idx);const f=idx-i0;
     const p0=a.pts[Math.min(i0,a.pts.length-1)],p1=a.pts[Math.min(i0+1,a.pts.length-1)];
     const pos=p0.clone().lerp(p1,f);
     o.ball.position.copy(pos);
+    // ---- live ball speed (mph) from real distance / real time between frames ----
+    // pos units: x,z in yards, y in feet (P() maps height ft->scene with Hscale*3=1).
+    if(a.lastPos){
+      const dxz_x=pos.x-a.lastPos.x, dxz_z=pos.z-a.lastPos.z;          // yards
+      const dy_yd=(pos.y-a.lastPos.y)/3;                               // ft -> yd
+      const distYd=Math.sqrt(dxz_x*dxz_x+dy_yd*dy_yd+dxz_z*dxz_z);
+      const dtAnim=(now-a.lastT)/1000;                                 // animation seconds
+      const dtReal=dtAnim/TIMESCALE;                                   // real flight seconds
+      if(dtReal>1e-4){
+        const ydPerS=distYd/dtReal;
+        const mph=ydPerS*3*0.681818;                                   // yd/s -> ft/s -> mph
+        // light smoothing so the number doesn't jitter frame-to-frame
+        a.speed=a.speed?a.speed*0.7+mph*0.3:mph;
+      }
+    }
+    a.lastPos=pos.clone();a.lastT=now;
     // trail buffer
     a.trailPos.push(pos.clone());if(a.trailPos.length>60)a.trailPos.shift();
     const arr=o.trail.geometry.attributes.position.array;
@@ -434,7 +466,8 @@ function stepFlights(now){
     o.trail.geometry.setDrawRange(0,Math.min(60,a.trailPos.length));
     // live HUD = the highest/most recent flight
     const yards=Math.round(pos.x);const ht=Math.round(pos.y/Hscale/3);
-    liveStats={club:d.club,carry:d.carry,cur:yards,ht,apex:d.apex,col:o.col};
+    liveStats={club:d.club,carry:d.carry,cur:yards,ht,apex:d.apex,col:o.col,
+               speed:Math.round(a.speed),tRemain:Math.max(0,(a.ftReal*(1-u))).toFixed(1)};
     if(u>=1){
       // land: drop ball at landing, fade trail, end
       o.ball.visible=false;o.trail.visible=false;o.anim=null;flying--;
@@ -442,7 +475,9 @@ function stepFlights(now){
     }
   });
   if(liveStats&&hud){
-    hud.innerHTML='<b style="color:'+liveStats.col+'">'+liveStats.club+'</b><div class="big">'+liveStats.cur+'<span>yd</span></div><div class="sub">height '+liveStats.ht+' ft &middot; carry '+liveStats.carry+' y</div>';
+    hud.innerHTML='<b style="color:'+liveStats.col+'">'+liveStats.club+'</b>'+
+      '<div class="big">'+liveStats.speed+'<span>mph</span></div>'+
+      '<div class="sub">'+liveStats.cur+' yd carried &middot; height '+liveStats.ht+' ft &middot; '+liveStats.tRemain+'s to land</div>';
   }
 }
 

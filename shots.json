@@ -50,7 +50,8 @@
    {"carry": 99.0, "total": 96.1, "apex": 96.6, "descent": 60.1, "dev": 3.6, "devTotal": 3.5},
    {"carry": 95.4, "total": 91.2, "apex": 89.7, "descent": 59.5, "dev": -0.4, "devTotal": -0.5},
    {"carry": 99.7, "total": 95.6, "apex": 89.1, "descent": 58.8, "dev": 5.2, "devTotal": 4.9}
-  ]
+  ],
+  "flightTime": 5.22
  },
  {
   "club": "Gap Wedge",
@@ -143,7 +144,8 @@
    {"carry": 100.3, "total": 97.8, "apex": 101.7, "descent": 60.8, "dev": -7.0, "devTotal": -6.9},
    {"carry": 102.2, "total": 101.0, "apex": 113.0, "descent": 62.3, "dev": -6.4, "devTotal": -6.3},
    {"carry": 106.9, "total": 105.6, "apex": 115.4, "descent": 61.7, "dev": -12.4, "devTotal": -12.3}
-  ]
+  ],
+  "flightTime": 5.41
  },
  {
   "club": "Pitching Wedge",
@@ -280,7 +282,8 @@
    {"carry": 125.2, "total": 123.1, "apex": 120.6, "descent": 60.9, "dev": -0.3, "devTotal": -0.3},
    {"carry": 124.4, "total": 121.9, "apex": 120.8, "descent": 61.2, "dev": -7.6, "devTotal": -7.5},
    {"carry": 125.4, "total": 122.9, "apex": 117.8, "descent": 60.6, "dev": -1.0, "devTotal": -1.0}
-  ]
+  ],
+  "flightTime": 5.98
  },
  {
   "club": "9 Iron",
@@ -441,7 +444,8 @@
    {"carry": 142.0, "total": 140.1, "apex": 126.9, "descent": 60.1, "dev": -8.0, "devTotal": -7.9},
    {"carry": 138.3, "total": 136.6, "apex": 123.4, "descent": 59.9, "dev": -10.7, "devTotal": -10.6},
    {"carry": 143.0, "total": 141.2, "apex": 110.4, "descent": 57.2, "dev": -4.9, "devTotal": -4.8}
-  ]
+  ],
+  "flightTime": 6.3
  },
  {
   "club": "8 Iron",
@@ -502,7 +506,8 @@
    {"carry": 161.0, "total": 160.3, "apex": 121.1, "descent": 57.0, "dev": 0.3, "devTotal": 0.2},
    {"carry": 160.1, "total": 159.0, "apex": 125.5, "descent": 58.0, "dev": -8.3, "devTotal": -8.2},
    {"carry": 165.1, "total": 164.1, "apex": 114.3, "descent": 55.8, "dev": 3.3, "devTotal": 3.2}
-  ]
+  ],
+  "flightTime": 6.55
  },
  {
   "club": "7 Iron",
@@ -635,7 +640,8 @@
    {"carry": 181.2, "total": 180.9, "apex": 125.2, "descent": 55.8, "dev": 7.1, "devTotal": 7.0},
    {"carry": 173.3, "total": 173.0, "apex": 120.9, "descent": 55.7, "dev": 7.0, "devTotal": 7.0},
    {"carry": 171.3, "total": 170.5, "apex": 134.2, "descent": 58.2, "dev": -3.4, "devTotal": -3.4}
-  ]
+  ],
+  "flightTime": 6.67
  },
  {
   "club": "6 Iron",
@@ -712,7 +718,8 @@
    {"carry": 197.4, "total": 197.3, "apex": 122.3, "descent": 53.6, "dev": -5.1, "devTotal": -5.1},
    {"carry": 200.2, "total": 200.1, "apex": 107.0, "descent": 49.9, "dev": 6.6, "devTotal": 6.6},
    {"carry": 197.0, "total": 196.9, "apex": 118.7, "descent": 52.8, "dev": -3.4, "devTotal": -3.4}
-  ]
+  ],
+  "flightTime": 6.62
  },
  {
   "club": "5 Iron",
@@ -809,7 +816,8 @@
    {"carry": 215.5, "total": 216.3, "apex": 117.5, "descent": 50.5, "dev": 3.0, "devTotal": 3.0},
    {"carry": 204.8, "total": 205.4, "apex": 106.2, "descent": 48.6, "dev": 0.3, "devTotal": 0.3},
    {"carry": 208.3, "total": 208.6, "apex": 126.9, "descent": 52.9, "dev": -18.1, "devTotal": -18.1}
-  ]
+  ],
+  "flightTime": 6.57
  },
  {
   "club": "4 Iron",
@@ -886,7 +894,8 @@
    {"carry": 216.2, "total": 218.6, "apex": 99.4, "descent": 45.5, "dev": -1.5, "devTotal": -1.4},
    {"carry": 219.2, "total": 220.7, "apex": 102.1, "descent": 46.5, "dev": 3.2, "devTotal": 3.3},
    {"carry": 219.8, "total": 221.6, "apex": 115.6, "descent": 49.5, "dev": -17.7, "devTotal": -17.9}
-  ]
+  ],
+  "flightTime": 6.27
  },
  {
   "club": "3 Iron",
@@ -1007,7 +1016,8 @@
    {"carry": 224.4, "total": 226.7, "apex": 100.6, "descent": 45.2, "dev": -15.2, "devTotal": -15.4},
    {"carry": 221.5, "total": 223.5, "apex": 93.4, "descent": 43.3, "dev": -3.0, "devTotal": -2.9},
    {"carry": 218.6, "total": 220.1, "apex": 89.8, "descent": 42.9, "dev": -20.5, "devTotal": -20.7}
-  ]
+  ],
+  "flightTime": 6.33
  },
  {
   "club": "3 Wood",
@@ -1164,6 +1174,7 @@
    {"carry": 279.6, "total": 289.2, "apex": 136.9, "descent": 51.1, "dev": -9.1, "devTotal": -9.2},
    {"carry": 245.9, "total": 251.3, "apex": 126.1, "descent": 52.9, "dev": -83.3, "devTotal": -86.3},
    {"carry": 285.2, "total": 293.8, "apex": 133.5, "descent": 50.2, "dev": 27.4, "devTotal": 28.9}
-  ]
+  ],
+  "flightTime": 7.15
  }
 ]

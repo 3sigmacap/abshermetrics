@@ -58,6 +58,7 @@ let raw=''; process.stdin.on('data',d=>raw+=d); process.stdin.on('end',()=>{
       ground: resample(r.groundPoints, Math.max(2,Math.round(NPTS/2))),
       carry: r.carryYd, total: r.totalYd, apex: r.apexFt,
       descent: r.descentDeg, lateral: r.lateralYd, totalLateral: r.totalLateralYd,
+      flightTime: r.flightTime,
     });
   }
   process.stdout.write(JSON.stringify(out));
@@ -109,9 +110,11 @@ def main():
         eApex  = [r['apex']  for r in shotRes]
         eDesc  = [r['descent'] for r in shotRes]
         eLat   = [r['lateral'] for r in shotRes]
+        eFT    = [r['flightTime'] for r in shotRes]
 
         carry = round(mean(eCarry)); total = round(mean(eTotal))
         apex = round(mean(eApex)); descent = round(mean(eDesc))
+        flightTime = round(mean(eFT), 2)
         ell = {'cx': round(mean(eCarry),1), 'cz': round(mean(eLat),1),
                'rx': round(sd(eCarry),1), 'rz': round(sd(eLat),1)}
         spinaxis = round(mean([r.get('axis',0) for r in st]), 1)
@@ -131,7 +134,7 @@ def main():
                             for r in shotRes]
             c['carry'] = carry; c['total'] = total; c['apex'] = apex
             c['descent'] = descent; c['n'] = len(st); c['ell'] = ell
-            c['spinaxis'] = spinaxis
+            c['spinaxis'] = spinaxis; c['flightTime'] = flightTime
 
     print("%-15s | carry old->new | apex old->new | total(new)" % "club")
     for r in report:
