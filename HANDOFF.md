@@ -126,7 +126,8 @@ inserts the flag as a minimal diff.)
    launch / spin contribution bars that sum to the total, plus the measured-vs-modeled note.
    Imports flight-engine.js. Loads raw-shots.json (+ browser uploads). Health dots per club chip.
    Has an **"Average Shot"** box (between Metric-Over-Time and the table): engine-computed mean
-   trajectory drawn as SIDE profile + DOWN-THE-LINE animated SVGs, looping every 4s while on screen.
+   trajectory drawn as SIDE profile + TOP-DOWN animated SVGs (top-down shows lateral movement),
+   animated at REAL-LIFE speed (engine flightTime) while on screen.
    Insight cards + the All-Metrics table color by TONE (good=green / bad=red / neutral=dim), driven
    by each metric's `better` field (`up`/`down`/`zero`/`neutral`) — NOT by raw direction. So a drop
    in Lateral Spread or Carry Consistency (SD) shows green (improvement) while the arrow still points
@@ -219,6 +220,15 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **3D launch fix + real-time speed + Trends top-down (this session):** (1) FIXED the 3D Launch
+  that appeared broken — it wasn't: the animated ball had been over-shrunk to radius 0.45 (≈16 in
+  at true 1:1 scale) so it was an invisible speck. Restored visible sizes (ball 1.6, landing marker
+  1.4, rest marker 1.2). (2) 3D animation now plays at TRUE real-life speed: `TIMESCALE` 0.46→1.0,
+  clamps widened (300–12000 ms) so each club's real flightTime passes through unchanged. (3) Trends
+  "Average Shot" box: replaced the down-the-line view with a TOP-DOWN view (downrange horizontal,
+  lateral vertical, target line centered) to actually show lateral movement; and its ball now
+  animates at real-life speed using the engine `flightTime` (data-ft attr), looping flightTime+0.9s
+  hold instead of a fixed 2.6s. flight-3d.html + trends.html.
 - **Trends "Average Shot" views (this session):** added a box on the Trends page (between
   Metric-Over-Time and the All-Metrics table) showing two engine-computed SVG views of the selected
   club's MEAN-launch trajectory — SIDE profile (left, wider; height vs carry) and DOWN-THE-LINE

@@ -272,7 +272,7 @@ DATA.forEach(d=>{
   // so the animated ball simply follows it and lands on the measured distance.
   const flightPts=meanPts.map(p=>new THREE.Vector3(p.x,p.y,p.z));
   const mn=d.mean.length;
-  const mk=new THREE.Mesh(new THREE.SphereGeometry(0.55,16,16),new THREE.MeshBasicMaterial({color:col}));
+  const mk=new THREE.Mesh(new THREE.SphereGeometry(1.4,16,16),new THREE.MeshBasicMaterial({color:col}));
   mk.position.copy(P(d.mean[mn-3],0,d.mean[mn-1]));
 
   // roll-out path (bounce + roll after landing), drawn the SAME as the aerial
@@ -290,7 +290,7 @@ DATA.forEach(d=>{
       rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,TUBE_R,8,false),
         new THREE.MeshBasicMaterial({color:col}));
       const rn=d.meanRoll.length;
-      restMk=new THREE.Mesh(new THREE.SphereGeometry(0.475,14,14),
+      restMk=new THREE.Mesh(new THREE.SphereGeometry(1.2,14,14),
         new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5,wireframe:true}));
       restMk.position.copy(P(d.meanRoll[rn-3],0,d.meanRoll[rn-1]));
     }
@@ -304,7 +304,7 @@ DATA.forEach(d=>{
   ovl.add(disc);ovl.add(ring);ovl.add(gap);ovl.visible=false;
 
   // animated ball + trail (hidden until launched)
-  const ball=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshBasicMaterial({color:0xffffff}));
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,16),new THREE.MeshBasicMaterial({color:0xffffff}));
   ball.visible=false;
   const trailGeom=new THREE.BufferGeometry();
   const TRAIL=60;trailGeom.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TRAIL*3),3));
@@ -441,8 +441,8 @@ function launchVisible(){
 // longer than a wedge) and the natural deceleration (the mean points are sampled
 // uniformly in TIME by the engine, so stepping through them on a real-time clock
 // makes the ball slow down toward apex/landing exactly as the physics dictates).
-const TIMESCALE=0.46;          // real seconds -> animation seconds (~half-speed)
-const MIN_DUR=1100, MAX_DUR=3600;  // clamp so wedges aren't too quick / woods too long
+const TIMESCALE=1.0;           // 1.0 = play at TRUE real-life flight speed
+const MIN_DUR=300, MAX_DUR=12000;  // wide clamps so real flight times pass through unchanged
 const ROLL_MS_PER_YD=26;       // roll pacing: animation ms per yard of ground travel
 const ROLL_MIN_MS=350, ROLL_MAX_MS=1600;
 function startFlight(o){
