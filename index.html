@@ -94,7 +94,7 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <div class="tscroll">
 <table>
 <thead><tr>
-<th>Club</th><th>Loft</th><th>Carry</th><th>&plusmn;SD</th>
+<th>Club</th><th>Loft</th><th>Carry</th><th>Total</th><th>&plusmn;SD</th>
 <th class="hide-sm">Ball</th><th class="hide-sm">Launch</th>
 <th class="hide-sm">Spin</th><th class="hide-sm">Apex</th><th>Lateral SD</th>
 </tr></thead>
@@ -131,20 +131,23 @@ fetch('shots.json').then(r=>r.json()).then(data=>{
   const asc = data.slice();
   const disp = data.slice().reverse();
 
-  // per-club computed metrics from the post-exclusion / post-realignment stats rows
+  // Per-club metrics. Carry, apex, dispersion (±SD, lateral SD) and total now
+  // come from the ENGINE (baked into shots.json by generate_trajectories.py).
+  // Ball speed, launch, spin are the R50 LAUNCH inputs (means from stats).
   const M = {};
   data.forEach(c=>{
     const st=c.stats;
     const col=k=>st.map(r=>r[k]);
     M[c.club]={
       n: st.length,
-      carry: r0(mean(col('carry'))),
-      sd:    r1(stdev(col('carry'))),
-      ball:  r0(mean(col('bs'))),
-      launch:r1(mean(col('la'))),
-      spin:  r0(mean(col('spin'))),
-      apex:  r0(mean(col('apex'))),
-      lat:   r1(stdev(col('dev')))
+      carry: c.carry,                 // engine carry (mean of per-shot engine carries)
+      total: c.total,                 // engine total after bounce + roll
+      sd:    c.ell ? c.ell.rx : 0,     // engine carry SD
+      ball:  r0(mean(col('bs'))),      // R50 launch
+      launch:r1(mean(col('la'))),      // R50 launch
+      spin:  r0(mean(col('spin'))),    // R50 launch
+      apex:  c.apex,                   // engine apex
+      lat:   c.ell ? c.ell.rz : 0      // engine lateral SD
     };
   });
 
@@ -178,6 +181,7 @@ fetch('shots.json').then(r=>r.json()).then(data=>{
       `<td class="cl">${c.club}</td>`+
       `<td class="num">${LOFT[c.club]||'\u2013'}</td>`+
       `<td class="num big2">${m.carry}</td>`+
+      `<td class="num">${m.total}</td>`+
       `<td class="num">&plusmn;${f1(m.sd)}</td>`+
       `<td class="hide-sm num">${m.ball}</td>`+
       `<td class="hide-sm num">${f1(m.launch)}\u00b0</td>`+
@@ -191,7 +195,7 @@ fetch('shots.json').then(r=>r.json()).then(data=>{
       html +=
         '<tr class="gaprow"><td></td><td></td>'+
         `<td class="gapcell"><span class="gapval"><b>${gap}</b> yd gap</span></td>`+
-        '<td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>';
+        '<td></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>';
     }
   });
   document.getElementById('tbody').innerHTML=html;

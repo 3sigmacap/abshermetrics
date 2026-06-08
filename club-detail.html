@@ -234,7 +234,22 @@ function consistencyBars(S){
 function renderClub(){
   const d=DATA.find(c=>c.club===current);
   if(!d)return;
-  const S=d.stats, col=d.color;
+  const col=d.color;
+  // Per-shot view: carry/total/apex/dev come from the ENGINE (d.derived);
+  // ball speed / launch / spin are the R50 launch inputs (d.stats). Merge them
+  // so every chart below uses engine-consistent results, not the R50's own
+  // carry/apex. (Falls back to stats if derived is missing.)
+  const S=(d.stats||[]).map((st,i)=>{
+    const e=(d.derived&&d.derived[i])?d.derived[i]:{};
+    return {
+      bs:st.bs, la:st.la, ld:st.ld, spin:st.spin, axis:st.axis,
+      bspin:st.bspin, sspin:st.sspin,
+      carry:(e.carry!=null?e.carry:st.carry),
+      total:(e.total!=null?e.total:st.total),
+      apex:(e.apex!=null?e.apex:st.apex),
+      dev:(e.dev!=null?e.dev:st.dev)
+    };
+  });
   const carries=S.map(s=>s.carry);
   const cMean=mean(carries), cSd=sd(carries);
   const totals=S.map(s=>s.total);

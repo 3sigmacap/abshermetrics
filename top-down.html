@@ -106,40 +106,12 @@ try{
   throw _e;
 }
 
-/* ---- Anchor every path to the MEASURED launch-monitor carry ----
-   The physics model only sets the *shape* of each flight (height profile,
-   lateral curve, relative spread). The final carry distance must always come
-   from the measured data: d.carry for the club mean, and stats[i].carry for
-   each individual shot. We rescale the downrange (x) coordinate of every path
-   so it lands exactly on its measured distance, leaving height (y) and the
-   lateral shape (z) untouched. */
-(function normalizeCarries(){
-  DATA.forEach(d=>{
-    if(Array.isArray(d.mean)&&d.mean.length>=3){
-      const endX=d.mean[d.mean.length-3];
-      if(endX>0){
-        const s=d.carry/endX;
-        for(let i=0;i<d.mean.length;i+=3) d.mean[i]*=s;
-      }
-    }
-    if(Array.isArray(d.shots)){
-      d.shots.forEach((f,i)=>{
-        if(!Array.isArray(f)||f.length<3) return;
-        const endX=f[f.length-3];
-        const target=(d.stats&&d.stats[i]&&typeof d.stats[i].carry==='number')?d.stats[i].carry:d.carry;
-        if(endX>0&&target>0){
-          const s=target/endX;
-          for(let k=0;k<f.length;k+=3) f[k]*=s;
-        }
-      });
-    }
-    if(d.ell&&Array.isArray(d.shots)&&d.shots.length){
-      let sum=0,n=0;
-      d.shots.forEach(f=>{ if(Array.isArray(f)&&f.length>=3){ sum+=f[f.length-3]; n++; } });
-      if(n) d.ell.cx=sum/n;
-    }
-  });
-})();
+/* ---- Engine-driven coordinates (no rescaling) ----
+   Carry, lateral landing, apex and the dispersion ellipse are all computed by
+   flight-engine.js and baked into shots.json by generate_trajectories.py. The
+   engine's landing IS the carry, so there is no longer any rescale-to-measured
+   step here — paths and ellipse are used as-is. (ell.cx/cz/rx/rz already come
+   from the engine landings.) */
 
 
 const NS='http://www.w3.org/2000/svg';

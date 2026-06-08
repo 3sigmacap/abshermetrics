@@ -96,6 +96,20 @@ export const STD_ATMOS = {
   windDirDeg: 0.0,
 };
 
+/* ----------------------------------------------------------------------------
+ * Ground surface (libgolf GroundSurface defaults — typical fairway).
+ * Used by the bounce + roll phases. Carry (first landing) is independent of
+ * these; only the post-landing rollout/check-up depends on them.
+ * -------------------------------------------------------------------------- */
+export const GROUND = {
+  restitution: 0.40,      // COR
+  frictionStatic: 0.50,
+  frictionDynamic: 0.20,
+  firmness: 0.80,
+  spinRetention: 0.75,
+  criticalAngleDeg: 15.0, // Penner spin-back gate (measured from surface plane)
+};
+
 /* ---- math_utils ---- */
 const f2c = f => (f - 32.0) * (5.0 / 9.0);
 const c2k = c => c + C.KELVIN_OFFSET;
@@ -242,38 +256,137 @@ const spinDecayTau = (vel, ballRadius) => {
 };
 
 /* ----------------------------------------------------------------------------
- * simulateFlight — integrate the aerial phase to ground.
+ * DefaultBounceModel — Penner (2003) spin-back + COR. Port of libgolf's
+ * DefaultBounceModel.hpp. Surface = GROUND. Returns post-bounce {vel, spin}.
+ *
+ * High backspin + steep, energetic impact → ball checks/spins back (wedges).
+ * Shallow or low-energy impact → simple friction retention (chips, drives
+ * release forward). Spin is scaled by surface.spinRetention every bounce.
+ * -------------------------------------------------------------------------- */
+const BOUNCE = {
+  MIN_PENNER_SPEED_FTS: 20.0 * C.METERS_TO_FEET,
+  COR_SPIN_KNEE_RPM: 1500.0, COR_SPIN_HIGH_BAND_RPM: 1500.0,
+  COR_SPIN_LOW_MAX_RED: 0.30, COR_SPIN_HIGH_MAX_RED: 0.70,
+  COR_VEL_LOW_MS: 12.0, COR_VEL_MID_SCALE: 0.50, COR_VEL_HIGH_MS: 25.0,
+  RETENTION_BASE: 0.55, RETENTION_RPM_NORM: 8000.0, RETENTION_FLOOR: 0.40,
+};
+const dot = (a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross = (a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const mag = a=>Math.sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);
+function corVelocityScale(speedMs){
+  if (speedMs < BOUNCE.COR_VEL_LOW_MS) return BOUNCE.COR_VEL_MID_SCALE*(speedMs/BOUNCE.COR_VEL_LOW_MS);
+  if (speedMs < BOUNCE.COR_VEL_HIGH_MS){ const t=(speedMs-BOUNCE.COR_VEL_LOW_MS)/(BOUNCE.COR_VEL_HIGH_MS-BOUNCE.COR_VEL_LOW_MS); return BOUNCE.COR_VEL_MID_SCALE+(1-BOUNCE.COR_VEL_MID_SCALE)*t; }
+  return 1.0;
+}
+function corMaxReduction(rpm){
+  if (rpm < BOUNCE.COR_SPIN_KNEE_RPM) return (rpm/BOUNCE.COR_SPIN_KNEE_RPM)*BOUNCE.COR_SPIN_LOW_MAX_RED;
+  const t=Math.min((rpm-BOUNCE.COR_SPIN_KNEE_RPM)/BOUNCE.COR_SPIN_HIGH_BAND_RPM,1);
+  return BOUNCE.COR_SPIN_LOW_MAX_RED+(BOUNCE.COR_SPIN_HIGH_MAX_RED-BOUNCE.COR_SPIN_LOW_MAX_RED)*t;
+}
+function resolveBounce(vel, spin, normal, ballRadius, surf) {
+  const vDotN = dot(vel, normal);
+  const vNormal = [normal[0]*vDotN, normal[1]*vDotN, normal[2]*vDotN];
+  const vTangent = [vel[0]-vNormal[0], vel[1]-vNormal[1], vel[2]-vNormal[2]];
+  const tangentMag = mag(vTangent);
+  const impactSpeed = mag(vel);
+  const omegaMag = mag(spin);
+  const spinRpm = omegaMag / C.RPM_TO_RAD_PER_S;
+  const speedNormalMs = Math.abs(vDotN) / C.METERS_TO_FEET;
+  const effCor = surf.restitution * (1 - corMaxReduction(spinRpm)*corVelocityScale(speedNormalMs));
+  const vNormalAfter = [vNormal[0]*-effCor, vNormal[1]*-effCor, vNormal[2]*-effCor];
+
+  let impactAngle = 0;
+  if (impactSpeed > C.MIN_SPEED) impactAngle = Math.asin(clamp(-vDotN/impactSpeed, -1, 1));
+  const critAngle = surf.criticalAngleDeg * C.DEG_TO_RAD;
+  const steep = impactAngle >= critAngle;
+  const energetic = impactSpeed >= BOUNCE.MIN_PENNER_SPEED_FTS;
+
+  let vTangentAfter;
+  if (steep && energetic && tangentMag > C.MIN_SPEED) {
+    const tHat = [vTangent[0]/tangentMag, vTangent[1]/tangentMag, vTangent[2]/tangentMag];
+    const lateralAxis = cross(tHat, normal);
+    const backspinScalar = dot(spin, lateralAxis);
+    const retention = BOUNCE.RETENTION_BASE * clamp(1 - spinRpm/BOUNCE.RETENTION_RPM_NORM, BOUNCE.RETENTION_FLOOR, 1);
+    const spinbackTerm = (2 * ballRadius * backspinScalar) / 7;
+    const newTangentSpeed = retention*impactSpeed*Math.sin(impactAngle-critAngle) - spinbackTerm;
+    vTangentAfter = [vTangent[0]*(newTangentSpeed/tangentMag), vTangent[1]*(newTangentSpeed/tangentMag), vTangent[2]*(newTangentSpeed/tangentMag)];
+  } else {
+    let ff = clamp(1 - surf.frictionStatic*(1 - surf.firmness), 0, 1);
+    vTangentAfter = [vTangent[0]*ff, vTangent[1]*ff, vTangent[2]*ff];
+  }
+  return {
+    vel: [vNormalAfter[0]+vTangentAfter[0], vNormalAfter[1]+vTangentAfter[1], vNormalAfter[2]+vTangentAfter[2]],
+    spin: [spin[0]*surf.spinRetention, spin[1]*surf.spinRetention, spin[2]*surf.spinRetention],
+  };
+}
+
+/* ----------------------------------------------------------------------------
+ * DefaultRollModel — Coulomb friction roll-out on flat ground. Port of
+ * libgolf's DefaultRollModel.hpp. Decelerates until horizontal speed < stop.
+ * -------------------------------------------------------------------------- */
+const ROLL = { STOPPING_VELOCITY: 0.1, SPIN_DECAY_RATE: 2.0 };
+function rollStep(pos, vel, spin, normal, dt, surf) {
+  // flat ground (normal ~ +z up): deceleration = frictionDynamic * g opposing motion
+  const vH = Math.sqrt(vel[0]*vel[0] + vel[1]*vel[1]);
+  let acc = [0,0,0];
+  if (vH >= C.MIN_SPEED) {
+    const decel = surf.frictionDynamic * C.GRAVITY_FT_PER_S2;
+    acc = [-decel*(vel[0]/vH), -decel*(vel[1]/vH), 0];
+  }
+  const oldX = vel[0], oldY = vel[1];
+  let nv = [vel[0]+acc[0]*dt, vel[1]+acc[1]*dt, 0];
+  if (Math.abs(oldX) > ROLL.STOPPING_VELOCITY && oldX*nv[0] < 0) nv[0] = 0;
+  if (Math.abs(oldY) > ROLL.STOPPING_VELOCITY && oldY*nv[1] < 0) nv[1] = 0;
+  const np = [pos[0]+nv[0]*dt, pos[1]+nv[1]*dt, pos[2]];
+  // linear spin decay
+  const sm = mag(spin); const dec = ROLL.SPIN_DECAY_RATE*dt;
+  const ns = sm > dec ? [spin[0]*((sm-dec)/sm), spin[1]*((sm-dec)/sm), spin[2]*((sm-dec)/sm)] : [0,0,0];
+  const atRest = Math.sqrt(nv[0]*nv[0]+nv[1]*nv[1]) < ROLL.STOPPING_VELOCITY;
+  return { pos: np, vel: nv, spin: ns, atRest };
+}
+
+/* ----------------------------------------------------------------------------
+ * simulateFlight — integrate aerial flight, optionally through bounce + roll.
  *   launch: { ballSpeedMph, launchDeg, backspinRpm, sidespinRpm, directionDeg? }
- *           (you can also pass spinRpm + axisDeg; see normalizeLaunch below)
- * Returns { carryYd, lateralYd, apexFt, descentDeg, flightTime, points }
- *   points: array of [x_yd, height_ft, z_yd]  (shots.json's x,y,z layout:
- *   x downrange yards, y height feet, z lateral yards)
+ *           (or spinRpm + axisDeg; see normalizeLaunch)
+ *   opts.rollout (bool): if true, continue past first landing through the
+ *     libgolf bounce + roll phases until the ball comes to rest. Default false
+ *     (carry-only) so callers that only care about carry are unaffected.
+ *
+ * Returns {
+ *   carryYd, lateralYd, apexFt, descentDeg, flightTime,   // aerial (first landing)
+ *   totalYd, totalLateralYd, restPoint,                   // after roll (rollout only)
+ *   points,            // aerial path [x_yd, height_ft, z_yd]
+ *   groundPoints       // bounce+roll path (rollout only), same layout
+ * }
  * -------------------------------------------------------------------------- */
 export function simulateFlight(launchIn, opts = {}) {
   const atmos = { ...STD_ATMOS, ...(opts.atmos || {}) };
   const ball = { ...BALL, ...(opts.ball || {}) };
+  const surf = { ...GROUND, ...(opts.ground || {}) };
   const launch = normalizeLaunch(launchIn);
   const dt = opts.dt || C.SIMULATION_TIME_STEP;
+  const rollout = !!opts.rollout;
   const ctx = buildContext(launch, atmos, ball);
+  const R = ctx.ballRadius;
+  const NORMAL = [0, 0, 1]; // flat ground, normal points up
 
   let pos = [0, 0, 0];
   let vel = ctx.vel.slice();
   let spin = ctx.spin.slice();
   let t = 0;
-  let acc = addGravity(aeroAccel(vel, ctx.wind, spin, ctx.c0, ctx.re100, ctx.ballRadius));
+  let acc = addGravity(aeroAccel(vel, ctx.wind, spin, ctx.c0, ctx.re100, R));
 
-  // record trajectory in shots.json layout: [x_downrange_yd, height_ft, z_lateral_yd]
-  const pts = [[0, 0, 0]];
+  const pts = [[0, 0, 0]];   // aerial path
   let apexFt = 0;
   let prev = pos.slice();
+  let landFt = null, prevAtLanding = null, flightTime = 0;
 
+  // ---- AERIAL PHASE ----
   while (t < C.MAX_SIMULATION_TIME) {
-    // spin decays once per step using the velocity from the start of step
-    const tau = spinDecayTau(vel, ctx.ballRadius);
+    const tau = spinDecayTau(vel, R);
     const decay = Math.exp(-dt / tau);
     spin = [spin[0]*decay, spin[1]*decay, spin[2]*decay];
-
-    // semi-implicit Euler (DefaultIntegrator): pos uses 0.5*a*dt^2, vel forward-Euler
     prev = pos.slice();
     for (let i = 0; i < 3; i++) {
       pos[i] += vel[i]*dt + 0.5*acc[i]*dt*dt;
@@ -283,23 +396,68 @@ export function simulateFlight(launchIn, opts = {}) {
     if (pos[2] > apexFt) apexFt = pos[2];
 
     if (pos[2] <= 0 && prev[2] > 0) {
-      // interpolate landing at z=0
       const f = prev[2] / (prev[2] - pos[2]);
-      const land = [
-        prev[0] + (pos[0]-prev[0])*f,
-        prev[1] + (pos[1]-prev[1])*f,
-        0,
-      ];
-      pts.push([land[1]/C.YARDS_TO_FEET, land[2], land[0]/C.YARDS_TO_FEET]);
-      return finalize(pts, apexFt, t, prev, land, ball);
+      landFt = [prev[0]+(pos[0]-prev[0])*f, prev[1]+(pos[1]-prev[1])*f, 0];
+      prevAtLanding = prev.slice();
+      flightTime = t;
+      pts.push([landFt[1]/C.YARDS_TO_FEET, 0, landFt[0]/C.YARDS_TO_FEET]);
+      // set state to the landing point for the ground phase
+      pos = landFt.slice();
+      break;
     }
     pts.push([pos[1]/C.YARDS_TO_FEET, pos[2], pos[0]/C.YARDS_TO_FEET]);
-
-    // start-of-next-step acceleration
-    acc = addGravity(aeroAccel(vel, ctx.wind, spin, ctx.c0, ctx.re100, ctx.ballRadius));
-    if (pos[1]/C.YARDS_TO_FEET > 600) break; // safety
+    acc = addGravity(aeroAccel(vel, ctx.wind, spin, ctx.c0, ctx.re100, R));
+    if (pos[1]/C.YARDS_TO_FEET > 600) { landFt = pos.slice(); prevAtLanding = prev.slice(); flightTime = t; break; }
   }
-  return finalize(pts, apexFt, t, prev, pos, ball);
+  if (!landFt) { landFt = pos.slice(); prevAtLanding = prev.slice(); flightTime = t; }
+
+  const base = finalize(pts, apexFt, flightTime, prevAtLanding, landFt, ball);
+  if (!rollout) return base;
+
+  // ---- BOUNCE + ROLL PHASES (libgolf-style) ----
+  const groundPts = [[landFt[1]/C.YARDS_TO_FEET, 0, landFt[0]/C.YARDS_TO_FEET]];
+  // BOUNCE: resolve each impact, fly the arc between impacts, until the ball is
+  // moving slowly enough normal-to-ground to roll.
+  let guard = 0;
+  // first, resolve the landing impact
+  ({ vel, spin } = resolveBounce(vel, spin, NORMAL, R, surf));
+  acc = addGravity(aeroAccel(vel, ctx.wind, spin, ctx.c0, ctx.re100, R));
+  while (t < C.MAX_SIMULATION_TIME && guard++ < 20000) {
+    prev = pos.slice();
+    for (let i = 0; i < 3; i++) {
+      pos[i] += vel[i]*dt + 0.5*acc[i]*dt*dt;
+      vel[i] += acc[i]*dt;
+    }
+    t += dt;
+    if (pos[2] < 0) pos[2] = 0;
+    groundPts.push([pos[1]/C.YARDS_TO_FEET, pos[2], pos[0]/C.YARDS_TO_FEET]);
+
+    const heightAbove = pos[2];
+    const vDotN = dot(vel, NORMAL);
+    // bounce -> roll transition: near ground AND slow normal speed
+    if (heightAbove <= 0.1 && Math.abs(vDotN) < 1.0) break;
+    // another impact?
+    if (pos[2] <= 0 && vDotN < 0) {
+      ({ vel, spin } = resolveBounce(vel, spin, NORMAL, R, surf));
+      pos[2] = 0;
+    }
+    acc = addGravity(aeroAccel(vel, ctx.wind, spin, ctx.c0, ctx.re100, R));
+  }
+  // ROLL: Coulomb friction until rest
+  vel[2] = 0; pos[2] = 0;
+  guard = 0;
+  while (t < C.MAX_SIMULATION_TIME && guard++ < 200000) {
+    const r = rollStep(pos, vel, spin, NORMAL, dt, surf);
+    pos = r.pos; vel = r.vel; spin = r.spin; t += dt;
+    groundPts.push([pos[1]/C.YARDS_TO_FEET, 0, pos[0]/C.YARDS_TO_FEET]);
+    if (r.atRest) break;
+  }
+
+  base.totalYd = pos[1] / C.YARDS_TO_FEET;
+  base.totalLateralYd = pos[0] / C.YARDS_TO_FEET;
+  base.restPoint = [pos[1]/C.YARDS_TO_FEET, 0, pos[0]/C.YARDS_TO_FEET];
+  base.groundPoints = groundPts;
+  return base;
 }
 function addGravity(a){ return [a[0], a[1], a[2] - C.GRAVITY_FT_PER_S2]; }
 

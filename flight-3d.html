@@ -145,7 +145,7 @@ canvas{display:block;}
 <div id="side">
 <div id="drawerTab"><span class="grip"></span><span>Clubs &amp; options &middot; <b>tap</b></span></div>
 <div class="hd"><h1>SHOT <span>DISPERSION</span></h1><div class="s">3D BALL FLIGHT &middot; FITTED TO YOUR DATA</div></div>
-<div class="tog"><button class="gb on" id="tShots">Show shots</button><button class="gb on" id="tMean">Show mean</button></div>
+<div class="tog"><button class="gb on" id="tShots">Show shots</button><button class="gb on" id="tMean">Show mean</button><button class="gb" id="tRoll">Roll-out</button></div>
 <div class="glob"><button class="gb" id="gAll">All</button><button class="gb" id="gNone">None</button><button class="gb" id="gIron">Irons</button><button class="gb" id="gWedge">Wedges</button></div>
 <div class="list" id="list"></div>
 <div class="foot">Solid bright line = mean shot. Faint lines = individual shots. Click a club name to isolate it; click its dot to toggle. <b>Launch</b> animates the ball flight; <b>Landing zones</b> shows 1&sigma; dispersion discs + carry rings. Vertical axis exaggerated 3&times;.</div>
@@ -162,44 +162,13 @@ try{
   throw _e;
 }
 
-/* ---- Anchor every path to the MEASURED launch-monitor carry ----
-   The physics model only sets the *shape* of each flight (height profile,
-   lateral curve, relative spread). The final carry distance must always come
-   from the measured data: d.carry for the club mean, and stats[i].carry for
-   each individual shot. We rescale the downrange (x) coordinate of every path
-   so it lands exactly on its measured distance, leaving height (y) and the
-   lateral shape (z) untouched. This keeps the visuals physically plausible
-   while guaranteeing the rendered carries equal the launch monitor's. */
-(function normalizeCarries(){
-  DATA.forEach(d=>{
-    // ---- mean path -> measured club carry ----
-    if(Array.isArray(d.mean)&&d.mean.length>=3){
-      const endX=d.mean[d.mean.length-3];
-      if(endX>0){
-        const s=d.carry/endX;
-        for(let i=0;i<d.mean.length;i+=3) d.mean[i]*=s;
-      }
-    }
-    // ---- each shot -> its own measured carry (keeps true dispersion) ----
-    if(Array.isArray(d.shots)){
-      d.shots.forEach((f,i)=>{
-        if(!Array.isArray(f)||f.length<3) return;
-        const endX=f[f.length-3];
-        const target=(d.stats&&d.stats[i]&&typeof d.stats[i].carry==='number')?d.stats[i].carry:d.carry;
-        if(endX>0&&target>0){
-          const s=target/endX;
-          for(let k=0;k<f.length;k+=3) f[k]*=s;
-        }
-      });
-    }
-    // ---- dispersion ellipse center -> mean of measured shot carries ----
-    if(d.ell&&Array.isArray(d.shots)&&d.shots.length){
-      let sum=0,n=0;
-      d.shots.forEach(f=>{ if(Array.isArray(f)&&f.length>=3){ sum+=f[f.length-3]; n++; } });
-      if(n) d.ell.cx=sum/n;
-    }
-  });
-})();
+/* ---- Engine-driven coordinates (no rescaling) ----
+   Carry, lateral landing, apex, descent, total (after bounce+roll) and the
+   dispersion ellipse are all computed by flight-engine.js and baked into
+   shots.json by generate_trajectories.py. The engine's landing IS the carry,
+   so paths and ellipse are used as-is — no rescale-to-measured step. Each club
+   also carries `roll`/`meanRoll` ground paths (bounce + roll) for the rollout
+   toggle. */
 
 import * as THREE from 'three';
 
@@ -283,6 +252,24 @@ DATA.forEach(d=>{
   const mk=new THREE.Mesh(new THREE.SphereGeometry(3.2,18,18),new THREE.MeshBasicMaterial({color:col}));
   mk.position.copy(P(d.mean[mn-3],0,d.mean[mn-1]));
 
+  // roll-out path (bounce + roll after landing). Dimmer + thinner tube + a
+  // hollow marker at final rest. From engine `meanRoll`. May be empty/short.
+  let rollTube=null, restMk=null;
+  if(Array.isArray(d.meanRoll)&&d.meanRoll.length>=6){
+    const rollPts=toPts(d.meanRoll);
+    // de-dup consecutive identical points so CatmullRom doesn't choke
+    const clean=rollPts.filter((p,i)=>i===0||p.distanceTo(rollPts[i-1])>1e-4);
+    if(clean.length>=2){
+      const rollCurve=new THREE.CatmullRomCurve3(clean);
+      rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,0.5,6,false),
+        new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5}));
+      const rn=d.meanRoll.length;
+      restMk=new THREE.Mesh(new THREE.SphereGeometry(2.6,14,14),
+        new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.45,wireframe:true}));
+      restMk.position.copy(P(d.meanRoll[rn-3],0,d.meanRoll[rn-1]));
+    }
+  }
+
   // overlays
   const ovl=new THREE.Group();
   const disc=ellDisc(d.ell,col);
@@ -299,9 +286,10 @@ DATA.forEach(d=>{
   trail.visible=false;
 
   grp.add(shotGrp);grp.add(tube);grp.add(mk);grp.add(ovl);grp.add(ball);grp.add(trail);
+  if(rollTube){grp.add(rollTube);} if(restMk){grp.add(restMk);}
   scene.add(grp);
   clubObjs[d.club]={grp,shotGrp,tube,mk,ovl,ball,trail,curve,meanPts,flightPts,col:d.color,data:d,visible:true,
-                    anim:null};
+                    rollTube,restMk,anim:null};
 });
 
 // ---- camera (orbit + presets + auto) ----
@@ -369,7 +357,7 @@ const list=document.getElementById('list');
     });
   }
 })();
-let showShots=true,showMean=true,soloClub=null,showOverlay=false;
+let showShots=true,showMean=true,soloClub=null,showOverlay=false,showRoll=false;
 DATA.forEach(d=>{
   const row=document.createElement('div');row.className='row';row.dataset.club=d.club;
   row.innerHTML='<div class="dot" style="background:'+d.color+';color:'+d.color+'"></div><div class="nm">'+d.club+'</div><div class="meta">'+d.carry+'y</div>';
@@ -385,6 +373,8 @@ function apply(){
     o.shotGrp.visible=vis&&showShots;
     o.tube.visible=vis&&showMean;
     o.mk.visible=vis&&showMean;
+    if(o.rollTube)o.rollTube.visible=vis&&showMean&&showRoll;
+    if(o.restMk)o.restMk.visible=vis&&showMean&&showRoll;
     o.ovl.visible=vis&&showOverlay;
     const row=list.querySelector('[data-club="'+CSS.escape(d.club)+'"]');
     row.classList.toggle('off',!o.visible);row.classList.toggle('sel',soloClub===d.club);
@@ -392,6 +382,7 @@ function apply(){
 }
 document.getElementById('tShots').onclick=function(){showShots=!showShots;this.classList.toggle('on',showShots);apply();};
 document.getElementById('tMean').onclick=function(){showMean=!showMean;this.classList.toggle('on',showMean);apply();};
+document.getElementById('tRoll').onclick=function(){showRoll=!showRoll;this.classList.toggle('on',showRoll);apply();};
 document.getElementById('gAll').onclick=()=>{soloClub=null;DATA.forEach(d=>clubObjs[d.club].visible=true);apply();};
 document.getElementById('gNone').onclick=()=>{soloClub=null;DATA.forEach(d=>clubObjs[d.club].visible=false);apply();};
 document.getElementById('gIron').onclick=()=>{soloClub=null;DATA.forEach(d=>clubObjs[d.club].visible=/Iron/.test(d.club));apply();};
