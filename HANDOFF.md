@@ -125,6 +125,12 @@ inserts the flag as a minimal diff.)
    panel that calls `attributeCarryChange()` (first session vs latest) and shows ball-speed /
    launch / spin contribution bars that sum to the total, plus the measured-vs-modeled note.
    Imports flight-engine.js. Loads raw-shots.json (+ browser uploads). Health dots per club chip.
+   Insight cards + the All-Metrics table color by TONE (good=cyan / bad=red / neutral=dim), driven
+   by each metric's `better` field (`up`/`down`/`zero`/`neutral`) — NOT by raw direction. So a drop
+   in Lateral Spread or Carry Consistency (SD) shows green (improvement) while the arrow still points
+   down (real direction). `better:'zero'` (Lateral Bias) = good when |latest| shrinks toward 0;
+   `neutral` metrics (apex/launch/spin) never color good/bad. The "Why carry changed" attribution
+   panel keeps directional cyan/red (it decomposes the carry delta itself, not a good/bad judgment).
 4. **top-down.html** — 2D Dispersion. Inline-SVG top-down (#top) + side profile (#side).
    Pinch-zoom/pan, All on/off, individual-shots toggle. Loads shots.json. normalizeCarries REMOVED.
 5. **flight-3d.html** — 3D Flight. Three.js (type=module, importmap → three@0.160.0 cdnjs).
@@ -201,6 +207,13 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **Trends coloring fix (this session):** insight cards + All-Metrics table were coloring every
+  change by raw direction (down=red), so improvements in dispersion/consistency (Lateral Spread,
+  Carry Consistency — both `better:'down'`) showed red even though down is GOOD. Now color follows
+  a `tone` (good=cyan/bad=red/neutral=dim) computed from each metric's `better` field; the arrow
+  still shows real direction. Added `tone-good/bad/flat` CSS classes; handled `better:'zero'`
+  (Lateral Bias good when |value| shrinks). Attribution panel unchanged (its cyan/red is a
+  directional decomposition of the carry delta, correct as-is). trends.html only.
 - **3D field size, tube thickness, roll-path style (this session):** (1) shrank the oversized
   ground field — was a 600x600 yd square GridHelper centered at x=150 (lateral spanned +/-300 yd
   for shots that miss by ~+/-20); now an explicit line grid `FIELD_X0..FIELD_X1` = -20..320 yd

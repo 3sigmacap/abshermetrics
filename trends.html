@@ -28,9 +28,11 @@ h1.big span{color:var(--accent);}
 .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0;}
 .ins{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;border-left:3px solid var(--line2);}
 .ins.big-up{border-left-color:var(--up);} .ins.big-down{border-left-color:var(--down);}
+.ins.tone-good{border-left-color:var(--up);} .ins.tone-bad{border-left-color:var(--down);} .ins.tone-flat{border-left-color:var(--line2);}
 .ins .mname{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
 .ins .delta{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1.05;margin-top:4px;}
 .ins .delta.up{color:var(--up);} .ins .delta.down{color:var(--down);} .ins .delta.flat{color:var(--dim);}
+.ins .delta.tone-good{color:var(--up);} .ins .delta.tone-bad{color:var(--down);} .ins .delta.tone-flat{color:var(--dim);}
 .ins .desc{font-size:13.5px;color:var(--dim);margin-top:4px;line-height:1.35;}
 
 .panel{background:#0b1410cc;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:18px;}
@@ -47,6 +49,7 @@ table.t th:first-child{text-align:left;}
 table.t td{padding:9px 10px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
 table.t td:first-child{text-align:left;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;}
 table.t td.d-up{color:var(--up);} table.t td.d-down{color:var(--down);} table.t td.d-flat{color:var(--dim2);}
+table.t td.tone-good{color:var(--up);} table.t td.tone-bad{color:var(--down);} table.t td.tone-flat{color:var(--dim2);}
 .empty{padding:30px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .note{font-size:13px;color:var(--dim);margin-top:14px;line-height:1.4;}
 .attr{display:flex;flex-direction:column;gap:11px;}
@@ -316,19 +319,22 @@ function render(){
     if(se.length<2)return '';
     const c=classify(se,m);
     const goodDir = m.better==='up'?'up':m.better==='down'?'down':null;
+    // tone = is this change GOOD, BAD, or neutral? (color follows this)
+    // 'up'/'down' metrics -> good when moving the better way; metrics with no
+    // better-direction (apex/launch/spin, and 'zero'/'neutral') -> always neutral.
     let tone='flat';
-    if(c.sig){ if(goodDir){tone=(c.dir===goodDir)?'good':'bad';} else tone=c.dir; }
-    const cls = !c.sig?'':(c.dir==='up'?'big-up':'big-down');
-    const arrow = c.dir==='up'?'▲':c.dir==='down'?'▼':'■';
-    const dcls = c.dir==='up'?'up':c.dir==='down'?'down':'flat';
+    if(c.sig && goodDir){ tone=(c.dir===goodDir)?'good':'bad'; }
+    else if(c.sig && m.better==='zero'){ tone=(Math.abs(c.last)<Math.abs(c.first))?'good':'bad'; }
+    const toneCls = 'tone-'+tone;                       // border + number color
+    const arrow = c.dir==='up'?'▲':c.dir==='down'?'▼':'■';   // arrow = real direction
     const pct = c.first?(c.delta/Math.abs(c.first)*100):0;
     const verdict = !c.sig?'within normal variation':
       (m.better==='down'? (c.dir==='down'?'tightened — improving':'loosened — watch this')
        :m.better==='up'? (c.dir==='up'?'gaining':'dropping off')
        :'shifted');
-    return `<div class="ins ${cls}">
+    return `<div class="ins ${c.sig?toneCls:''}">
       <div class="mname">${m.label}</div>
-      <div class="delta ${dcls}">${arrow} ${fmt(c.delta,m.dp,true)} <span style="font-size:15px;color:var(--dim)">${m.unit}</span></div>
+      <div class="delta ${toneCls}">${arrow} ${fmt(c.delta,m.dp,true)} <span style="font-size:15px;color:var(--dim)">${m.unit}</span></div>
       <div class="desc">${fmt(c.first,m.dp)} → ${fmt(c.last,m.dp)} · ${verdict}</div>
     </div>`;
   }).join('');
@@ -344,7 +350,14 @@ function render(){
     const s2=series(current,m);
     if(s2.length<2)return '';
     const c=classify(s2,m);
-    const dcls=!c.sig?'d-flat':(c.dir==='up'?'d-up':'d-down');
+    // tone: good/bad/neutral. up/down metrics -> good when moving the better way;
+    // 'zero' metric (lateral bias) -> good when |last| shrinks toward 0; others neutral.
+    let tone='flat';
+    if(c.sig){
+      if(m.better==='up'||m.better==='down'){ tone=(c.dir===m.better)?'good':'bad'; }
+      else if(m.better==='zero'){ tone=(Math.abs(c.last)<Math.abs(c.first))?'good':'bad'; }
+    }
+    const dcls='tone-'+tone;
     return `<tr><td>${m.label} <span style="color:var(--dim2)">${m.unit}</span></td>
       <td>${fmt(c.first,m.dp)}</td><td>${fmt(c.last,m.dp)}</td>
       <td class="${dcls}">${fmt(c.delta,m.dp,true)}</td>
