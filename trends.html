@@ -1,0 +1,256 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Trends</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;--up:#7fd4ff;--down:#ff9d9d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;white-space:nowrap;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:30px 26px 80px;}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,84px);line-height:.92;letter-spacing:1px;margin:8px 0;}
+h1.big span{color:var(--accent);}
+.lead{font-size:18px;color:var(--dim);max-width:740px;font-weight:300;line-height:1.5;}
+.foot{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+.picker{display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 6px;}
+.pchip{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 13px;border-radius:18px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.13s;white-space:nowrap;}
+.pchip:hover{color:var(--ink);}
+.pchip.on{color:#0a120d;font-weight:600;}
+
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0;}
+.ins{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;border-left:3px solid var(--line2);}
+.ins.big-up{border-left-color:var(--up);} .ins.big-down{border-left-color:var(--down);}
+.ins .mname{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
+.ins .delta{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1.05;margin-top:4px;}
+.ins .delta.up{color:var(--up);} .ins .delta.down{color:var(--down);} .ins .delta.flat{color:var(--dim);}
+.ins .desc{font-size:13.5px;color:var(--dim);margin-top:4px;line-height:1.35;}
+
+.panel{background:#0b1410cc;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:18px;}
+.panel h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;font-weight:400;margin-bottom:2px;}
+.panel .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;}
+.metricsel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.msel{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.12s;}
+.msel.on{background:var(--accent);border-color:var(--accent);color:#0a120d;font-weight:500;}
+svg{display:block;width:100%;height:auto;}
+
+table.t{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px;}
+table.t th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line2);font-weight:500;}
+table.t th:first-child{text-align:left;}
+table.t td{padding:9px 10px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
+table.t td:first-child{text-align:left;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+table.t td.d-up{color:var(--up);} table.t td.d-down{color:var(--down);} table.t td.d-flat{color:var(--dim2);}
+.empty{padding:30px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.note{font-size:13px;color:var(--dim);margin-top:14px;line-height:1.4;}
+
+@media(max-width:760px){
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
+  .page{padding:20px 14px 56px;}
+}
+</style></head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="club-detail.html" class="tab ">Club Detail</a>
+<a href="trends.html" class="tab on">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+</div>
+
+<div class="page">
+<div class="kicker">Over Time</div>
+<h1 class="big">Performance <span>Trends</span></h1>
+<p class="lead">How each club's numbers have moved session to session. Pick a club to see its biggest changes, then drill into any single metric. Meaningful shifts are flagged — small session-to-session noise is not.</p>
+
+<div class="picker" id="picker"></div>
+<div id="content"></div>
+
+<div class="foot"><span>ABSHERMETRICS · session-over-session trends</span><span id="sessFoot"></span></div>
+</div>
+
+<script type="module">
+let SESSIONS=[], SHOTS=[], COLORS={};
+const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
+
+async function loadUploaded(){try{const r=await window.storage.get('uploaded_shots');return r&&r.value?JSON.parse(r.value):[];}catch(e){return [];}}
+
+try{
+  const base=await (await fetch('raw-shots.json')).json();
+  COLORS={...(base.colors||{})};
+  const up=await loadUploaded();
+  SHOTS=[...base.shots,...up];
+  const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
+  up.forEach(s=>{if(!sm[s.session])sm[s.session]={id:s.session,label:s.session_label||s.session,date:s.date||'',_uploaded:true};});
+  SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
+  let ci=0; SHOTS.forEach(s=>{if(!COLORS[s.club]){COLORS[s.club]=FALLBACK[ci%FALLBACK.length];ci++;}});
+}catch(e){
+  document.getElementById('content').innerHTML='<div class="panel empty">Could not load raw-shots.json ('+e.message+'). Serve over http, not file://.</div>';
+}
+document.getElementById('sessFoot').textContent=SESSIONS.length+' sessions';
+
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1));};
+const fmt=(n,dp=1,signed=false)=>{if(n===undefined||n===null||Number.isNaN(n))return '—';let s=Number(n).toFixed(dp);if(dp===0)s=Number(s).toLocaleString('en-US');return signed&&n>0?'+'+s:s;};
+
+const METRICS=[
+  {key:'carry',label:'Carry',unit:'yd',dp:1,better:'up'},
+  {key:'total',label:'Total',unit:'yd',dp:1,better:'up'},
+  {key:'bs',label:'Ball Speed',unit:'mph',dp:1,better:'up'},
+  {key:'apex',label:'Apex',unit:'ft',dp:1,better:'neutral'},
+  {key:'la',label:'Launch Angle',unit:'°',dp:1,better:'neutral'},
+  {key:'spin',label:'Spin',unit:'rpm',dp:0,better:'neutral'},
+  {key:'carrySd',label:'Carry Consistency',unit:'yd SD',dp:1,better:'down',derived:'sd',base:'carry'},
+  {key:'devSd',label:'Lateral Spread',unit:'yd SD',dp:1,better:'down',derived:'sd',base:'dev'},
+  {key:'dev',label:'Lateral Bias',unit:'yd',dp:1,better:'zero'},
+];
+
+let current=null, activeMetric='carry';
+
+// build per-session aggregate for a club+metric -> [{session,label,value,n}]
+function series(club,m){
+  const out=[];
+  SESSIONS.forEach(s=>{
+    const vals=SHOTS.filter(x=>x.club===club&&x.session===s.id&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
+    if(!vals.length)return;
+    let v;
+    if(m.derived==='sd')v=sd(vals); else v=mean(vals);
+    out.push({session:s.id,label:s.label,value:v,n:vals.length});
+  });
+  return out;
+}
+
+// ---- picker ----
+const picker=document.getElementById('picker');
+const clubsWithData=[...new Set(SHOTS.map(s=>s.club))];
+// order by typical bag order if present in COLORS insertion; else as-is
+clubsWithData.forEach((club,i)=>{
+  const b=document.createElement('button');
+  b.className='pchip'+(i===0?' on':'');
+  b.textContent=club;b.dataset.club=club;
+  b.onclick=()=>select(club);
+  picker.appendChild(b);
+});
+function paintPicker(){[...picker.children].forEach(ch=>{const on=ch.dataset.club===current;ch.classList.toggle('on',on);const col=COLORS[ch.dataset.club]||'#d4ff4f';if(on){ch.style.background=col;ch.style.borderColor=col;ch.style.color='#0a120d';}else{ch.style.background='var(--bg2)';ch.style.borderColor='var(--line2)';ch.style.color='var(--dim)';}});}
+function select(c){current=c;paintPicker();render();}
+
+// significance: change is "meaningful" if |Δ| exceeds ~0.6× the pooled shot-to-shot SD
+function classify(serie,m){
+  if(serie.length<2)return {dir:'flat',sig:false};
+  const first=serie[0].value, last=serie[serie.length-1].value;
+  const d=last-first;
+  // pooled spread of the metric across all this club's shots, for a noise yardstick
+  const allv=SHOTS.filter(x=>x.club===current&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
+  const noise=(m.derived==='sd')? sd(allv)*0.5 : sd(allv)/Math.sqrt(Math.max(1,serie[0].n))*1.6;
+  const sig=Math.abs(d)>Math.max(noise, Math.abs(first)*0.02);
+  let dir = Math.abs(d)<1e-9?'flat':(d>0?'up':'down');
+  return {dir,sig,delta:d,first,last};
+}
+
+// line chart of a metric over sessions
+function lineChart(serie,m,color,W=720,H=240){
+  if(serie.length<1)return '<div class="empty">No data for this metric.</div>';
+  const pad={l:46,r:18,t:20,b:34};
+  const iw=W-pad.l-pad.r, ih=H-pad.t-pad.b;
+  const vals=serie.map(p=>p.value);
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  if(lo===hi){lo-=1;hi+=1;}
+  const padv=(hi-lo)*0.18; lo-=padv; hi+=padv;
+  const X=i=>pad.l+(serie.length===1?iw/2:(i/(serie.length-1))*iw);
+  const Y=v=>pad.t+ih-((v-lo)/(hi-lo))*ih;
+  // gridlines (4)
+  let grid='';
+  for(let k=0;k<=4;k++){const gy=pad.t+ (k/4)*ih; const gv=hi-(k/4)*(hi-lo); grid+=`<line x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}" stroke="#142219"/><text x="${pad.l-8}" y="${gy+3}" fill="var(--dim2)" font-size="9" font-family="monospace" text-anchor="end">${gv.toFixed(m.dp)}</text>`;}
+  // line
+  let path=serie.map((p,i)=>(i?'L':'M')+X(i)+' '+Y(p.value)).join(' ');
+  let dots=serie.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.value)}" r="4.5" fill="${color}"/><text x="${X(i)}" y="${Y(p.value)-10}" fill="var(--ink)" font-size="11" font-family="monospace" text-anchor="middle">${fmt(p.value,m.dp)}</text>`).join('');
+  // x labels
+  let xl=serie.map((p,i)=>`<text x="${X(i)}" y="${H-12}" fill="var(--dim)" font-size="9.5" font-family="monospace" text-anchor="middle">${p.label}</text><text x="${X(i)}" y="${H-2}" fill="var(--dim2)" font-size="8" font-family="monospace" text-anchor="middle">n=${p.n}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}">${grid}<path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>${dots}${xl}</svg>`;
+}
+
+function render(){
+  if(!current){document.getElementById('content').innerHTML='<div class="panel empty">No club data.</div>';return;}
+  const color=COLORS[current]||'#d4ff4f';
+
+  // need >=2 sessions with data for trends
+  const sessForClub=SESSIONS.filter(s=>SHOTS.some(x=>x.club===current&&x.session===s.id));
+  if(sessForClub.length<2){
+    document.getElementById('content').innerHTML=`<div class="panel"><h2 style="color:${color}">${current}</h2><div class="empty">Only ${sessForClub.length} session has data for this club — need at least 2 to show a trend. Log another range session and upload it on the Raw Data page.</div></div>`;
+    return;
+  }
+
+  // insight cards: top movers across key metrics
+  const cardMetrics=METRICS.filter(m=>['carry','bs','carrySd','devSd','apex','dev'].includes(m.key));
+  const cards=cardMetrics.map(m=>{
+    const se=series(current,m);
+    if(se.length<2)return '';
+    const c=classify(se,m);
+    const goodDir = m.better==='up'?'up':m.better==='down'?'down':null;
+    let tone='flat';
+    if(c.sig){ if(goodDir){tone=(c.dir===goodDir)?'good':'bad';} else tone=c.dir; }
+    const cls = !c.sig?'':(c.dir==='up'?'big-up':'big-down');
+    const arrow = c.dir==='up'?'▲':c.dir==='down'?'▼':'■';
+    const dcls = c.dir==='up'?'up':c.dir==='down'?'down':'flat';
+    const pct = c.first?(c.delta/Math.abs(c.first)*100):0;
+    const verdict = !c.sig?'within normal variation':
+      (m.better==='down'? (c.dir==='down'?'tightened — improving':'loosened — watch this')
+       :m.better==='up'? (c.dir==='up'?'gaining':'dropping off')
+       :'shifted');
+    return `<div class="ins ${cls}">
+      <div class="mname">${m.label}</div>
+      <div class="delta ${dcls}">${arrow} ${fmt(c.delta,m.dp,true)} <span style="font-size:15px;color:var(--dim)">${m.unit}</span></div>
+      <div class="desc">${fmt(c.first,m.dp)} → ${fmt(c.last,m.dp)} · ${verdict}</div>
+    </div>`;
+  }).join('');
+
+  // metric selector + chart
+  const msel=METRICS.map(m=>`<button class="msel${m.key===activeMetric?' on':''}" data-m="${m.key}">${m.label}</button>`).join('');
+  const am=METRICS.find(m=>m.key===activeMetric);
+  const se=series(current,am);
+  const chart=lineChart(se,am,color);
+
+  // full table: every metric, first vs last + delta
+  const trows=METRICS.map(m=>{
+    const s2=series(current,m);
+    if(s2.length<2)return '';
+    const c=classify(s2,m);
+    const dcls=!c.sig?'d-flat':(c.dir==='up'?'d-up':'d-down');
+    return `<tr><td>${m.label} <span style="color:var(--dim2)">${m.unit}</span></td>
+      <td>${fmt(c.first,m.dp)}</td><td>${fmt(c.last,m.dp)}</td>
+      <td class="${dcls}">${fmt(c.delta,m.dp,true)}</td>
+      <td class="${dcls}">${c.sig?'●':'○'}</td></tr>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML=`
+    <div class="insights">${cards}</div>
+    <div class="panel">
+      <h2 style="color:${color}">${current} — Metric Over Time</h2>
+      <div class="hint">first to latest session · dots show session average · n = shots that session</div>
+      <div class="metricsel" id="msel">${msel}</div>
+      ${chart}
+    </div>
+    <div class="panel">
+      <h2>All Metrics: First vs Latest</h2>
+      <div class="hint">● = meaningful change · ○ = within normal session noise</div>
+      <table class="t"><thead><tr><th>Metric</th><th>First</th><th>Latest</th><th>Δ</th><th>Sig</th></tr></thead><tbody>${trows}</tbody></table>
+      <div class="note">"Meaningful" compares the change against this club's shot-to-shot scatter, so a 2-yard carry bump on a club that swings ±8 yards won't get flagged, but a real tightening of your dispersion will.</div>
+    </div>
+  `;
+
+  document.querySelectorAll('#msel .msel').forEach(b=>{b.onclick=()=>{activeMetric=b.dataset.m;render();};});
+}
+
+if(clubsWithData.length){current=clubsWithData[0];paintPicker();render();}
+else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
+</script>
+</body></html>

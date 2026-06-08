@@ -1,0 +1,348 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Raw R50 Data</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;white-space:nowrap;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px 26px 80px;}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,84px);line-height:.92;letter-spacing:1px;margin:8px 0;}
+h1.big span{color:var(--accent);}
+.lead{font-size:18px;color:var(--dim);max-width:720px;font-weight:300;line-height:1.5;}
+.foot{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:26px 0 14px;}
+.controls .grp{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.fld{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);background:var(--bg2);border:1px solid var(--line2);border-radius:7px;padding:9px 12px;outline:none;}
+.fld:focus{border-color:var(--accent);}
+select.fld{cursor:pointer;}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
+.clubchips{display:flex;flex-wrap:wrap;gap:6px;}
+.cchip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.13s;white-space:nowrap;}
+.cchip.on{color:#0a120d;font-weight:500;}
+.countpill{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-left:auto;white-space:nowrap;}
+.countpill b{color:var(--accent);}
+
+/* table */
+.tablewrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1410cc;}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:74vh;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px;}
+thead th{position:sticky;top:0;z-index:2;background:#0c1712;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:11px 12px;border-bottom:1px solid var(--line2);white-space:nowrap;cursor:pointer;user-select:none;font-weight:500;transition:.12s;}
+thead th:hover{color:var(--accent);}
+thead th.club-col,thead th.idx-col{text-align:left;}
+thead th .arrow{display:inline-block;width:9px;color:var(--accent);opacity:0;font-size:9px;}
+thead th.sorted .arrow{opacity:1;}
+tbody td{padding:9px 12px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;}
+tbody td.club-col{text-align:left;font-family:'Barlow Condensed',sans-serif;font-weight:500;}
+tbody td.idx-col{text-align:left;color:var(--dim2);font-family:'IBM Plex Mono',monospace;font-size:11px;}
+tbody tr:hover td{background:#10201733;}
+.sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:baseline;}
+.neg{color:#ff9d9d;}
+.empty{padding:40px 20px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.unit{color:var(--dim2);font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;}
+
+@media(max-width:760px){
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
+  .page{padding:22px 14px 56px;}
+  .lead{font-size:16px;}
+  table{font-size:12px;}
+  thead th,tbody td{padding:8px 9px;}
+  .countpill{flex:1 0 100%;margin-left:0;margin-top:4px;}
+}
+</style></head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="raw-data.html" class="tab on">Raw Data</a>
+<a href="club-detail.html" class="tab ">Club Detail</a>
+<a href="trends.html" class="tab ">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+</div>
+
+<div class="page">
+<div class="kicker">Garmin Approach R50</div>
+<h1 class="big">Raw <span>Shot Data</span></h1>
+<p class="lead">Every individual shot exactly as measured by the launch monitor — no smoothing, no modeling. Tap any column header to sort; filter by club or search. This is the source data behind every chart on the site.</p>
+
+<div class="controls">
+  <div class="grp">
+    <span class="lbl">Search</span>
+    <input type="text" id="search" class="fld" placeholder="filter rows…" style="width:150px">
+  </div>
+  <div class="grp clubchips" id="clubChips"></div>
+  <span class="countpill"><b id="shownCount">0</b> of <span id="totalCount">0</span> shots</span>
+</div>
+<div class="controls" style="margin-top:0">
+  <span class="lbl">Sessions</span>
+  <div class="grp clubchips" id="sessChips"></div>
+  <button class="cchip" id="uploadBtn" style="border-style:dashed;color:var(--accent2);border-color:var(--accent2)">+ Upload session CSV</button>
+  <input type="file" id="fileInput" accept=".csv" multiple style="display:none">
+</div>
+<div id="uploadMsg" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin:-4px 0 10px;min-height:14px"></div>
+
+<div class="tablewrap">
+  <div class="tscroll">
+    <table id="tbl">
+      <thead><tr id="headRow"></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="foot"><span>ABSHERMETRICS · raw launch-monitor export</span><span>Garmin Approach R50</span></div>
+</div>
+
+<script type="module">
+const COLS=[
+  {key:'_idx',  label:'#',        unit:'',     type:'idx'},
+  {key:'date',  label:'Date',     unit:'',     type:'date'},
+  {key:'club',  label:'Club',     unit:'',     type:'club'},
+  {key:'bs',    label:'Ball Spd', unit:'mph',  dp:1},
+  {key:'carry', label:'Carry',    unit:'yd',   dp:1},
+  {key:'total', label:'Total',    unit:'yd',   dp:1},
+  {key:'la',    label:'Launch',   unit:'°',    dp:1},
+  {key:'ld',    label:'Launch Dir',unit:'°',   dp:1, signed:true},
+  {key:'spin',  label:'Spin',     unit:'rpm',  dp:0},
+  {key:'bspin', label:'Backspin', unit:'rpm',  dp:0},
+  {key:'sspin', label:'Sidespin', unit:'rpm',  dp:0, signed:true},
+  {key:'axis',  label:'Spin Axis',unit:'°',    dp:1, signed:true},
+  {key:'apex',  label:'Apex',     unit:'ft',   dp:1},
+  {key:'dev',   label:'Lateral',  unit:'yd',   dp:1, signed:true},
+];
+
+let ROWS=[];           // flat list of every shot, each tagged with club + color
+let sortKey='_idx', sortDir=1;
+const clubState={};    // club -> shown bool
+const sessState={};    // session id -> shown bool
+let SESSIONS=[];       // [{id,label,date,n}]
+const COLORS={};
+const FALLBACK_COLORS=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff','#8aa596','#ff7f50','#5ed2ff','#e8d44f'];
+
+// Pull any sessions the user uploaded in-browser (persisted via storage)
+async function loadUploaded(){
+  try{
+    const r=await window.storage.get('uploaded_shots');
+    return r&&r.value?JSON.parse(r.value):[];
+  }catch(e){return [];}
+}
+
+async function loadAll(){
+  let base={sessions:[],colors:{},shots:[]};
+  try{
+    base=await (await fetch('raw-shots.json')).json();
+  }catch(e){
+    document.querySelector('.tablewrap').innerHTML='<div class="empty">Could not load raw-shots.json ('+e.message+'). Serve over http (e.g. <b>python3 -m http.server</b>), not file://.</div>';
+    return;
+  }
+  Object.assign(COLORS, base.colors||{});
+  const uploaded=await loadUploaded();
+  const allShots=[...base.shots, ...uploaded];
+  // assign colors to any clubs not in the palette map
+  let ci=0;
+  allShots.forEach(s=>{ if(!COLORS[s.club]){COLORS[s.club]=FALLBACK_COLORS[ci%FALLBACK_COLORS.length];ci++;} });
+
+  // build sessions list (base + any uploaded), preserve date order
+  const sessMap={};
+  (base.sessions||[]).forEach(s=>sessMap[s.id]=({...s}));
+  uploaded.forEach(s=>{
+    if(!sessMap[s.session])sessMap[s.session]={id:s.session,label:s.session_label||s.session,date:s.date||'',n:0,_uploaded:true};
+  });
+  SESSIONS=Object.values(sessMap).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
+  SESSIONS.forEach(s=>sessState[s.id]=true);
+
+  // build rows
+  allShots.forEach(s=>{
+    if(!(s.club in clubState))clubState[s.club]=true;
+    ROWS.push({...s, _color:COLORS[s.club], _idx:ROWS.length+1});
+  });
+}
+await loadAll();
+
+document.getElementById('totalCount').textContent=ROWS.length;
+
+// ---- build header ----
+const headRow=document.getElementById('headRow');
+COLS.forEach(c=>{
+  const th=document.createElement('th');
+  th.dataset.key=c.key;
+  if(c.type==='club')th.className='club-col';
+  if(c.type==='idx')th.className='idx-col';
+  if(c.type==='date')th.className='idx-col';
+  th.innerHTML=c.label+(c.unit?' <span class="unit">'+c.unit+'</span>':'')+' <span class="arrow">▾</span>';
+  th.onclick=()=>setSort(c.key);
+  headRow.appendChild(th);
+});
+
+// ---- club filter chips ----
+const chipWrap=document.getElementById('clubChips');
+Object.keys(clubState).forEach(club=>{
+  const b=document.createElement('button');
+  b.className='cchip on';b.dataset.club=club;
+  b.textContent=club;
+  const col=COLORS[club];
+  function paint(){if(clubState[club]){b.style.background=col;b.style.borderColor=col;b.style.color='#0a120d';b.classList.add('on');}else{b.style.background='var(--bg2)';b.style.borderColor='var(--line2)';b.style.color='var(--dim)';b.classList.remove('on');}}
+  b.onclick=()=>{clubState[club]=!clubState[club];paint();render();};
+  paint();
+  chipWrap.appendChild(b);
+});
+
+function setSort(key){
+  if(sortKey===key)sortDir*=-1; else {sortKey=key;sortDir=1;}
+  render();
+}
+
+// ---- session filter chips ----
+const sessWrap=document.getElementById('sessChips');
+function buildSessionChips(){
+  sessWrap.innerHTML='';
+  SESSIONS.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='cchip on';b.dataset.sess=s.id;
+    b.textContent=s.label+(s._uploaded?' •':'')+' ('+ROWS.filter(r=>r.session===s.id).length+')';
+    function paint(){if(sessState[s.id]!==false){b.style.background='var(--accent2)';b.style.borderColor='var(--accent2)';b.style.color='#0a120d';}else{b.style.background='var(--bg2)';b.style.borderColor='var(--line2)';b.style.color='var(--dim)';}}
+    b.onclick=()=>{sessState[s.id]=(sessState[s.id]===false);paint();render();};
+    paint();
+    sessWrap.appendChild(b);
+  });
+}
+buildSessionChips();
+
+// ---- CSV upload (client-side, persisted in browser storage) ----
+const FIELD_MAP={'Ball Speed':'bs','Launch Angle':'la','Launch Direction':'ld','Backspin':'bspin','Sidespin':'sspin','Spin Rate':'spin','Spin Axis':'axis','Apex Height':'apex','Carry Distance':'carry','Total Distance':'total','Carry Deviation Distance':'dev','Club Speed':'cs','Smash Factor':'smash'};
+function parseCSV(text){
+  // split lines, handle the header + units row like the R50 export
+  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(l=>l.trim().length);
+  if(lines.length<2)return [];
+  const head=lines[0].split(',').map(h=>h.trim());
+  // detect & skip a units row (second row where Date cell is empty)
+  let start=1;
+  const secondCells=lines[1].split(',');
+  if(!secondCells[0].trim())start=2;
+  const out=[];
+  for(let i=start;i<lines.length;i++){
+    const cells=lines[i].split(',');
+    const row={}; head.forEach((h,j)=>row[h]=(cells[j]||'').trim());
+    if(!row['Date'])continue;
+    const o={club:(row['Club Type']||'').trim()};
+    for(const [csvName,key] of Object.entries(FIELD_MAP)){
+      if(row[csvName]!==undefined&&row[csvName]!==''){const n=parseFloat(row[csvName]);if(!Number.isNaN(n))o[key]=Math.round(n*100)/100;}
+    }
+    // parse date: "06/05/26 15:24:33 PM"
+    const ds=(row['Date']||'').replace(/\s*(AM|PM)\s*$/i,'').trim();
+    const m=ds.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+    if(m){const yr=2000+(+m[3]);o._ts=new Date(yr,+m[1]-1,+m[2],+m[4],+m[5],+m[6]);}
+    else o._ts=new Date();
+    out.push(o);
+  }
+  return out;
+}
+function assignSessions(shots){
+  shots.sort((a,b)=>a._ts-b._ts);
+  const byday={};
+  shots.forEach(s=>{const d=s._ts.toISOString().slice(0,10);(byday[d]=byday[d]||[]).push(s);});
+  const result=[];
+  Object.keys(byday).sort().forEach(d=>{
+    const ts=byday[d];
+    const groups=[[ts[0]]];
+    for(let i=1;i<ts.length;i++){if((ts[i]._ts-ts[i-1]._ts)/60000>90)groups.push([]);groups[groups.length-1].push(ts[i]);}
+    groups.forEach((g,gi)=>{
+      const dd=g[0]._ts;
+      const label=groups.length>1?(dd.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+(dd.getHours()<12?'AM':'PM')):dd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const sid=d+'_'+(gi+1)+'_u';
+      g.forEach(s=>{s.session=sid;s.session_label=label;s.date=d;s.ts=s._ts.toISOString();delete s._ts;});
+      result.push(...g);
+    });
+  });
+  return result;
+}
+const msg=document.getElementById('uploadMsg');
+document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange=async(e)=>{
+  const files=[...e.target.files]; if(!files.length)return;
+  msg.textContent='Parsing '+files.length+' file(s)…';
+  let parsed=[];
+  for(const f of files){ const txt=await f.text(); parsed.push(...parseCSV(txt)); }
+  if(!parsed.length){msg.textContent='No valid shot rows found in those files.';return;}
+  const withSess=assignSessions(parsed);
+  // merge with existing uploaded, de-dupe by ts+club
+  const existing=await loadUploaded();
+  const seen=new Set(existing.map(s=>s.ts+'|'+s.club));
+  const fresh=withSess.filter(s=>!seen.has(s.ts+'|'+s.club));
+  const merged=[...existing,...fresh];
+  try{ await window.storage.set('uploaded_shots', JSON.stringify(merged)); }
+  catch(err){ msg.textContent='Could not save ('+err.message+').'; return; }
+  msg.innerHTML='Added <b style="color:var(--accent)">'+fresh.length+'</b> shots. Reloading…';
+  setTimeout(()=>location.reload(),700);
+};
+
+const fmt=(v,c,row)=>{
+  if(c.type==='date'){return '<span style="color:var(--dim)">'+(row.session_label||row.date||'—')+'</span>';}
+  if(v===undefined||v===null||v==='')return '—';
+  if(c.type==='idx')return v;
+  if(c.type==='club')return '<span class="sw" style="background:'+row._color+'"></span>'+v;
+  let n=Number(v);
+  if(Number.isNaN(n))return v;
+  let s=n.toFixed(c.dp);
+  if(c.dp===0)s=Number(s).toLocaleString('en-US');
+  if(c.signed&&n>0)s='+'+s;
+  return s;
+};
+
+function render(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  let rows=ROWS.filter(r=>clubState[r.club] && (r.session?sessState[r.session]!==false:true));
+  if(q)rows=rows.filter(r=>COLS.some(c=>{
+    const v=r[c.key]; return v!==undefined && String(v).toLowerCase().includes(q);
+  }) || r.club.toLowerCase().includes(q) || (r.session_label||'').toLowerCase().includes(q));
+
+  rows.sort((a,b)=>{
+    if(sortKey==='club'){return a.club.localeCompare(b.club)*sortDir;}
+    if(sortKey==='date'){return ((a.ts||'').localeCompare(b.ts||''))*sortDir;}
+    let x=Number(a[sortKey]),y=Number(b[sortKey]);
+    if(Number.isNaN(x))x=-Infinity;if(Number.isNaN(y))y=-Infinity;
+    return (x-y)*sortDir;
+  });
+
+  const body=document.getElementById('body');
+  if(!rows.length){body.innerHTML='<tr><td colspan="'+COLS.length+'" class="empty">No shots match.</td></tr>';}
+  else{
+    body.innerHTML=rows.map(r=>{
+      return '<tr>'+COLS.map(c=>{
+        let cls='';
+        if(c.type==='club')cls=' class="club-col"';
+        else if(c.type==='idx'||c.type==='date')cls=' class="idx-col"';
+        else {
+          const n=Number(r[c.key]);
+          cls=(c.signed&&n<0)?' class="neg"':'';
+        }
+        return '<td'+cls+'>'+fmt(r[c.key],c,r)+'</td>';
+      }).join('')+'</tr>';
+    }).join('');
+  }
+  document.getElementById('shownCount').textContent=rows.length;
+
+  // header arrows
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.toggle('sorted',th.dataset.key===sortKey);
+    const ar=th.querySelector('.arrow');
+    if(ar)ar.textContent=sortDir>0?'▴':'▾';
+  });
+}
+
+document.getElementById('search').addEventListener('input',render);
+render();
+</script>
+</body></html>

@@ -1,0 +1,344 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Club Detail</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;white-space:nowrap;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:30px 26px 80px;}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+.foot{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+/* club selector */
+.picker{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 8px;}
+.pchip{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 13px;border-radius:18px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.13s;white-space:nowrap;}
+.pchip:hover{color:var(--ink);}
+.pchip.on{color:#0a120d;font-weight:600;}
+
+/* hero title */
+.clubhead{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:14px 0 4px;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,9vw,92px);line-height:.9;letter-spacing:1px;}
+h1.big span{color:var(--accent);}
+.subline{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:1px;padding-bottom:10px;}
+
+/* headline stat strip */
+.hstrip{display:flex;gap:14px;flex-wrap:wrap;margin:22px 0 10px;}
+.hcard{flex:1 1 130px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+.hcard .v{font-family:'Bebas Neue',sans-serif;font-size:40px;line-height:1;color:var(--accent);}
+.hcard .v small{font-size:17px;color:var(--dim);}
+.hcard .l{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;margin-top:6px;}
+.hcard .sub{font-size:13px;color:var(--dim);margin-top:3px;}
+
+/* section layout */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;}
+.panel{background:#0b1410cc;border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+.panel h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;font-weight:400;margin-bottom:4px;}
+.panel .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;}
+.full{grid-column:1/-1;}
+
+/* metric table */
+table.m{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.m th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:7px 8px;border-bottom:1px solid var(--line2);font-weight:500;}
+table.m th:first-child{text-align:left;}
+table.m td{padding:8px 8px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
+table.m td:first-child{text-align:left;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.5px;}
+table.m td.mean{color:var(--accent);font-weight:500;font-size:15px;}
+.neg{color:#ff9d9d;}
+
+/* svg charts */
+svg{display:block;width:100%;height:auto;}
+.cap{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);margin-top:8px;text-align:center;letter-spacing:.5px;}
+
+/* consistency bars */
+.crow{display:flex;align-items:center;gap:10px;margin:9px 0;}
+.crow .nm{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);width:92px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px;}
+.bar{flex:1;height:8px;background:#10201766;border-radius:5px;overflow:hidden;}
+.bar i{display:block;height:100%;border-radius:5px;}
+.crow .vv{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);width:70px;text-align:right;flex-shrink:0;}
+
+/* shot table */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table.s{width:100%;border-collapse:collapse;font-size:13px;min-width:560px;}
+table.s th{position:sticky;top:0;background:#0c1712;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:8px 9px;border-bottom:1px solid var(--line2);cursor:pointer;white-space:nowrap;}
+table.s th:hover{color:var(--accent);}
+table.s th:first-child{text-align:left;}
+table.s td{padding:7px 9px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+table.s td:first-child{text-align:left;color:var(--dim2);font-family:'IBM Plex Mono',monospace;font-size:10px;}
+table.s tr:hover td{background:#10201733;}
+
+@media(max-width:860px){.grid{grid-template-columns:1fr;}}
+@media(max-width:760px){
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
+  .page{padding:20px 14px 56px;}
+  .hcard .v{font-size:34px;}
+}
+</style></head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="club-detail.html" class="tab on">Club Detail</a>
+<a href="trends.html" class="tab ">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+</div>
+
+<div class="page">
+<div class="kicker">Deep Dive</div>
+<div class="picker" id="picker"></div>
+
+<div id="content"></div>
+
+<div class="foot"><span>ABSHERMETRICS · per-club analysis</span><span>Garmin Approach R50 · physics-derived dispersion</span></div>
+</div>
+
+<script type="module">
+let DATA=[];
+try{ DATA=await (await fetch('shots.json')).json(); }
+catch(e){
+  document.getElementById('content').innerHTML='<div class="panel">Could not load shots.json ('+e.message+'). Serve over http (e.g. <b>python3 -m http.server</b>), not file://.</div>';
+}
+
+// ---- stat helpers ----
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1));};
+const fmt=(n,dp=1,signed=false)=>{if(n===undefined||Number.isNaN(n))return '—';let s=Number(n).toFixed(dp);if(dp===0)s=Number(s).toLocaleString('en-US');return signed&&n>0?'+'+s:s;};
+
+const METRICS=[
+  {key:'carry',label:'Carry',unit:'yd',dp:1},
+  {key:'total',label:'Total',unit:'yd',dp:1},
+  {key:'bs',label:'Ball Speed',unit:'mph',dp:1},
+  {key:'la',label:'Launch Angle',unit:'°',dp:1},
+  {key:'ld',label:'Launch Dir',unit:'°',dp:1,signed:true},
+  {key:'spin',label:'Spin',unit:'rpm',dp:0},
+  {key:'bspin',label:'Backspin',unit:'rpm',dp:0},
+  {key:'sspin',label:'Sidespin',unit:'rpm',dp:0,signed:true},
+  {key:'axis',label:'Spin Axis',unit:'°',dp:1,signed:true},
+  {key:'apex',label:'Apex',unit:'ft',dp:1},
+  {key:'dev',label:'Lateral Dev',unit:'yd',dp:1,signed:true},
+];
+
+let current=null, shotSort={key:'carry',dir:-1};
+
+// ---- club picker ----
+const picker=document.getElementById('picker');
+DATA.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='pchip'+(i===0?' on':'');
+  b.textContent=c.club;
+  b.dataset.club=c.club;
+  function paintAll(){[...picker.children].forEach(ch=>{const on=ch.dataset.club===c.club;});}
+  b.onclick=()=>{select(c.club);};
+  picker.appendChild(b);
+});
+function paintPicker(){
+  [...picker.children].forEach(ch=>{
+    const d=DATA.find(x=>x.club===ch.dataset.club);
+    const on=ch.dataset.club===current;
+    ch.classList.toggle('on',on);
+    if(on){ch.style.background=d.color;ch.style.borderColor=d.color;ch.style.color='#0a120d';}
+    else{ch.style.background='var(--bg2)';ch.style.borderColor='var(--line2)';ch.style.color='var(--dim)';}
+  });
+}
+
+function select(club){current=club;paintPicker();renderClub();}
+
+// ---- histogram (carry distribution) ----
+function histogram(vals,color,W=460,H=190){
+  const pad={l:34,r:14,t:14,b:30};
+  const n=vals.length;
+  const lo=Math.min(...vals), hi=Math.max(...vals);
+  const span=hi-lo||1;
+  const bins=Math.max(5,Math.min(12,Math.round(Math.sqrt(n))));
+  const bw=span/bins;
+  const counts=new Array(bins).fill(0);
+  vals.forEach(v=>{let bi=Math.floor((v-lo)/bw);if(bi>=bins)bi=bins-1;counts[bi]++;});
+  const maxC=Math.max(...counts);
+  const iw=W-pad.l-pad.r, ih=H-pad.t-pad.b;
+  const x=i=>pad.l+(i/bins)*iw;
+  const bwpx=iw/bins;
+  let bars='';
+  counts.forEach((c,i)=>{
+    const h=maxC?c/maxC*ih:0;
+    bars+=`<rect x="${x(i)+1.5}" y="${pad.t+ih-h}" width="${bwpx-3}" height="${h}" rx="2" fill="${color}" opacity="0.82"/>`;
+    if(c)bars+=`<text x="${x(i)+bwpx/2}" y="${pad.t+ih-h-4}" fill="var(--dim)" font-size="9" font-family="monospace" text-anchor="middle">${c}</text>`;
+  });
+  // x axis labels: lo, mid, hi
+  const lab=v=>`<text x="${pad.l+((v-lo)/span)*iw}" y="${H-10}" fill="var(--dim2)" font-size="9" font-family="monospace" text-anchor="middle">${v.toFixed(0)}</text>`;
+  const m=mean(vals);
+  const mx=pad.l+((m-lo)/span)*iw;
+  const meanLine=`<line x1="${mx}" y1="${pad.t}" x2="${mx}" y2="${pad.t+ih}" stroke="var(--accent2)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${mx}" y="${pad.t-2}" fill="var(--accent2)" font-size="9" font-family="monospace" text-anchor="middle">μ ${m.toFixed(0)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}">
+    <line x1="${pad.l}" y1="${pad.t+ih}" x2="${W-pad.r}" y2="${pad.t+ih}" stroke="var(--line2)"/>
+    ${bars}${meanLine}${lab(lo)}${lab(lo+span/2)}${lab(hi)}
+  </svg>`;
+}
+
+// ---- mini top-down dispersion (carry vs lateral) ----
+function dispersion(S,color,W=460,H=300){
+  const pad=30;
+  const carries=S.map(s=>s.carry), devs=S.map(s=>s.dev);
+  const cLo=Math.min(...carries), cHi=Math.max(...carries);
+  const dMax=Math.max(10,Math.max(...devs.map(Math.abs)));
+  const iw=W-pad*2, ih=H-pad*2;
+  // x = lateral (centered), y = carry (far = top)
+  const X=d=>pad+iw/2+(d/ (dMax*1.1))*(iw/2);
+  const cSpan=(cHi-cLo)||1;
+  const Y=c=>pad+ih-((c-cLo)/cSpan)*ih*0.92-6;
+  // center line
+  let g=`<line x1="${pad+iw/2}" y1="${pad}" x2="${pad+iw/2}" y2="${pad+ih}" stroke="var(--line)" stroke-dasharray="3 4"/>`;
+  // ±1σ lateral band
+  const ms=mean(devs), ds=sd(devs);
+  g+=`<rect x="${X(ms-ds)}" y="${pad}" width="${X(ms+ds)-X(ms-ds)}" height="${ih}" fill="${color}" opacity="0.06"/>`;
+  S.forEach(s=>{
+    g+=`<circle cx="${X(s.dev)}" cy="${Y(s.carry)}" r="3.4" fill="${color}" opacity="0.7"/>`;
+  });
+  // mean point
+  g+=`<circle cx="${X(ms)}" cy="${Y(mean(carries))}" r="5" fill="none" stroke="var(--accent2)" stroke-width="2"/>`;
+  // labels
+  g+=`<text x="${pad}" y="${pad-10}" fill="var(--dim2)" font-size="9" font-family="monospace">← left   carry ↑   right →</text>`;
+  g+=`<text x="${pad+iw/2}" y="${H-8}" fill="var(--dim2)" font-size="9" font-family="monospace" text-anchor="middle">lateral spread (yd)</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}">${g}</svg>`;
+}
+
+// ---- consistency bars (lower SD% = tighter = greener) ----
+function consistencyBars(S){
+  const items=[
+    {nm:'Carry',k:'carry'},
+    {nm:'Ball Speed',k:'bs'},
+    {nm:'Launch',k:'la'},
+    {nm:'Spin',k:'spin'},
+    {nm:'Apex',k:'apex'},
+  ];
+  return items.map(it=>{
+    const v=S.map(s=>s[it.k]);
+    const m=mean(v), s=sd(v);
+    const cv=m?s/Math.abs(m)*100:0;          // coefficient of variation %
+    // map CV 0..15% -> bar 100..0; clamp
+    const tight=Math.max(0,Math.min(100,100-(cv/15*100)));
+    const hue=tight>66?'var(--accent)':tight>33?'#e8d44f':'#ff9d9d';
+    return `<div class="crow"><span class="nm">${it.nm}</span><div class="bar"><i style="width:${tight.toFixed(0)}%;background:${hue}"></i></div><span class="vv">±${s.toFixed(cv<1?2:1)} <span style="color:var(--dim2)">${cv.toFixed(1)}%</span></span></div>`;
+  }).join('');
+}
+
+function renderClub(){
+  const d=DATA.find(c=>c.club===current);
+  if(!d)return;
+  const S=d.stats, col=d.color;
+  const carries=S.map(s=>s.carry);
+  const cMean=mean(carries), cSd=sd(carries);
+  const totals=S.map(s=>s.total);
+  const devs=S.map(s=>s.dev);
+  const apexes=S.map(s=>s.apex);
+  const spins=S.map(s=>s.spin);
+  // bag context: where this club ranks by carry
+  const sortedByCarry=[...DATA].sort((a,b)=>b.carry-a.carry);
+  const rank=sortedByCarry.findIndex(c=>c.club===current)+1;
+
+  // headline cards
+  const cards=`
+    <div class="hcard"><div class="v">${fmt(cMean,0)}<small> yd</small></div><div class="l">Avg Carry</div><div class="sub">±${fmt(cSd,1)} yd spread</div></div>
+    <div class="hcard"><div class="v">${fmt(mean(totals),0)}<small> yd</small></div><div class="l">Avg Total</div><div class="sub">+${fmt(mean(totals)-cMean,1)} roll</div></div>
+    <div class="hcard"><div class="v">${fmt(mean(apexes),0)}<small> ft</small></div><div class="l">Avg Apex</div><div class="sub">${fmt(mean(S.map(s=>s.la)),1)}° launch</div></div>
+    <div class="hcard"><div class="v">${fmt(mean(spins),0)}</div><div class="l">Avg Spin (rpm)</div><div class="sub">${fmt(mean(S.map(s=>s.axis)),1)}° axis</div></div>
+    <div class="hcard"><div class="v">${S.length}</div><div class="l">Shots</div><div class="sub">#${rank} longest in bag</div></div>
+  `;
+
+  // full metric table
+  const rows=METRICS.map(m=>{
+    const v=S.map(s=>s[m.key]);
+    const mn=mean(v), s=sd(v);
+    const lo=Math.min(...v), hi=Math.max(...v);
+    const neg=x=>(m.signed&&x<0)?' class="neg"':'';
+    return `<tr>
+      <td>${m.label} <span style="color:var(--dim2)">${m.unit}</span></td>
+      <td class="mean"${m.signed&&mn<0?' style="color:#ff9d9d"':''}>${fmt(mn,m.dp,m.signed)}</td>
+      <td>${fmt(s,m.dp)}</td>
+      <td${neg(lo)}>${fmt(lo,m.dp,m.signed)}</td>
+      <td${neg(hi)}>${fmt(hi,m.dp,m.signed)}</td>
+      <td>${fmt(hi-lo,m.dp)}</td>
+    </tr>`;
+  }).join('');
+
+  // shot-by-shot table
+  const shotCols=[
+    {k:'_n',label:'#'},{k:'carry',label:'Carry'},{k:'total',label:'Total'},
+    {k:'bs',label:'Ball'},{k:'la',label:'Launch'},{k:'spin',label:'Spin',dp:0},
+    {k:'apex',label:'Apex'},{k:'dev',label:'Lat',signed:true},{k:'axis',label:'Axis',signed:true},
+  ];
+  const indexed=S.map((s,i)=>({...s,_n:i+1}));
+  indexed.sort((a,b)=>{
+    if(shotSort.key==='_n')return (a._n-b._n)*shotSort.dir;
+    return (a[shotSort.key]-b[shotSort.key])*shotSort.dir;
+  });
+  const shotHead=shotCols.map(c=>`<th data-k="${c.k}">${c.label}</th>`).join('');
+  const shotRows=indexed.map(s=>'<tr>'+shotCols.map(c=>{
+    if(c.k==='_n')return `<td>${s._n}</td>`;
+    const dp=c.dp===undefined?1:c.dp;
+    const n=s[c.k];
+    const cls=(c.signed&&n<0)?' class="neg"':'';
+    return `<td${cls}>${fmt(n,dp,c.signed)}</td>`;
+  }).join('')+'</tr>').join('');
+
+  document.getElementById('content').innerHTML=`
+    <div class="clubhead">
+      <h1 class="big" style="color:${col}">${d.club}</h1>
+      <span class="subline">${d.n} shots · ${fmt(cMean,0)} yd carry · loft-ordered #${rank} of ${DATA.length}</span>
+    </div>
+    <div class="hstrip">${cards}</div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Carry Distribution</h2>
+        <div class="hint">how tightly carries cluster · dashed = mean</div>
+        ${histogram(carries,col)}
+        <div class="cap">carry (yd) — ${S.length} shots, ${fmt(Math.min(...carries),0)}–${fmt(Math.max(...carries),0)} yd</div>
+      </div>
+      <div class="panel">
+        <h2>Shot Dispersion</h2>
+        <div class="hint">top-down landing pattern · ring = mean</div>
+        ${dispersion(S,col)}
+        <div class="cap">lateral ±${fmt(sd(devs),1)} yd · carry ±${fmt(cSd,1)} yd</div>
+      </div>
+      <div class="panel">
+        <h2>Consistency</h2>
+        <div class="hint">longer + greener = more repeatable (lower variation)</div>
+        ${consistencyBars(S)}
+      </div>
+      <div class="panel">
+        <h2>Full Metrics</h2>
+        <div class="hint">every R50 field · mean / sd / min / max / range</div>
+        <table class="m"><thead><tr><th>Metric</th><th>Mean</th><th>SD</th><th>Min</th><th>Max</th><th>Range</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <div class="panel full">
+        <h2>Every Shot</h2>
+        <div class="hint">tap a header to sort</div>
+        <div class="tscroll"><table class="s" id="shotTbl"><thead><tr>${shotHead}</tr></thead><tbody>${shotRows}</tbody></table></div>
+      </div>
+    </div>
+  `;
+
+  // wire shot-table sorting
+  document.querySelectorAll('#shotTbl th').forEach(th=>{
+    th.onclick=()=>{
+      const k=th.dataset.k;
+      if(shotSort.key===k)shotSort.dir*=-1; else {shotSort.key=k;shotSort.dir=k==='_n'?1:-1;}
+      renderClub();
+    };
+  });
+}
+
+// init
+if(DATA.length){current=DATA[0].club;paintPicker();renderClub();}
+</script>
+</body></html>
