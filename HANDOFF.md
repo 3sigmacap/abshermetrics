@@ -125,7 +125,9 @@ inserts the flag as a minimal diff.)
    panel that calls `attributeCarryChange()` (first session vs latest) and shows ball-speed /
    launch / spin contribution bars that sum to the total, plus the measured-vs-modeled note.
    Imports flight-engine.js. Loads raw-shots.json (+ browser uploads). Health dots per club chip.
-   Insight cards + the All-Metrics table color by TONE (good=cyan / bad=red / neutral=dim), driven
+   Has an **"Average Shot"** box (between Metric-Over-Time and the table): engine-computed mean
+   trajectory drawn as SIDE profile + DOWN-THE-LINE animated SVGs, looping every 4s while on screen.
+   Insight cards + the All-Metrics table color by TONE (good=green / bad=red / neutral=dim), driven
    by each metric's `better` field (`up`/`down`/`zero`/`neutral`) — NOT by raw direction. So a drop
    in Lateral Spread or Carry Consistency (SD) shows green (improvement) while the arrow still points
    down (real direction). `better:'zero'` (Lateral Bias) = good when |latest| shrinks toward 0;
@@ -217,6 +219,13 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **Trends "Average Shot" views (this session):** added a box on the Trends page (between
+  Metric-Over-Time and the All-Metrics table) showing two engine-computed SVG views of the selected
+  club's MEAN-launch trajectory — SIDE profile (left, wider; height vs carry) and DOWN-THE-LINE
+  (right, narrower; lateral vs downrange, viewed from behind the tee). The ball animates along each
+  path, looping every 4 s (flies ~2.6 s, then holds), and only runs while the box is scrolled into
+  view (IntersectionObserver). Functions `flightViews()` + `animateFlightViews()`; computes the path
+  live via `simulateFlight` (no shots.json dependency). trends.html only.
 - **Added model.html "The Model" page (this session):** new physics/math reference page documenting
   the full launch-data -> ball-flight derivation with the actual engine equations (MathJax via
   cdnjs). Linked from the Overview "About the model" card (`href="model.html"`); NOT added as a nav
