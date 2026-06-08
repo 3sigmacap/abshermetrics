@@ -65,11 +65,11 @@ tbody tr:hover td{background:#10201733;}
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab ">Overview</a>
-<a href="raw-data.html" class="tab on">Raw Data</a>
 <a href="club-detail.html" class="tab ">Club Detail</a>
 <a href="trends.html" class="tab ">Trends</a>
 <a href="top-down.html" class="tab ">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
+<a href="raw-data.html" class="tab on">Raw Data</a>
 </div>
 
 <div class="page">
@@ -129,6 +129,7 @@ const clubState={};    // club -> shown bool
 const sessState={};    // session id -> shown bool
 let SESSIONS=[];       // [{id,label,date,n}]
 const COLORS={};
+let CLUB_ORDER=[];
 const FALLBACK_COLORS=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff','#8aa596','#ff7f50','#5ed2ff','#e8d44f'];
 
 // Pull any sessions the user uploaded in-browser (persisted via storage)
@@ -148,6 +149,7 @@ async function loadAll(){
     return;
   }
   Object.assign(COLORS, base.colors||{});
+  CLUB_ORDER=base.club_order||[];
   const uploaded=await loadUploaded();
   const allShots=[...base.shots, ...uploaded];
   // assign colors to any clubs not in the palette map
@@ -187,8 +189,9 @@ COLS.forEach(c=>{
 });
 
 // ---- club filter chips ----
+const orderIdx=c=>{const i=CLUB_ORDER.indexOf(c);return i<0?999:i;};
 const chipWrap=document.getElementById('clubChips');
-Object.keys(clubState).forEach(club=>{
+Object.keys(clubState).sort((a,b)=>orderIdx(a)-orderIdx(b)).forEach(club=>{
   const b=document.createElement('button');
   b.className='cchip on';b.dataset.club=club;
   b.textContent=club;
@@ -249,38 +252,31 @@ function parseCSV(text){
   }
   return out;
 }
-function assignSessions(shots){
-  shots.sort((a,b)=>a._ts-b._ts);
-  const byday={};
-  shots.forEach(s=>{const d=s._ts.toISOString().slice(0,10);(byday[d]=byday[d]||[]).push(s);});
-  const result=[];
-  Object.keys(byday).sort().forEach(d=>{
-    const ts=byday[d];
-    const groups=[[ts[0]]];
-    for(let i=1;i<ts.length;i++){if((ts[i]._ts-ts[i-1]._ts)/60000>90)groups.push([]);groups[groups.length-1].push(ts[i]);}
-    groups.forEach((g,gi)=>{
-      const dd=g[0]._ts;
-      const label=groups.length>1?(dd.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+(dd.getHours()<12?'AM':'PM')):dd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-      const sid=d+'_'+(gi+1)+'_u';
-      g.forEach(s=>{s.session=sid;s.session_label=label;s.date=d;s.ts=s._ts.toISOString();delete s._ts;});
-      result.push(...g);
-    });
-  });
-  return result;
+function sessionFromFile(shots){
+  // each uploaded file = one session, labeled by date + start time (matches built-in format)
+  const valid=shots.filter(s=>s._ts);
+  if(!valid.length)return [];
+  valid.sort((a,b)=>a._ts-b._ts);
+  const start=valid[0]._ts;
+  const pad=n=>String(n).padStart(2,'0');
+  const sid=start.getFullYear()+'-'+pad(start.getMonth()+1)+'-'+pad(start.getDate())+'_'+pad(start.getHours())+pad(start.getMinutes())+'_u';
+  const label=start.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' · '+start.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  const dateISO=start.getFullYear()+'-'+pad(start.getMonth()+1)+'-'+pad(start.getDate());
+  valid.forEach(s=>{s.session=sid;s.session_label=label;s.date=dateISO;s.ts=s._ts.toISOString();delete s._ts;});
+  return valid;
 }
 const msg=document.getElementById('uploadMsg');
 document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
 document.getElementById('fileInput').onchange=async(e)=>{
   const files=[...e.target.files]; if(!files.length)return;
   msg.textContent='Parsing '+files.length+' file(s)…';
-  let parsed=[];
-  for(const f of files){ const txt=await f.text(); parsed.push(...parseCSV(txt)); }
-  if(!parsed.length){msg.textContent='No valid shot rows found in those files.';return;}
-  const withSess=assignSessions(parsed);
+  let all=[];
+  for(const f of files){ const txt=await f.text(); all.push(...sessionFromFile(parseCSV(txt))); }
+  if(!all.length){msg.textContent='No valid shot rows found in those files.';return;}
   // merge with existing uploaded, de-dupe by ts+club
   const existing=await loadUploaded();
   const seen=new Set(existing.map(s=>s.ts+'|'+s.club));
-  const fresh=withSess.filter(s=>!seen.has(s.ts+'|'+s.club));
+  const fresh=all.filter(s=>!seen.has(s.ts+'|'+s.club));
   const merged=[...existing,...fresh];
   try{ await window.storage.set('uploaded_shots', JSON.stringify(merged)); }
   catch(err){ msg.textContent='Could not save ('+err.message+').'; return; }
@@ -309,7 +305,7 @@ function render(){
   }) || r.club.toLowerCase().includes(q) || (r.session_label||'').toLowerCase().includes(q));
 
   rows.sort((a,b)=>{
-    if(sortKey==='club'){return a.club.localeCompare(b.club)*sortDir;}
+    if(sortKey==='club'){const d=(orderIdx(a.club)-orderIdx(b.club))*sortDir; return d|| (a.ts||'').localeCompare(b.ts||'');}
     if(sortKey==='date'){return ((a.ts||'').localeCompare(b.ts||''))*sortDir;}
     let x=Number(a[sortKey]),y=Number(b[sortKey]);
     if(Number.isNaN(x))x=-Infinity;if(Number.isNaN(y))y=-Infinity;

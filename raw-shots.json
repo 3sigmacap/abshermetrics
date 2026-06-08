@@ -1,27 +1,51 @@
 {
+"club_order": [
+"Sand Wedge",
+"Gap Wedge",
+"Pitching Wedge",
+"9 Iron",
+"8 Iron",
+"7 Iron",
+"6 Iron",
+"5 Iron",
+"4 Iron",
+"3 Iron",
+"3 Wood"
+],
 "sessions": [
 {
-"id": "2026-05-28_1",
-"label": "May 28, 2026",
+"id": "2026-05-28_1554",
+"label": "May 28, 2026 \u00b7 3:54 PM",
 "date": "2026-05-28",
-"n": 106
+"start": "2026-05-28T15:54:56",
+"n": 50
 },
 {
-"id": "2026-06-04_1",
-"label": "Jun 4 AM",
+"id": "2026-05-28_1752",
+"label": "May 28, 2026 \u00b7 5:52 PM",
+"date": "2026-05-28",
+"start": "2026-05-28T17:52:33",
+"n": 56
+},
+{
+"id": "2026-06-04_0911",
+"label": "Jun 4, 2026 \u00b7 9:11 AM",
 "date": "2026-06-04",
+"start": "2026-06-04T09:11:11",
 "n": 40
 },
 {
-"id": "2026-06-04_2",
-"label": "Jun 4 PM",
+"id": "2026-06-04_1854",
+"label": "Jun 4, 2026 \u00b7 6:54 PM",
 "date": "2026-06-04",
+"start": "2026-06-04T18:54:11",
 "n": 45
 },
 {
-"id": "2026-06-05_1",
-"label": "Jun 5, 2026",
+"id": "2026-06-05_1524",
+"label": "Jun 5, 2026 \u00b7 3:24 PM",
 "date": "2026-06-05",
+"start": "2026-06-05T15:24:33",
 "n": 51
 }
 ],
@@ -40,8 +64,8 @@
 },
 "shots": [
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:54:56",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -58,8 +82,8 @@
 "dev": -1.53
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:55:18",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -76,8 +100,8 @@
 "dev": -20.37
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:55:41",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -94,8 +118,8 @@
 "dev": -0.6
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:56:05",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -112,8 +136,8 @@
 "dev": 7.84
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:56:35",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -132,8 +156,8 @@
 "smash": 1.52
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:56:56",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -150,8 +174,8 @@
 "dev": -3.07
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:57:17",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -170,8 +194,8 @@
 "smash": 0.0
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:57:35",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -188,8 +212,8 @@
 "dev": 26.35
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:57:55",
 "date": "2026-05-28",
 "club": "7 Iron",
@@ -206,8 +230,8 @@
 "dev": 11.08
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:59:18",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -226,8 +250,8 @@
 "smash": 1.36
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T15:59:39",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -246,8 +270,8 @@
 "smash": 1.29
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:00:04",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -266,8 +290,8 @@
 "smash": 1.33
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:00:30",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -284,8 +308,8 @@
 "dev": -2.71
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:00:53",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -304,8 +328,8 @@
 "smash": 1.33
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:01:38",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -324,8 +348,8 @@
 "smash": 1.36
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:01:58",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -344,8 +368,8 @@
 "smash": 1.33
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:02:15",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -364,8 +388,8 @@
 "smash": 1.37
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:02:34",
 "date": "2026-05-28",
 "club": "4 Iron",
@@ -384,8 +408,8 @@
 "smash": 1.35
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:03:56",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -404,8 +428,8 @@
 "smash": 1.48
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:05:13",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -424,8 +448,8 @@
 "smash": 1.46
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:05:40",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -444,8 +468,8 @@
 "smash": 1.43
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:06:02",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -464,8 +488,8 @@
 "smash": 1.49
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:06:23",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -484,8 +508,8 @@
 "smash": 1.38
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:06:44",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -504,8 +528,8 @@
 "smash": 1.44
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:10:22",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -524,8 +548,8 @@
 "smash": 1.36
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:10:46",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -542,8 +566,8 @@
 "dev": -12.07
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:11:22",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -562,8 +586,8 @@
 "smash": 1.33
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:11:41",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -582,8 +606,8 @@
 "smash": 1.25
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:11:59",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -602,8 +626,8 @@
 "smash": 1.23
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:12:56",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -622,8 +646,8 @@
 "smash": 1.23
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:13:14",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -642,8 +666,8 @@
 "smash": 1.21
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:13:34",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -662,8 +686,8 @@
 "smash": 1.22
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:14:35",
 "date": "2026-05-28",
 "club": "6 Iron",
@@ -680,8 +704,8 @@
 "dev": 15.1
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:15:00",
 "date": "2026-05-28",
 "club": "6 Iron",
@@ -700,8 +724,8 @@
 "smash": 1.29
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:15:21",
 "date": "2026-05-28",
 "club": "6 Iron",
@@ -720,8 +744,8 @@
 "smash": 1.23
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:15:52",
 "date": "2026-05-28",
 "club": "6 Iron",
@@ -738,8 +762,8 @@
 "dev": 15.64
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:16:13",
 "date": "2026-05-28",
 "club": "6 Iron",
@@ -758,8 +782,8 @@
 "smash": 0.56
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:17:28",
 "date": "2026-05-28",
 "club": "3 Iron",
@@ -776,8 +800,8 @@
 "dev": 34.44
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:17:49",
 "date": "2026-05-28",
 "club": "3 Iron",
@@ -796,8 +820,8 @@
 "smash": 1.35
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:18:22",
 "date": "2026-05-28",
 "club": "3 Iron",
@@ -816,8 +840,8 @@
 "smash": 0.0
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:19:13",
 "date": "2026-05-28",
 "club": "3 Iron",
@@ -836,8 +860,8 @@
 "smash": 1.35
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:19:31",
 "date": "2026-05-28",
 "club": "3 Iron",
@@ -856,8 +880,8 @@
 "smash": 0.0
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:19:54",
 "date": "2026-05-28",
 "club": "3 Iron",
@@ -876,8 +900,8 @@
 "smash": 1.29
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:23:38",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -896,8 +920,8 @@
 "smash": 1.42
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:24:19",
 "date": "2026-05-28",
 "club": "5 Iron",
@@ -916,8 +940,8 @@
 "smash": 1.42
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:24:40",
 "date": "2026-05-28",
 "club": "5 Iron",
@@ -936,8 +960,8 @@
 "smash": 1.31
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:25:09",
 "date": "2026-05-28",
 "club": "5 Iron",
@@ -956,8 +980,8 @@
 "smash": 1.3
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:25:31",
 "date": "2026-05-28",
 "club": "5 Iron",
@@ -976,8 +1000,8 @@
 "smash": 1.26
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:26:34",
 "date": "2026-05-28",
 "club": "5 Iron",
@@ -994,8 +1018,8 @@
 "dev": -33.54
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1554",
+"session_label": "May 28, 2026 \u00b7 3:54 PM",
 "ts": "2026-05-28T16:27:27",
 "date": "2026-05-28",
 "club": "5 Iron",
@@ -1012,8 +1036,8 @@
 "dev": -0.6
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:52:33",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1030,8 +1054,8 @@
 "dev": 5.66
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:52:50",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1048,8 +1072,8 @@
 "dev": 6.68
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:53:13",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1066,8 +1090,8 @@
 "dev": -2.52
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:53:32",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1084,8 +1108,8 @@
 "dev": 18.64
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:53:49",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1102,8 +1126,8 @@
 "dev": 11.99
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:54:10",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1120,8 +1144,8 @@
 "dev": 6.73
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:54:49",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1138,8 +1162,8 @@
 "dev": 5.84
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:55:13",
 "date": "2026-05-28",
 "club": "Gap Wedge",
@@ -1156,8 +1180,8 @@
 "dev": 12.13
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:55:43",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1174,8 +1198,8 @@
 "dev": 0.19
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:56:00",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1192,8 +1216,8 @@
 "dev": 8.72
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:56:31",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1210,8 +1234,8 @@
 "dev": 11.06
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:56:47",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1228,8 +1252,8 @@
 "dev": -3.24
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:57:05",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1246,8 +1270,8 @@
 "dev": 0.19
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:57:21",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1264,8 +1288,8 @@
 "dev": 5.5
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:57:37",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1282,8 +1306,8 @@
 "dev": 1.06
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:57:54",
 "date": "2026-05-28",
 "club": "Sand Wedge",
@@ -1300,8 +1324,8 @@
 "dev": 7.75
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:58:59",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1318,8 +1342,8 @@
 "dev": -0.7
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:59:19",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1336,8 +1360,8 @@
 "dev": 15.68
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T17:59:40",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1354,8 +1378,8 @@
 "dev": 3.96
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:00:02",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1372,8 +1396,8 @@
 "dev": 3.59
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:00:19",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1390,8 +1414,8 @@
 "dev": -0.24
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:00:36",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1408,8 +1432,8 @@
 "dev": 7.33
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:00:57",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1426,8 +1450,8 @@
 "dev": 10.75
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:01:15",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1444,8 +1468,8 @@
 "dev": 0.23
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:01:33",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1462,8 +1486,8 @@
 "dev": 12.19
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:02:11",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1480,8 +1504,8 @@
 "dev": 7.93
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:03:02",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1498,8 +1522,8 @@
 "dev": 1.83
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:03:24",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1516,8 +1540,8 @@
 "dev": 4.59
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:03:44",
 "date": "2026-05-28",
 "club": "Pitching Wedge",
@@ -1534,8 +1558,8 @@
 "dev": 3.41
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:04:54",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1552,8 +1576,8 @@
 "dev": -1.1
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:05:28",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1570,8 +1594,8 @@
 "dev": 11.23
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:05:48",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1588,8 +1612,8 @@
 "dev": 5.99
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:06:09",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1606,8 +1630,8 @@
 "dev": 1.9
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:06:26",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1624,8 +1648,8 @@
 "dev": 6.73
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:06:48",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1642,8 +1666,8 @@
 "dev": 14.97
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:07:10",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1660,8 +1684,8 @@
 "dev": 2.36
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:07:31",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1678,8 +1702,8 @@
 "dev": 13.3
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:07:53",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1696,8 +1720,8 @@
 "dev": 0.04
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:08:18",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1714,8 +1738,8 @@
 "dev": 16.52
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:08:37",
 "date": "2026-05-28",
 "club": "9 Iron",
@@ -1732,8 +1756,8 @@
 "dev": 4.57
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:10:31",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1750,8 +1774,8 @@
 "dev": -4.16
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:10:59",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1768,8 +1792,8 @@
 "dev": -9.14
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:11:52",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1786,8 +1810,8 @@
 "dev": 18.76
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:12:19",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1804,8 +1828,8 @@
 "dev": 2.38
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:12:45",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1822,8 +1846,8 @@
 "dev": -52.45
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:13:23",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1840,8 +1864,8 @@
 "dev": 51.56
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:13:43",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1858,8 +1882,8 @@
 "dev": 18.1
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:14:04",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1876,8 +1900,8 @@
 "dev": 22.82
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:14:25",
 "date": "2026-05-28",
 "club": "3 Wood",
@@ -1894,8 +1918,8 @@
 "dev": 27.55
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:15:15",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -1912,8 +1936,8 @@
 "dev": 16.9
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:15:37",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -1930,8 +1954,8 @@
 "dev": -20.63
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:15:59",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -1948,8 +1972,8 @@
 "dev": 0.92
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:16:28",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -1966,8 +1990,8 @@
 "dev": 9.46
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:17:05",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -1984,8 +2008,8 @@
 "dev": 4.99
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:17:32",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -2002,8 +2026,8 @@
 "dev": -5.92
 },
 {
-"session": "2026-05-28_1",
-"session_label": "May 28, 2026",
+"session": "2026-05-28_1752",
+"session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:17:55",
 "date": "2026-05-28",
 "club": "8 Iron",
@@ -2020,8 +2044,8 @@
 "dev": 8.45
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:11:11",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2038,8 +2062,8 @@
 "dev": -26.96
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:11:34",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2056,8 +2080,8 @@
 "dev": -39.32
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:11:56",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2074,8 +2098,8 @@
 "dev": -34.2
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:12:25",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2092,8 +2116,8 @@
 "dev": -19.71
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:12:49",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2110,8 +2134,8 @@
 "dev": -31.7
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:13:26",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2128,8 +2152,8 @@
 "dev": -53.57
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:14:01",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2146,8 +2170,8 @@
 "dev": -10.47
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:14:23",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2164,8 +2188,8 @@
 "dev": 5.8
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:14:42",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2182,8 +2206,8 @@
 "dev": -14.14
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:15:05",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2200,8 +2224,8 @@
 "dev": -2.89
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:15:24",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2218,8 +2242,8 @@
 "dev": 2.99
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:15:46",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2236,8 +2260,8 @@
 "dev": -2.27
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:16:13",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2254,8 +2278,8 @@
 "dev": -2.37
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:16:35",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2272,8 +2296,8 @@
 "dev": 0.39
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:17:09",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2290,8 +2314,8 @@
 "dev": -11.77
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:17:27",
 "date": "2026-06-04",
 "club": "9 Iron",
@@ -2308,8 +2332,8 @@
 "dev": -24.65
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:17:59",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2326,8 +2350,8 @@
 "dev": 8.49
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:18:19",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2344,8 +2368,8 @@
 "dev": -2.54
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:18:37",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2362,8 +2386,8 @@
 "dev": 0.97
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:19:03",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2380,8 +2404,8 @@
 "dev": 5.37
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:19:25",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2398,8 +2422,8 @@
 "dev": -1.78
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:19:43",
 "date": "2026-06-04",
 "club": "Pitching Wedge",
@@ -2416,8 +2440,8 @@
 "dev": -7.84
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:22:45",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2434,8 +2458,8 @@
 "dev": 14.12
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:23:01",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2452,8 +2476,8 @@
 "dev": 11.67
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:23:18",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2470,8 +2494,8 @@
 "dev": -4.41
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:23:36",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2488,8 +2512,8 @@
 "dev": 15.2
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:24:21",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2506,8 +2530,8 @@
 "dev": -14.8
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:24:46",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2524,8 +2548,8 @@
 "dev": -14.53
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:25:06",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2542,8 +2566,8 @@
 "dev": 12.75
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:25:41",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2560,8 +2584,8 @@
 "dev": 0.93
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:25:56",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2578,8 +2602,8 @@
 "dev": 13.21
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:26:47",
 "date": "2026-06-04",
 "club": "6 Iron",
@@ -2596,8 +2620,8 @@
 "dev": 1.84
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:28:42",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -2614,8 +2638,8 @@
 "dev": -29.42
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:30:03",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -2632,8 +2656,8 @@
 "dev": -16.83
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:30:24",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -2650,8 +2674,8 @@
 "dev": -26.22
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:30:44",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -2668,8 +2692,8 @@
 "dev": -16.64
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:31:01",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -2686,8 +2710,8 @@
 "dev": 8.87
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:32:35",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -2704,8 +2728,8 @@
 "dev": -81.01
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:32:57",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -2722,8 +2746,8 @@
 "dev": -99.58
 },
 {
-"session": "2026-06-04_1",
-"session_label": "Jun 4 AM",
+"session": "2026-06-04_0911",
+"session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:33:15",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -2740,8 +2764,8 @@
 "dev": -82.92
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:54:11",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2758,8 +2782,8 @@
 "dev": -9.35
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:54:58",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2776,8 +2800,8 @@
 "dev": -9.91
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:55:15",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2794,8 +2818,8 @@
 "dev": -5.6
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:55:37",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2812,8 +2836,8 @@
 "dev": -3.15
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:56:55",
 "date": "2026-06-04",
 "club": "Gap Wedge",
@@ -2830,8 +2854,8 @@
 "dev": -12.31
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:57:55",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2848,8 +2872,8 @@
 "dev": -2.44
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:58:21",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2866,8 +2890,8 @@
 "dev": 1.9
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:59:12",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2884,8 +2908,8 @@
 "dev": -1.94
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:00:17",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2902,8 +2926,8 @@
 "dev": 2.99
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:01:24",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2920,8 +2944,8 @@
 "dev": -19.02
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:01:49",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2938,8 +2962,8 @@
 "dev": -11.19
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:02:31",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2956,8 +2980,8 @@
 "dev": -5.3
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:02:55",
 "date": "2026-06-04",
 "club": "7 Iron",
@@ -2974,8 +2998,8 @@
 "dev": 12.19
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:03:41",
 "date": "2026-06-04",
 "club": "4 Iron",
@@ -2992,8 +3016,8 @@
 "dev": -8.19
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:04:10",
 "date": "2026-06-04",
 "club": "4 Iron",
@@ -3010,8 +3034,8 @@
 "dev": -14.1
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:04:33",
 "date": "2026-06-04",
 "club": "4 Iron",
@@ -3028,8 +3052,8 @@
 "dev": 2.84
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:05:08",
 "date": "2026-06-04",
 "club": "4 Iron",
@@ -3046,8 +3070,8 @@
 "dev": 10.9
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:05:40",
 "date": "2026-06-04",
 "club": "4 Iron",
@@ -3064,8 +3088,8 @@
 "dev": -16.22
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:06:04",
 "date": "2026-06-04",
 "club": "4 Iron",
@@ -3082,8 +3106,8 @@
 "dev": -9.38
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:09:32",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3100,8 +3124,8 @@
 "dev": 12.83
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:11:32",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3118,8 +3142,8 @@
 "dev": -4.36
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:12:00",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3136,8 +3160,8 @@
 "dev": -6.78
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:12:29",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3154,8 +3178,8 @@
 "dev": -16.19
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:13:00",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3172,8 +3196,8 @@
 "dev": 13.98
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:13:28",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3190,8 +3214,8 @@
 "dev": -0.7
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:14:29",
 "date": "2026-06-04",
 "club": "3 Wood",
@@ -3208,8 +3232,8 @@
 "dev": 0.81
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:16:37",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3226,8 +3250,8 @@
 "dev": -2.74
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:17:16",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3244,8 +3268,8 @@
 "dev": 10.88
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:17:40",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3262,8 +3286,8 @@
 "dev": 3.79
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:17:57",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3280,8 +3304,8 @@
 "dev": -14.61
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:18:23",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3298,8 +3322,8 @@
 "dev": 15.73
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:19:02",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3316,8 +3340,8 @@
 "dev": -10.28
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:19:20",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3334,8 +3358,8 @@
 "dev": -2.29
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:19:38",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3352,8 +3376,8 @@
 "dev": 3.27
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:19:59",
 "date": "2026-06-04",
 "club": "5 Iron",
@@ -3370,8 +3394,8 @@
 "dev": 9.96
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:21:10",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3388,8 +3412,8 @@
 "dev": -26.91
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:21:27",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3406,8 +3430,8 @@
 "dev": 4.4
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:21:45",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3424,8 +3448,8 @@
 "dev": -18.97
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:22:04",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3442,8 +3466,8 @@
 "dev": 19.37
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:22:25",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3460,8 +3484,8 @@
 "dev": 3.79
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:22:57",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3478,8 +3502,8 @@
 "dev": -5.47
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:23:26",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3496,8 +3520,8 @@
 "dev": -6.1
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:23:46",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3514,8 +3538,8 @@
 "dev": 18.46
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:24:24",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3532,8 +3556,8 @@
 "dev": -20.57
 },
 {
-"session": "2026-06-04_2",
-"session_label": "Jun 4 PM",
+"session": "2026-06-04_1854",
+"session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:25:03",
 "date": "2026-06-04",
 "club": "3 Iron",
@@ -3550,8 +3574,8 @@
 "dev": -8.49
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:24:33",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3568,8 +3592,8 @@
 "dev": 13.27
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:24:53",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3586,8 +3610,8 @@
 "dev": -0.5
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:25:15",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3604,8 +3628,8 @@
 "dev": 6.21
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:25:34",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3622,8 +3646,8 @@
 "dev": 4.66
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:25:55",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3640,8 +3664,8 @@
 "dev": -2.79
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:26:29",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3658,8 +3682,8 @@
 "dev": 8.97
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:27:12",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3676,8 +3700,8 @@
 "dev": -3.89
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:27:34",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3694,8 +3718,8 @@
 "dev": 2.66
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:27:52",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3712,8 +3736,8 @@
 "dev": -5.52
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:28:51",
 "date": "2026-06-05",
 "club": "Pitching Wedge",
@@ -3730,8 +3754,8 @@
 "dev": 1.6
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:29:34",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3748,8 +3772,8 @@
 "dev": -8.58
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:29:57",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3766,8 +3790,8 @@
 "dev": -7.13
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:30:15",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3784,8 +3808,8 @@
 "dev": -6.84
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:30:37",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3802,8 +3826,8 @@
 "dev": -7.87
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:31:21",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3820,8 +3844,8 @@
 "dev": 2.24
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:32:13",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3838,8 +3862,8 @@
 "dev": -3.69
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:32:35",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3856,8 +3880,8 @@
 "dev": -4.28
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:32:56",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3874,8 +3898,8 @@
 "dev": -6.06
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:33:20",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3892,8 +3916,8 @@
 "dev": -8.99
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:33:43",
 "date": "2026-06-05",
 "club": "9 Iron",
@@ -3910,8 +3934,8 @@
 "dev": -2.99
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:35:09",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -3928,8 +3952,8 @@
 "dev": -3.2
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:35:30",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -3946,8 +3970,8 @@
 "dev": -9.56
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:35:50",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -3964,8 +3988,8 @@
 "dev": -12.0
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:36:09",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -3982,8 +4006,8 @@
 "dev": 7.15
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:36:26",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4000,8 +4024,8 @@
 "dev": -0.85
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:36:42",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4018,8 +4042,8 @@
 "dev": 5.14
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:37:01",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4036,8 +4060,8 @@
 "dev": -10.67
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:38:15",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4054,8 +4078,8 @@
 "dev": -6.82
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:39:45",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4072,8 +4096,8 @@
 "dev": 11.69
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:40:05",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4090,8 +4114,8 @@
 "dev": 12.94
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:41:19",
 "date": "2026-06-05",
 "club": "7 Iron",
@@ -4108,8 +4132,8 @@
 "dev": -1.57
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:41:57",
 "date": "2026-06-05",
 "club": "3 Iron",
@@ -4126,8 +4150,8 @@
 "dev": -26.63
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:42:16",
 "date": "2026-06-05",
 "club": "3 Iron",
@@ -4144,8 +4168,8 @@
 "dev": -20.94
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:42:59",
 "date": "2026-06-05",
 "club": "3 Iron",
@@ -4162,8 +4186,8 @@
 "dev": -15.34
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:43:57",
 "date": "2026-06-05",
 "club": "3 Iron",
@@ -4180,8 +4204,8 @@
 "dev": -1.19
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:44:17",
 "date": "2026-06-05",
 "club": "3 Iron",
@@ -4198,8 +4222,8 @@
 "dev": -22.08
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:45:18",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4216,8 +4240,8 @@
 "dev": -12.53
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:45:47",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4234,8 +4258,8 @@
 "dev": -4.81
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:46:09",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4252,8 +4276,8 @@
 "dev": 44.91
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:46:30",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4270,8 +4294,8 @@
 "dev": -37.19
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:46:50",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4288,8 +4312,8 @@
 "dev": -46.33
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:47:12",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4306,8 +4330,8 @@
 "dev": -4.59
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:47:34",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4324,8 +4348,8 @@
 "dev": 7.62
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:48:22",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4342,8 +4366,8 @@
 "dev": -83.58
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:48:52",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4360,8 +4384,8 @@
 "dev": -8.74
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:49:56",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4378,8 +4402,8 @@
 "dev": -92.91
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:50:35",
 "date": "2026-06-05",
 "club": "3 Wood",
@@ -4396,8 +4420,8 @@
 "dev": 29.58
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:51:08",
 "date": "2026-06-05",
 "club": "5 Iron",
@@ -4414,8 +4438,8 @@
 "dev": -12.62
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:51:48",
 "date": "2026-06-05",
 "club": "5 Iron",
@@ -4432,8 +4456,8 @@
 "dev": 5.34
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:52:27",
 "date": "2026-06-05",
 "club": "5 Iron",
@@ -4450,8 +4474,8 @@
 "dev": 3.79
 },
 {
-"session": "2026-06-05_1",
-"session_label": "Jun 5, 2026",
+"session": "2026-06-05_1524",
+"session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:52:48",
 "date": "2026-06-05",
 "club": "5 Iron",

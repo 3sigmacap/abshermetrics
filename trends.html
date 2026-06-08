@@ -60,17 +60,22 @@ table.t td.d-up{color:var(--up);} table.t td.d-down{color:var(--down);} table.t 
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab ">Overview</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
 <a href="club-detail.html" class="tab ">Club Detail</a>
 <a href="trends.html" class="tab on">Trends</a>
 <a href="top-down.html" class="tab ">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
+<a href="raw-data.html" class="tab ">Raw Data</a>
 </div>
 
 <div class="page">
 <div class="kicker">Over Time</div>
 <h1 class="big">Performance <span>Trends</span></h1>
 <p class="lead">How each club's numbers have moved session to session. Pick a club to see its biggest changes, then drill into any single metric. Meaningful shifts are flagged — small session-to-session noise is not.</p>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:10px;display:flex;gap:18px;flex-wrap:wrap">
+  <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7fd4ff;box-shadow:0 0 6px #7fd4ff;margin-right:6px"></span>improving</span>
+  <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#5e7568;margin-right:6px"></span>steady</span>
+  <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff9d9d;box-shadow:0 0 6px #ff9d9d;margin-right:6px"></span>needs a look</span>
+</div>
 
 <div class="picker" id="picker"></div>
 <div id="content"></div>
@@ -87,6 +92,7 @@ async function loadUploaded(){try{const r=await window.storage.get('uploaded_sho
 try{
   const base=await (await fetch('raw-shots.json')).json();
   COLORS={...(base.colors||{})};
+  window.__CLUB_ORDER=base.club_order||[];
   const up=await loadUploaded();
   SHOTS=[...base.shots,...up];
   const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
@@ -131,8 +137,9 @@ function series(club,m){
 
 // ---- picker ----
 const picker=document.getElementById('picker');
-const clubsWithData=[...new Set(SHOTS.map(s=>s.club))];
-// order by typical bag order if present in COLORS insertion; else as-is
+const CLUB_ORDER=(window.__CLUB_ORDER||[]);
+const orderIdx=c=>{const i=CLUB_ORDER.indexOf(c);return i<0?999:i;};
+const clubsWithData=[...new Set(SHOTS.map(s=>s.club))].sort((a,b)=>orderIdx(a)-orderIdx(b));
 clubsWithData.forEach((club,i)=>{
   const b=document.createElement('button');
   b.className='pchip'+(i===0?' on':'');
@@ -143,18 +150,47 @@ clubsWithData.forEach((club,i)=>{
 function paintPicker(){[...picker.children].forEach(ch=>{const on=ch.dataset.club===current;ch.classList.toggle('on',on);const col=COLORS[ch.dataset.club]||'#d4ff4f';if(on){ch.style.background=col;ch.style.borderColor=col;ch.style.color='#0a120d';}else{ch.style.background='var(--bg2)';ch.style.borderColor='var(--line2)';ch.style.color='var(--dim)';}});}
 function select(c){current=c;paintPicker();render();}
 
-// significance: change is "meaningful" if |Δ| exceeds ~0.6× the pooled shot-to-shot SD
-function classify(serie,m){
-  if(serie.length<2)return {dir:'flat',sig:false};
-  const first=serie[0].value, last=serie[serie.length-1].value;
-  const d=last-first;
-  // pooled spread of the metric across all this club's shots, for a noise yardstick
-  const allv=SHOTS.filter(x=>x.club===current&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
-  const noise=(m.derived==='sd')? sd(allv)*0.5 : sd(allv)/Math.sqrt(Math.max(1,serie[0].n))*1.6;
-  const sig=Math.abs(d)>Math.max(noise, Math.abs(first)*0.02);
-  let dir = Math.abs(d)<1e-9?'flat':(d>0?'up':'down');
-  return {dir,sig,delta:d,first,last};
+// ---- overall health signal per club (for the indicator dots) ----
+// Looks at directional metrics; good if improving, bad if regressing, else neutral.
+function clubHealth(club){
+  const dirMetrics=METRICS.filter(m=>['up','down'].includes(m.better));
+  let good=0,bad=0,counted=0;
+  dirMetrics.forEach(m=>{
+    const se=series(club,m);
+    if(se.length<2)return;
+    const c=classify2(se,m,club);
+    if(!c.sig)return;
+    counted++;
+    const goodDir=m.better;            // 'up' or 'down'
+    if(c.dir===goodDir)good++; else bad++;
+  });
+  if(counted===0)return 'neutral';
+  if(good>bad)return 'good';
+  if(bad>good)return 'bad';
+  return 'neutral';
 }
+// classify usable outside render (doesn't depend on `current`)
+function classify2(serie,m,club){
+  if(serie.length<2)return {dir:'flat',sig:false};
+  const first=serie[0].value,last=serie[serie.length-1].value,d=last-first;
+  const allv=SHOTS.filter(x=>x.club===club&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
+  const noise=(m.derived==='sd')?sd(allv)*0.5:sd(allv)/Math.sqrt(Math.max(1,serie[0].n))*1.6;
+  const sig=Math.abs(d)>Math.max(noise,Math.abs(first)*0.02);
+  return {dir:Math.abs(d)<1e-9?'flat':(d>0?'up':'down'),sig,delta:d,first,last};
+}
+function paintHealthDots(){
+  const HC={good:'#7fd4ff',bad:'#ff9d9d',neutral:'#5e7568'};
+  [...picker.children].forEach(ch=>{
+    const club=ch.dataset.club;
+    const h=clubHealth(club);
+    let dot=ch.querySelector('.hdot');
+    if(!dot){dot=document.createElement('span');dot.className='hdot';ch.prepend(dot);}
+    dot.style.cssText='display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle;background:'+HC[h]+';box-shadow:0 0 6px '+HC[h];
+  });
+}
+
+// significance: change is "meaningful" if |Δ| exceeds ~0.6× the pooled shot-to-shot SD
+function classify(serie,m){return classify2(serie,m,current);}
 
 // line chart of a metric over sessions
 function lineChart(serie,m,color,W=720,H=240){
@@ -250,7 +286,7 @@ function render(){
   document.querySelectorAll('#msel .msel').forEach(b=>{b.onclick=()=>{activeMetric=b.dataset.m;render();};});
 }
 
-if(clubsWithData.length){current=clubsWithData[0];paintPicker();render();}
+if(clubsWithData.length){current=clubsWithData[0];paintPicker();paintHealthDots();render();}
 else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
 </script>
 </body></html>
