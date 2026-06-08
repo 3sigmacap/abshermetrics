@@ -1522,6 +1522,7 @@
 "dev": 1.83
 },
 {
+"excluded": true,
 "session": "2026-05-28_1752",
 "session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:03:24",
@@ -1810,6 +1811,7 @@
 "dev": 18.76
 },
 {
+"excluded": true,
 "session": "2026-05-28_1752",
 "session_label": "May 28, 2026 \u00b7 5:52 PM",
 "ts": "2026-05-28T18:12:19",
@@ -2548,6 +2550,7 @@
 "dev": -14.53
 },
 {
+"excluded": true,
 "session": "2026-06-04_0911",
 "session_label": "Jun 4, 2026 \u00b7 9:11 AM",
 "ts": "2026-06-04T09:25:06",
@@ -2782,6 +2785,7 @@
 "dev": -9.35
 },
 {
+"excluded": true,
 "session": "2026-06-04_1854",
 "session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T18:54:58",
@@ -3088,6 +3092,7 @@
 "dev": -16.22
 },
 {
+"excluded": true,
 "session": "2026-06-04_1854",
 "session_label": "Jun 4, 2026 \u00b7 6:54 PM",
 "ts": "2026-06-04T19:06:04",
@@ -4150,6 +4155,7 @@
 "dev": -26.63
 },
 {
+"excluded": true,
 "session": "2026-06-05_1524",
 "session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:42:16",
@@ -4240,6 +4246,7 @@
 "dev": -12.53
 },
 {
+"excluded": true,
 "session": "2026-06-05_1524",
 "session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:45:47",
@@ -4312,6 +4319,7 @@
 "dev": -46.33
 },
 {
+"excluded": true,
 "session": "2026-06-05_1524",
 "session_label": "Jun 5, 2026 \u00b7 3:24 PM",
 "ts": "2026-06-05T15:47:12",

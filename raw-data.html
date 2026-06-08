@@ -48,6 +48,11 @@ tbody td.idx-col{text-align:left;color:var(--dim2);font-family:'IBM Plex Mono',m
 tbody tr:hover td{background:#10201733;}
 .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:baseline;}
 .neg{color:#ff9d9d;}
+thead th.excl-col,tbody td.excl-col{text-align:center;}
+.exbadge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:#ff9d9d;border:1px solid #5e2b2b;background:#2a1414;border-radius:5px;padding:2px 7px;}
+.inbadge{color:var(--dim2);font-size:13px;}
+tr.exrow td:not(.excl-col){opacity:.42;}
+tr.exrow:hover td{background:#1a121233;}
 .empty{padding:40px 20px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .unit{color:var(--dim2);font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;}
 
@@ -75,7 +80,7 @@ tbody tr:hover td{background:#10201733;}
 <div class="page">
 <div class="kicker">Garmin Approach R50</div>
 <h1 class="big">Raw <span>Shot Data</span></h1>
-<p class="lead">Every individual shot exactly as measured by the launch monitor — no smoothing, no modeling. Tap any column header to sort; filter by club or search. This is the source data behind every chart on the site.</p>
+<p class="lead">Every individual shot exactly as measured by the launch monitor — no smoothing, no modeling. Tap any column header to sort; filter by club or search. This is the source data behind every chart on the site. Shots marked <span class="exbadge">Excluded</span> were dropped during cleaning (mishits/outliers) and don't feed the charts, averages, or 3D flight.</p>
 
 <div class="controls">
   <div class="grp">
@@ -83,7 +88,7 @@ tbody tr:hover td{background:#10201733;}
     <input type="text" id="search" class="fld" placeholder="filter rows…" style="width:150px">
   </div>
   <div class="grp clubchips" id="clubChips"></div>
-  <span class="countpill"><b id="shownCount">0</b> of <span id="totalCount">0</span> shots</span>
+  <span class="countpill"><b id="shownCount">0</b> of <span id="totalCount">0</span> shots <span id="exclNote" style="color:var(--dim2)"></span></span>
 </div>
 <div class="controls" style="margin-top:0">
   <span class="lbl">Sessions</span>
@@ -110,6 +115,7 @@ const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
   {key:'date',  label:'Date',     unit:'',     type:'date'},
   {key:'club',  label:'Club',     unit:'',     type:'club'},
+  {key:'excluded', label:'In Model', unit:'', type:'excl'},
   {key:'bs',    label:'Ball Spd', unit:'mph',  dp:1},
   {key:'carry', label:'Carry',    unit:'yd',   dp:1},
   {key:'total', label:'Total',    unit:'yd',   dp:1},
@@ -174,6 +180,8 @@ async function loadAll(){
 await loadAll();
 
 document.getElementById('totalCount').textContent=ROWS.length;
+const exclCount=ROWS.filter(r=>r.excluded).length;
+if(exclCount)document.getElementById('exclNote').textContent='· '+exclCount+' excluded';
 
 // ---- build header ----
 const headRow=document.getElementById('headRow');
@@ -286,6 +294,11 @@ document.getElementById('fileInput').onchange=async(e)=>{
 
 const fmt=(v,c,row)=>{
   if(c.type==='date'){return '<span style="color:var(--dim)">'+(row.session_label||row.date||'—')+'</span>';}
+  if(c.type==='excl'){
+    return row.excluded
+      ? '<span class="exbadge" title="Dropped during cleaning — not used in the charts, averages, or 3D flight">Excluded</span>'
+      : '<span class="inbadge" title="Used in all charts, averages, and the model">✓</span>';
+  }
   if(v===undefined||v===null||v==='')return '—';
   if(c.type==='idx')return v;
   if(c.type==='club')return '<span class="sw" style="background:'+row._color+'"></span>'+v;
@@ -307,6 +320,7 @@ function render(){
   rows.sort((a,b)=>{
     if(sortKey==='club'){const d=(orderIdx(a.club)-orderIdx(b.club))*sortDir; return d|| (a.ts||'').localeCompare(b.ts||'');}
     if(sortKey==='date'){return ((a.ts||'').localeCompare(b.ts||''))*sortDir;}
+    if(sortKey==='excluded'){const d=((a.excluded?1:0)-(b.excluded?1:0))*sortDir; return d|| (a.ts||'').localeCompare(b.ts||'');}
     let x=Number(a[sortKey]),y=Number(b[sortKey]);
     if(Number.isNaN(x))x=-Infinity;if(Number.isNaN(y))y=-Infinity;
     return (x-y)*sortDir;
@@ -316,10 +330,11 @@ function render(){
   if(!rows.length){body.innerHTML='<tr><td colspan="'+COLS.length+'" class="empty">No shots match.</td></tr>';}
   else{
     body.innerHTML=rows.map(r=>{
-      return '<tr>'+COLS.map(c=>{
+      return '<tr'+(r.excluded?' class="exrow"':'')+'>'+COLS.map(c=>{
         let cls='';
         if(c.type==='club')cls=' class="club-col"';
         else if(c.type==='idx'||c.type==='date')cls=' class="idx-col"';
+        else if(c.type==='excl')cls=' class="excl-col"';
         else {
           const n=Number(r[c.key]);
           cls=(c.signed&&n<0)?' class="neg"':'';
