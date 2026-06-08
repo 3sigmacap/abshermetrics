@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AbsherMetrics — Trends</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
-:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;--up:#7fd4ff;--down:#ff9d9d;}
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;--up:#7fd4ff;--down:#ff9d9d;--good:#7CFFA0;--bad:#ff9d9d;}
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
@@ -28,11 +28,11 @@ h1.big span{color:var(--accent);}
 .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0;}
 .ins{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;border-left:3px solid var(--line2);}
 .ins.big-up{border-left-color:var(--up);} .ins.big-down{border-left-color:var(--down);}
-.ins.tone-good{border-left-color:var(--up);} .ins.tone-bad{border-left-color:var(--down);} .ins.tone-flat{border-left-color:var(--line2);}
+.ins.tone-good{border-left-color:var(--good);} .ins.tone-bad{border-left-color:var(--bad);} .ins.tone-flat{border-left-color:var(--line2);}
 .ins .mname{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
 .ins .delta{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1.05;margin-top:4px;}
 .ins .delta.up{color:var(--up);} .ins .delta.down{color:var(--down);} .ins .delta.flat{color:var(--dim);}
-.ins .delta.tone-good{color:var(--up);} .ins .delta.tone-bad{color:var(--down);} .ins .delta.tone-flat{color:var(--dim);}
+.ins .delta.tone-good{color:var(--good);} .ins .delta.tone-bad{color:var(--bad);} .ins .delta.tone-flat{color:var(--dim);}
 .ins .desc{font-size:13.5px;color:var(--dim);margin-top:4px;line-height:1.35;}
 
 .panel{background:#0b1410cc;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:18px;}
@@ -49,7 +49,7 @@ table.t th:first-child{text-align:left;}
 table.t td{padding:9px 10px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
 table.t td:first-child{text-align:left;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;}
 table.t td.d-up{color:var(--up);} table.t td.d-down{color:var(--down);} table.t td.d-flat{color:var(--dim2);}
-table.t td.tone-good{color:var(--up);} table.t td.tone-bad{color:var(--down);} table.t td.tone-flat{color:var(--dim2);}
+table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} table.t td.tone-flat{color:var(--dim2);}
 .empty{padding:30px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .note{font-size:13px;color:var(--dim);margin-top:14px;line-height:1.4;}
 .attr{display:flex;flex-direction:column;gap:11px;}
@@ -190,8 +190,20 @@ function classify2(serie,m,club){
   if(serie.length<2)return {dir:'flat',sig:false};
   const first=serie[0].value,last=serie[serie.length-1].value,d=last-first;
   const allv=SHOTS.filter(x=>x.club===club&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
-  const noise=(m.derived==='sd')?sd(allv)*0.5:sd(allv)/Math.sqrt(Math.max(1,serie[0].n))*1.6;
-  const sig=Math.abs(d)>Math.max(noise,Math.abs(first)*0.02);
+  let thresh;
+  if(m.derived==='sd'){
+    // Spread/consistency metrics (SD of carry, dev). The OLD test compared the change
+    // against 0.5x the pooled SD itself, which a real tightening almost never beats
+    // (e.g. lateral spread had to move >5 yd to count). Treat a change as meaningful
+    // when it's a clear FRACTION of the baseline spread, with a small absolute floor.
+    thresh=Math.max(first*0.15, 0.8);   // >15% change in spread, min 0.8 yd
+  }else{
+    // Mean metrics: change must beat the session-to-session sampling noise of the mean,
+    // or ~2% of the value, whichever is larger.
+    const noise=sd(allv)/Math.sqrt(Math.max(1,serie[0].n))*1.6;
+    thresh=Math.max(noise, Math.abs(first)*0.02);
+  }
+  const sig=Math.abs(d)>thresh;
   return {dir:Math.abs(d)<1e-9?'flat':(d>0?'up':'down'),sig,delta:d,first,last};
 }
 function paintHealthDots(){

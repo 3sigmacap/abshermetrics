@@ -210,15 +210,19 @@ page. Mobile breakpoint @media(max-width:760px).
 - **Trends coloring fix (this session):** insight cards + All-Metrics table were coloring every
   change by raw direction (down=red), so improvements in dispersion/consistency (Lateral Spread,
   Carry Consistency — both `better:'down'`) showed red even though down is GOOD. Now color follows
-  a `tone` (good=cyan/bad=red/neutral=dim) computed from each metric's `better` field; the arrow
-  still shows real direction. Added `tone-good/bad/flat` CSS classes; handled `better:'zero'`
-  (Lateral Bias good when |value| shrinks). Attribution panel unchanged (its cyan/red is a
-  directional decomposition of the carry delta, correct as-is). trends.html only.
+  a `tone` (good=GREEN `--good #7CFFA0` / bad=red / neutral=dim) computed from each metric's
+  `better` field; the arrow still shows real direction. Also FIXED the significance gate in
+  classify2: SD/spread metrics used to require a change > 0.5x the pooled SD (e.g. lateral spread
+  had to move >5 yd to count), so real tightenings showed gray. Now SD metrics use a fraction-of-
+  baseline threshold (>15%, min 0.8 yd); mean metrics keep the sampling-noise test. Handled
+  `better:'zero'` (Lateral Bias good when |value| shrinks). Attribution panel unchanged (its
+  cyan/red is a directional decomposition of the carry delta, correct as-is). trends.html only.
 - **3D field size, tube thickness, roll-path style (this session):** (1) shrank the oversized
   ground field — was a 600x600 yd square GridHelper centered at x=150 (lateral spanned +/-300 yd
   for shots that miss by ~+/-20); now an explicit line grid `FIELD_X0..FIELD_X1` = -20..320 yd
-  downrange, `FIELD_Z` = +/-70 yd lateral. (2) Mean-path tube 30% thinner via shared `TUBE_R`
-  const (0.805 -> 0.5635). (3) The roll-out tube is now drawn the SAME as the aerial tube (same
+  downrange, `FIELD_Z` = +/-70 yd lateral. (2) Mean-path tube thinned via shared `TUBE_R`
+  const (0.805 -> 0.5635 -> later halved to 0.282). End-of-path markers also halved
+  (landing 0.55, rest 0.475, animated ball 0.45). (3) The roll-out tube is now drawn the SAME as the aerial tube (same
   `TUBE_R`, same solid color) so carry + roll read as one continuous trajectory, instead of the
   old dimmer/thinner (0.28, opacity 0.5) separate-looking element. Roll tube still gated by the
   Roll-out toggle. flight-3d.html only; no engine/data change.
