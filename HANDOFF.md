@@ -226,9 +226,10 @@ page. Mobile breakpoint @media(max-width:760px).
   1.4, rest marker 1.2). (2) 3D animation now plays at TRUE real-life speed: `TIMESCALE` 0.46→1.0,
   clamps widened (300–12000 ms) so each club's real flightTime passes through unchanged. (3) Trends
   "Average Shot" box: replaced the down-the-line view with a TOP-DOWN view drawn like the 2D
-  Dispersion page — TRUE 1:1 (single px/yd scale on both axes), carry horizontal, miss-left at top /
-  miss-right at bottom, turf + carry/L-R gridlines + zero centerline + tee dot. Both views now equal
-  width (grid 1fr 1fr); lateral is NOT exaggerated (a 4-yd miss looks like 4 yd). Ball animates at real-life speed using the engine `flightTime` (data-ft attr), looping flightTime+0.9s
+  Dispersion page — TRUE 1:1 (single px/yd scale on both axes). Oriented BOTTOM->TOP: tee at the
+  bottom, shot travels upward (carry = vertical), lateral = horizontal (miss-left = left, miss-right
+  = right). It's a tall, narrow column (~150px), so the side view takes most of the box width (grid
+  `1fr minmax(120px,150px)`, `.fv-top svg` capped at 150px). Lateral NOT exaggerated. Ball animates at real-life speed using the engine `flightTime` (data-ft attr), looping flightTime+0.9s
   hold instead of a fixed 2.6s. flight-3d.html + trends.html.
 - **Trends "Average Shot" views (this session):** added a box on the Trends page (between
   Metric-Over-Time and the All-Metrics table) showing two engine-computed SVG views of the selected

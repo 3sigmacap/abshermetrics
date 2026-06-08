@@ -39,7 +39,8 @@ h1.big span{color:var(--accent);}
 .panel h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;font-weight:400;margin-bottom:2px;}
 .panel .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;}
 .metricsel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-.flightviews{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px;}
+.flightviews{display:grid;grid-template-columns:1fr minmax(120px,150px);gap:14px;margin-top:6px;align-items:stretch;}
+.fv-top svg{max-width:150px;margin:0 auto;}
 .fv{background:#0b1410;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;}
 .fv .lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2);margin-bottom:4px;}
 .fv svg{display:block;width:100%;height:auto;}
@@ -281,39 +282,42 @@ function flightViews(club,color){
   const sPath=P.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+' '+sy(p[1]).toFixed(1)).join('');
   const sSide=`<svg viewBox="0 0 ${SW} ${SH}" data-fv="side" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+sx(p[0]).toFixed(1),+sy(p[1]).toFixed(1)]))}'>${sGrid}<path d="${sPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${sx(0)}" cy="${sy(0)}"/></svg>`;
   // --- TOP-DOWN: bird's-eye, drawn like the 2D Dispersion page. TRUE 1:1 — one
-  //     yard sideways == one yard downrange. carry -> horizontal (left->right),
-  //     lateral -> vertical with MISS LEFT at top, MISS RIGHT at bottom. ---
-  const TW=560,TH=150,tm={l:34,r:14,t:12,b:24};
+  // --- TOP-DOWN: bird's-eye, shot travels BOTTOM -> TOP. carry -> vertical (tee at
+  //     bottom, landing at top), lateral -> horizontal (miss-left = left, miss-right
+  //     = right). TRUE 1:1 (same px/yd both axes). Tall, narrow column. ---
+  const TW=150,TH=300,tm={l:18,r:14,t:14,b:22};
   const tPW=TW-tm.l-tm.r, tPH=TH-tm.t-tm.b;
   const xMax=maxX*1.04;
   let zLo=Math.min(0,...P.map(p=>p[2])), zHi=Math.max(0,...P.map(p=>p[2]));
   const zPad=Math.max((zHi-zLo)*0.10,2); zLo-=zPad; zHi+=zPad;
   if(zHi-zLo<8){const c=(zHi+zLo)/2;zLo=c-4;zHi=c+4;}   // floor so a straight shot still has scale
-  const ppy=Math.min(tPW/xMax, tPH/(zHi-zLo));          // single 1:1 scale
+  const ppy=Math.min(tPH/xMax, tPW/(zHi-zLo));          // single 1:1 scale (carry on tall axis)
   const zMid=(zLo+zHi)/2;
-  const tx=x=>tm.l + x*ppy;                             // carry -> px
-  const tz=z=>tm.t + tPH/2 + (z - zMid)*ppy;            // lateral -> px (-z=left=top, +z=right=bottom)
+  const ty=x=>tm.t + tPH - x*ppy;                       // carry -> px (bottom=tee, up=downrange)
+  const tx=z=>tm.l + tPW/2 + (z - zMid)*ppy;            // lateral -> px (-z=left, +z=right)
   const niceStep=(range,target)=>{const raw=range/target,p=Math.pow(10,Math.floor(Math.log10(raw)));for(const mm of [1,2,2.5,5,10]){if(p*mm>=raw)return p*mm;}return p*10;};
   let tGrid=`<rect x="${tm.l}" y="${tm.t}" width="${tPW}" height="${tPH}" fill="#16271d"/>`;
-  const xs=niceStep(xMax,6);
-  for(let x=0;x<=xMax+0.5;x+=xs){const gx=tx(x);tGrid+=`<line x1="${gx.toFixed(1)}" y1="${tm.t}" x2="${gx.toFixed(1)}" y2="${tm.t+tPH}" stroke="#23402f"/><text x="${gx.toFixed(1)}" y="${TH-8}" fill="#7a9486" font-size="9" font-family="monospace" text-anchor="middle">${Math.round(x)}</text>`;}
-  const visZLo=zMid-(tPH/2)/ppy, visZHi=zMid+(tPH/2)/ppy, zStart=Math.ceil(visZLo/xs)*xs;
-  for(let z=zStart;z<=visZHi+0.001;z+=xs){const gz=tz(z);if(gz<tm.t-0.5||gz>tm.t+tPH+0.5)continue;
+  // carry gridlines (horizontal, labeled up the right edge)
+  const xs=niceStep(xMax,5);
+  for(let x=0;x<=xMax+0.5;x+=xs){const gy=ty(x);tGrid+=`<line x1="${tm.l}" y1="${gy.toFixed(1)}" x2="${TW-tm.r}" y2="${gy.toFixed(1)}" stroke="#23402f"/><text x="${TW-tm.r+3}" y="${(gy+3).toFixed(1)}" fill="#7a9486" font-size="8" font-family="monospace" text-anchor="start">${Math.round(x)}</text>`;}
+  // lateral gridlines (vertical) incl. the target-line center, L/R labels along the bottom
+  const visZLo=zMid-(tPW/2)/ppy, visZHi=zMid+(tPW/2)/ppy, zStart=Math.ceil(visZLo/xs)*xs;
+  for(let z=zStart;z<=visZHi+0.001;z+=xs){const gx=tx(z);if(gx<tm.l-0.5||gx>tm.l+tPW+0.5)continue;
     const zero=Math.abs(z)<1e-6;
-    tGrid+=`<line x1="${tm.l}" y1="${gz.toFixed(1)}" x2="${TW-tm.r}" y2="${gz.toFixed(1)}" stroke="${zero?'#39604a':'#1c3325'}" ${zero?'':'stroke-dasharray="2 5"'}/>`;
+    tGrid+=`<line x1="${gx.toFixed(1)}" y1="${tm.t}" x2="${gx.toFixed(1)}" y2="${tm.t+tPH}" stroke="${zero?'#39604a':'#1c3325'}" ${zero?'':'stroke-dasharray="2 5"'}/>`;
     const lab=zero?'0':(z<0?Math.abs(Math.round(z))+'L':Math.round(z)+'R');
-    tGrid+=`<text x="${tm.l-5}" y="${(gz+3).toFixed(1)}" fill="#7a9486" font-size="8.5" font-family="monospace" text-anchor="end">${lab}</text>`;}
-  const tPath=P.map((p,i)=>(i?'L':'M')+tx(p[0]).toFixed(1)+' '+tz(p[2]).toFixed(1)).join('');
-  // tee dot at origin
-  tGrid+=`<circle cx="${tx(0).toFixed(1)}" cy="${tz(0).toFixed(1)}" r="2.6" fill="#d4ff4f"/>`;
-  const tTop=`<svg viewBox="0 0 ${TW} ${TH}" data-fv="top" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+tx(p[0]).toFixed(1),+tz(p[2]).toFixed(1)]))}'>${tGrid}<path d="${tPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${tx(0).toFixed(1)}" cy="${tz(0).toFixed(1)}"/></svg>`;
+    tGrid+=`<text x="${gx.toFixed(1)}" y="${TH-8}" fill="#7a9486" font-size="8" font-family="monospace" text-anchor="middle">${lab}</text>`;}
+  const tPath=P.map((p,i)=>(i?'L':'M')+tx(p[2]).toFixed(1)+' '+ty(p[0]).toFixed(1)).join('');
+  // tee dot at origin (bottom)
+  tGrid+=`<circle cx="${tx(0).toFixed(1)}" cy="${ty(0).toFixed(1)}" r="2.6" fill="#d4ff4f"/>`;
+  const tTop=`<svg viewBox="0 0 ${TW} ${TH}" data-fv="top" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+tx(p[2]).toFixed(1),+ty(p[0]).toFixed(1)]))}'>${tGrid}<path d="${tPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${tx(0).toFixed(1)}" cy="${ty(0).toFixed(1)}"/></svg>`;
 
   return `<div class="panel" id="flightviewbox">
     <h2 style="color:${color}">${club} — Average Shot</h2>
     <div class="hint">engine-computed mean trajectory · side profile + top-down (true 1:1) · real-time (${ft.toFixed(1)}s flight)</div>
     <div class="flightviews">
       <div class="fv"><div class="lbl">Side view — height vs carry</div>${sSide}</div>
-      <div class="fv"><div class="lbl">Top down — true 1:1 · &uarr;miss L / miss R&darr;</div>${tTop}</div>
+      <div class="fv fv-top"><div class="lbl">Top down — true 1:1 · &larr;L / R&rarr;</div>${tTop}</div>
     </div>
   </div>`;
 }
