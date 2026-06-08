@@ -261,23 +261,25 @@ DATA.forEach(d=>{
   // so the animated ball simply follows it and lands on the measured distance.
   const flightPts=meanPts.map(p=>new THREE.Vector3(p.x,p.y,p.z));
   const mn=d.mean.length;
-  const mk=new THREE.Mesh(new THREE.SphereGeometry(3.2,18,18),new THREE.MeshBasicMaterial({color:col}));
+  const mk=new THREE.Mesh(new THREE.SphereGeometry(1.1,16,16),new THREE.MeshBasicMaterial({color:col}));
   mk.position.copy(P(d.mean[mn-3],0,d.mean[mn-1]));
 
   // roll-out path (bounce + roll after landing). Dimmer + thinner tube + a
   // hollow marker at final rest. From engine `meanRoll`. May be empty/short.
-  let rollTube=null, restMk=null;
+  let rollTube=null, restMk=null, rollPtsClean=null;
   if(Array.isArray(d.meanRoll)&&d.meanRoll.length>=6){
     const rollPts=toPts(d.meanRoll);
-    // de-dup consecutive identical points so CatmullRom doesn't choke
+    // de-dup consecutive identical points so CatmullRom doesn't choke (also strips
+    // the trailing padding the generator adds to pad meanRoll to a fixed length)
     const clean=rollPts.filter((p,i)=>i===0||p.distanceTo(rollPts[i-1])>1e-4);
+    rollPtsClean=clean;
     if(clean.length>=2){
       const rollCurve=new THREE.CatmullRomCurve3(clean);
-      rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,0.5,6,false),
+      rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,0.28,6,false),
         new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5}));
       const rn=d.meanRoll.length;
-      restMk=new THREE.Mesh(new THREE.SphereGeometry(2.6,14,14),
-        new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.45,wireframe:true}));
+      restMk=new THREE.Mesh(new THREE.SphereGeometry(0.95,14,14),
+        new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5,wireframe:true}));
       restMk.position.copy(P(d.meanRoll[rn-3],0,d.meanRoll[rn-1]));
     }
   }
@@ -290,7 +292,7 @@ DATA.forEach(d=>{
   ovl.add(disc);ovl.add(ring);ovl.add(gap);ovl.visible=false;
 
   // animated ball + trail (hidden until launched)
-  const ball=new THREE.Mesh(new THREE.SphereGeometry(2.6,16,16),new THREE.MeshBasicMaterial({color:0xffffff}));
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(0.9,16,16),new THREE.MeshBasicMaterial({color:0xffffff}));
   ball.visible=false;
   const trailGeom=new THREE.BufferGeometry();
   const TRAIL=60;trailGeom.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TRAIL*3),3));
@@ -300,7 +302,7 @@ DATA.forEach(d=>{
   grp.add(shotGrp);grp.add(tube);grp.add(mk);grp.add(ovl);grp.add(ball);grp.add(trail);
   if(rollTube){grp.add(rollTube);} if(restMk){grp.add(restMk);}
   scene.add(grp);
-  clubObjs[d.club]={grp,shotGrp,tube,mk,ovl,ball,trail,curve,meanPts,flightPts,col:d.color,data:d,visible:true,
+  clubObjs[d.club]={grp,shotGrp,tube,mk,ovl,ball,trail,curve,meanPts,flightPts,rollPts:rollPtsClean,col:d.color,data:d,visible:true,
                     rollTube,restMk,anim:null};
 });
 
@@ -429,6 +431,8 @@ function launchVisible(){
 // makes the ball slow down toward apex/landing exactly as the physics dictates).
 const TIMESCALE=0.46;          // real seconds -> animation seconds (~half-speed)
 const MIN_DUR=1100, MAX_DUR=3600;  // clamp so wedges aren't too quick / woods too long
+const ROLL_MS_PER_YD=26;       // roll pacing: animation ms per yard of ground travel
+const ROLL_MIN_MS=350, ROLL_MAX_MS=1600;
 function startFlight(o){
   const pts=o.flightPts;
   const ftReal=(o.data.flightTime||3.2);            // engine hang time, seconds
@@ -436,19 +440,43 @@ function startFlight(o){
   const t0=performance.now();
   o.ball.visible=true;o.trail.visible=true;o.ball.material.color.set(o.col);
   flying++;
-  o.anim={pts,t0,dur,ftReal,onflight:true,trailPos:[],lastPos:null,lastT:t0,speed:0};
+  // roll phase: animate the bounce+roll whenever we have a ground path, so Launch
+  // always shows the full shot (carry -> bounce -> roll to rest) like libgolf.
+  // (The Roll-out toggle still controls the static dimmer roll TUBES, not this.)
+  let roll=null, rollDur=0;
+  if(o.rollPts && o.rollPts.length>=2){
+    roll=o.rollPts;
+    // ground distance travelled (yards) -> a short, distance-scaled duration
+    let gyd=0; for(let i=1;i<roll.length;i++){const a=roll[i],b=roll[i-1];gyd+=Math.hypot(a.x-b.x,a.z-b.z);}
+    rollDur=Math.max(ROLL_MIN_MS,Math.min(ROLL_MAX_MS,gyd*ROLL_MS_PER_YD));
+  }
+  o.anim={pts,t0,dur,ftReal,roll,rollDur,phase:'air',
+          trailPos:[],lastPos:null,lastT:t0,speed:0};
 }
 function stepFlights(now){
   let liveStats=null;
   DATA.forEach(d=>{
     const o=clubObjs[d.club];if(!o.anim)return;
-    const a=o.anim;let u=(now-a.t0)/a.dur;
-    if(u>=1){u=1;}
-    // sample along mean polyline by index (points are time-uniform from the
-    // engine, so equal steps of u = equal steps of REAL time -> correct deceleration)
-    const idx=u*(a.pts.length-1);const i0=Math.floor(idx);const f=idx-i0;
-    const p0=a.pts[Math.min(i0,a.pts.length-1)],p1=a.pts[Math.min(i0+1,a.pts.length-1)];
-    const pos=p0.clone().lerp(p1,f);
+    const a=o.anim;
+    let pos, u, done=false, rolling=false;
+    if(a.phase==='air'){
+      u=(now-a.t0)/a.dur; if(u>=1)u=1;
+      // sample aerial polyline by index (time-uniform points -> correct deceleration)
+      const idx=u*(a.pts.length-1);const i0=Math.floor(idx);const f=idx-i0;
+      const p0=a.pts[Math.min(i0,a.pts.length-1)],p1=a.pts[Math.min(i0+1,a.pts.length-1)];
+      pos=p0.clone().lerp(p1,f);
+      if(u>=1){
+        if(a.roll){ a.phase='roll'; a.rollT0=now; }   // hand off to ground phase
+        else done=true;
+      }
+    } else { // roll phase: bounce + roll along the ground path
+      rolling=true;
+      let ru=(now-a.rollT0)/a.rollDur; if(ru>=1){ru=1;done=true;}
+      const idx=ru*(a.roll.length-1);const i0=Math.floor(idx);const f=idx-i0;
+      const p0=a.roll[Math.min(i0,a.roll.length-1)],p1=a.roll[Math.min(i0+1,a.roll.length-1)];
+      pos=p0.clone().lerp(p1,f);
+      u=1;
+    }
     o.ball.position.copy(pos);
     // ---- live ball speed (mph) from real distance / real time between frames ----
     // pos units: x,z in yards; y in scene-units where feet = y/Hscale.
@@ -457,11 +485,12 @@ function stepFlights(now){
       const dy_yd=((pos.y-a.lastPos.y)/Hscale)/3;                      // scene->ft->yd
       const distYd=Math.sqrt(dxz_x*dxz_x+dy_yd*dy_yd+dxz_z*dxz_z);
       const dtAnim=(now-a.lastT)/1000;                                 // animation seconds
-      const dtReal=dtAnim/TIMESCALE;                                   // real flight seconds
+      // air phase uses real flight time; roll phase has no engine time, so scale
+      // ground speed by the same TIMESCALE for a believable (not exact) readout.
+      const dtReal=dtAnim/TIMESCALE;                                   // real seconds
       if(dtReal>1e-4){
         const ydPerS=distYd/dtReal;
         const mph=ydPerS*3*0.681818;                                   // yd/s -> ft/s -> mph
-        // light smoothing so the number doesn't jitter frame-to-frame
         a.speed=a.speed?a.speed*0.7+mph*0.3:mph;
       }
     }
@@ -474,18 +503,21 @@ function stepFlights(now){
     o.trail.geometry.setDrawRange(0,Math.min(60,a.trailPos.length));
     // live HUD = the highest/most recent flight
     const yards=Math.round(pos.x);const ht=Math.round(pos.y/Hscale);  // scene -> feet
-    liveStats={club:d.club,carry:d.carry,cur:yards,ht,apex:d.apex,col:o.col,
-               speed:Math.round(a.speed),tRemain:Math.max(0,(a.ftReal*(1-u))).toFixed(1)};
-    if(u>=1){
-      // land: drop ball at landing, fade trail, end
+    liveStats={club:d.club,carry:d.carry,total:d.total,cur:yards,ht,apex:d.apex,col:o.col,
+               speed:Math.round(a.speed),rolling,
+               tRemain:rolling?'0.0':Math.max(0,(a.ftReal*(1-u))).toFixed(1)};
+    if(done){
       o.ball.visible=false;o.trail.visible=false;o.anim=null;flying--;
       if(flying<=0&&hud){setTimeout(()=>{if(flying<=0)hud.style.opacity=0;},1200);}
     }
   });
   if(liveStats&&hud){
+    const sub = liveStats.rolling
+      ? liveStats.cur+' yd &middot; rolling out &middot; total '+liveStats.total+' yd'
+      : liveStats.cur+' yd carried &middot; height '+liveStats.ht+' ft &middot; '+liveStats.tRemain+'s to land';
     hud.innerHTML='<b style="color:'+liveStats.col+'">'+liveStats.club+'</b>'+
       '<div class="big">'+liveStats.speed+'<span>mph</span></div>'+
-      '<div class="sub">'+liveStats.cur+' yd carried &middot; height '+liveStats.ht+' ft &middot; '+liveStats.tRemain+'s to land</div>';
+      '<div class="sub">'+sub+'</div>';
   }
 }
 

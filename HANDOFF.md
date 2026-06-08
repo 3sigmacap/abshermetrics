@@ -131,7 +131,8 @@ inserts the flag as a minimal diff.)
    Has a **"Roll-out" toggle** (next to Show shots / Show mean): when on, draws a dimmer/thinner
    tube tracing each club's bounce+roll ground path (from meanRoll) to a hollow rest marker.
    normalizeCarries REMOVED — engine landing IS the carry. **Launch** animates the ball over its
-   REAL hang time (uses `flightTime`; pacing const `TIMESCALE`); HUD shows live decelerating ball
+   REAL hang time (uses `flightTime`; pacing const `TIMESCALE`) then continues through the bounce
+   + roll-out to rest (along `meanRoll`, pace `ROLL_MS_PER_YD`) like libgolf; HUD shows live decelerating ball
    speed in mph (computed from real distance/time per frame). Drawn TRUE-TO-SCALE (height ft
    converted to yards via `Hscale=VEXAG/3`, VEXAG=1; matches libgolf's ~1:1 look — was a 3x
    units bug before). Mobile: Launch button lives in
@@ -200,6 +201,18 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **3D launch animation: roll-out + marker sizes (this session):** the ball animation now
+  continues through the GROUND interaction (bounce + roll to rest) instead of stopping at
+  touchdown, like the libgolf visualizer. Two phases in stepFlights: `phase:'air'` (aerial,
+  real-time/decelerating as before) then `phase:'roll'` along the club's `meanRoll` ground
+  path (stored as `o.rollPts`, de-duped). Roll pace is distance-scaled (`ROLL_MS_PER_YD`,
+  clamped). Wedges visibly check/roll back (Gap Wedge 104->102.5), woods roll forward (3W
+  274->282). The HUD switches to "rolling out / total N yd" during the roll. Roll always
+  animates on Launch when ground data exists — independent of the Roll-out TOGGLE (which
+  still controls the static dimmer roll tubes). Also shrank the oversized markers that hid
+  the roll: animated ball radius 2.6->0.9, landing marker 3.2->1.1, rest marker 2.6->0.95,
+  roll tube radius 0.5->0.28 (at true scale 1 unit=1 yd, the old ball was ~5 yd wide). No
+  engine/data change — flight-3d.html only.
 - **3D trajectory vertical-scale fix (this session):** the 3D flight arc was being drawn
   ~3.2x too tall, making every shot (esp. the 3W) look like a steep iron instead of the
   flat, penetrating libgolf shape. Root cause was a units bug: engine height is in FEET but
