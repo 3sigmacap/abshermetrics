@@ -83,15 +83,10 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 </div>
 <div class="page">
 <div class="hero">
-<div class="kicker">Launch-monitor analysis &middot; 11 clubs &middot; 234 shots</div>
+<div class="kicker">Launch-monitor analysis &middot; <span id="kClubs">–</span> clubs &middot; <span id="kShots">–</span> shots</div>
 <h1 class="big">MY <span>BAG</span>, BY THE NUMBERS</h1>
 <p class="lead">Every carry, gap, and miss pattern from my range sessions — modeled through real ball-flight physics. TaylorMade P7MB blades through the bag.</p>
-<div class="stats-strip">
-<div class="stat"><div class="v">271</div><div class="l">Longest carry (3W)</div></div>
-<div class="stat"><div class="v">99</div><div class="l">Shortest carry (SW)</div></div>
-<div class="stat"><div class="v">11</div><div class="l">Clubs tracked</div></div>
-<div class="stat"><div class="v">234</div><div class="l">Shots analyzed</div></div>
-</div>
+<div class="stats-strip" id="statStrip"></div>
 </div>
 
 <div class="tablewrap">
@@ -103,137 +98,7 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <th class="hide-sm">Ball</th><th class="hide-sm">Launch</th>
 <th class="hide-sm">Spin</th><th class="hide-sm">Apex</th><th>Lateral SD</th>
 </tr></thead>
-<tbody><tr>
-<td class="cl">3 Wood</td>
-<td class="num">15°</td>
-<td class="num big2">271</td>
-<td class="num">&plusmn;10.3</td>
-<td class="hide-sm num">163</td>
-<td class="hide-sm num">12.9°</td>
-<td class="hide-sm num">3,297</td>
-<td class="hide-sm num">120</td>
-<td class="num" style="color:#ff9d9d">&plusmn;40.5</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>46</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">3 Iron</td>
-<td class="num">20°</td>
-<td class="num big2">225</td>
-<td class="num">&plusmn;5.9</td>
-<td class="hide-sm num">142</td>
-<td class="hide-sm num">13.5°</td>
-<td class="hide-sm num">3,938</td>
-<td class="hide-sm num">102</td>
-<td class="num">&plusmn;17.3</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>12</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">4 Iron</td>
-<td class="num">23°</td>
-<td class="num big2">213</td>
-<td class="num">&plusmn;6.4</td>
-<td class="hide-sm num">139</td>
-<td class="hide-sm num">14.6°</td>
-<td class="hide-sm num">4,487</td>
-<td class="hide-sm num">106</td>
-<td class="num">&plusmn;14.8</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>12</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">5 Iron</td>
-<td class="num">26°</td>
-<td class="num big2">201</td>
-<td class="num">&plusmn;5.1</td>
-<td class="hide-sm num">134</td>
-<td class="hide-sm num">17.4°</td>
-<td class="hide-sm num">5,115</td>
-<td class="hide-sm num">121</td>
-<td class="num">&plusmn;12.7</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>14</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">6 Iron</td>
-<td class="num">30°</td>
-<td class="num big2">187</td>
-<td class="num">&plusmn;3.7</td>
-<td class="hide-sm num">131</td>
-<td class="hide-sm num">19.2°</td>
-<td class="hide-sm num">6,188</td>
-<td class="hide-sm num">126</td>
-<td class="num">&plusmn;11.3</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>17</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">7 Iron</td>
-<td class="num">34°</td>
-<td class="num big2">170</td>
-<td class="num">&plusmn;5.3</td>
-<td class="hide-sm num">124</td>
-<td class="hide-sm num">22.6°</td>
-<td class="hide-sm num">7,121</td>
-<td class="hide-sm num">133</td>
-<td class="num">&plusmn;10.2</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>12</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">8 Iron</td>
-<td class="num">39°</td>
-<td class="num big2">158</td>
-<td class="num">&plusmn;2.5</td>
-<td class="hide-sm num">119</td>
-<td class="hide-sm num">24.6°</td>
-<td class="hide-sm num">8,033</td>
-<td class="hide-sm num">132</td>
-<td class="num">&plusmn;12.4</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>15</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">9 Iron</td>
-<td class="num">42.5°</td>
-<td class="num big2">143</td>
-<td class="num">&plusmn;3.7</td>
-<td class="hide-sm num">111</td>
-<td class="hide-sm num">26.9°</td>
-<td class="hide-sm num">8,677</td>
-<td class="hide-sm num">126</td>
-<td class="num">&plusmn;8.5</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>15</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">Pitching Wedge</td>
-<td class="num">47°</td>
-<td class="num big2">128</td>
-<td class="num">&plusmn;3.2</td>
-<td class="hide-sm num">104</td>
-<td class="hide-sm num">29.5°</td>
-<td class="hide-sm num">9,270</td>
-<td class="hide-sm num">118</td>
-<td class="num">&plusmn;6.3</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>20</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">Gap Wedge</td>
-<td class="num">52°</td>
-<td class="num big2">108</td>
-<td class="num">&plusmn;4.1</td>
-<td class="hide-sm num">90</td>
-<td class="hide-sm num">34.2°</td>
-<td class="hide-sm num">8,098</td>
-<td class="hide-sm num">104</td>
-<td class="num" style="color:#ff9d9d">&plusmn;20.5</td>
-</tr>
-<tr class="gaprow"><td></td><td></td><td class="gapcell"><span class="gapval"><b>9</b> yd gap</span></td><td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>
-<tr>
-<td class="cl">Sand Wedge</td>
-<td class="num">56°</td>
-<td class="num big2">99</td>
-<td class="num">&plusmn;3.6</td>
-<td class="hide-sm num">87</td>
-<td class="hide-sm num">35.8°</td>
-<td class="hide-sm num">9,004</td>
-<td class="hide-sm num">100</td>
-<td class="num">&plusmn;5</td>
-</tr></tbody>
+<tbody id="tbody"></tbody>
 </table>
 </div>
 </div>
@@ -244,5 +109,95 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <div class="card"><div class="ic">3D</div><h3>Ball Flight</h3><p>Orbit the full trajectories in 3D, fitted to your launch numbers with a drag + Magnus model. Isolate any club.</p><a class="go" href="flight-3d.html">Open 3D &rarr;</a></div>
 <div class="card"><div class="ic">i</div><h3>About the model</h3><p>Carries are measured; curves come from physics (Reynolds- and spin-dependent drag &amp; lift), not anchored to the data. One Gap-Wedge session was realigned for a target-aim offset.</p></div>
 </div>
-<div class="foot"><span>BAGMETRICS &middot; launch-monitor analysis &middot; 234 shots</span><span>physics model: drag + Magnus, Re &amp; spin-rate dependent</span></div>
-</div></body></html>
+<div class="foot"><span>BAGMETRICS &middot; launch-monitor analysis &middot; <span id="fShots">–</span> shots</span><span>physics model: drag + Magnus, Re &amp; spin-rate dependent</span></div>
+</div>
+
+<script>
+// ---- Static config (NOT derivable from shot data) ----
+// Loft = club spec (degrees). Red = editorial two-way-miss flag.
+const LOFT = {"3 Wood":"15\u00b0","3 Iron":"20\u00b0","4 Iron":"23\u00b0","5 Iron":"26\u00b0","6 Iron":"30\u00b0","7 Iron":"34\u00b0","8 Iron":"39\u00b0","9 Iron":"42.5\u00b0","Pitching Wedge":"47\u00b0","Gap Wedge":"52\u00b0","Sand Wedge":"56\u00b0"};
+const RED = new Set(["3 Wood","Gap Wedge"]);
+
+// ---- helpers (match Python: mean, sample stdev, round-half-up like JS Math.round) ----
+const mean = a => a.reduce((s,x)=>s+x,0)/a.length;
+function stdev(a){const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1));}
+const r0 = x => Math.round(x);                 // integer
+const r1 = x => Math.round(x*10)/10;           // 1 decimal
+const comma = x => x.toLocaleString('en-US');  // 1,234
+const f1 = x => r1(x).toFixed(1);              // always 1 decimal in text
+
+fetch('shots.json').then(r=>r.json()).then(data=>{
+  // shots.json is canonical ASCENDING by length; display table is LONGEST first.
+  const asc = data.slice();
+  const disp = data.slice().reverse();
+
+  // per-club computed metrics from the post-exclusion / post-realignment stats rows
+  const M = {};
+  data.forEach(c=>{
+    const st=c.stats;
+    const col=k=>st.map(r=>r[k]);
+    M[c.club]={
+      n: st.length,
+      carry: r0(mean(col('carry'))),
+      sd:    r1(stdev(col('carry'))),
+      ball:  r0(mean(col('bs'))),
+      launch:r1(mean(col('la'))),
+      spin:  r0(mean(col('spin'))),
+      apex:  r0(mean(col('apex'))),
+      lat:   r1(stdev(col('dev')))
+    };
+  });
+
+  const totalShots = data.reduce((s,c)=>s+c.stats.length,0);
+  const nClubs = data.length;
+  const carriesDisp = disp.map(c=>M[c.club].carry);
+  const longest = Math.max(...carriesDisp);
+  const shortest = Math.min(...carriesDisp);
+  const longClub = disp.find(c=>M[c.club].carry===longest).club;
+  const shortClub = disp.find(c=>M[c.club].carry===shortest).club;
+  const abbr = {"3 Wood":"3W","Pitching Wedge":"PW","Gap Wedge":"GW","Sand Wedge":"SW"};
+  const ab = c => abbr[c]||c;
+
+  // hero
+  document.getElementById('kClubs').textContent=nClubs;
+  document.getElementById('kShots').textContent=totalShots;
+  document.getElementById('fShots').textContent=totalShots;
+  document.getElementById('statStrip').innerHTML=
+    `<div class="stat"><div class="v">${longest}</div><div class="l">Longest carry (${ab(longClub)})</div></div>`+
+    `<div class="stat"><div class="v">${shortest}</div><div class="l">Shortest carry (${ab(shortClub)})</div></div>`+
+    `<div class="stat"><div class="v">${nClubs}</div><div class="l">Clubs tracked</div></div>`+
+    `<div class="stat"><div class="v">${totalShots}</div><div class="l">Shots analyzed</div></div>`;
+
+  // table
+  let html='';
+  disp.forEach((c,idx)=>{
+    const m=M[c.club];
+    const latStyle = RED.has(c.club) ? ' style="color:#ff9d9d"' : '';
+    html +=
+      '<tr>'+
+      `<td class="cl">${c.club}</td>`+
+      `<td class="num">${LOFT[c.club]||'\u2013'}</td>`+
+      `<td class="num big2">${m.carry}</td>`+
+      `<td class="num">&plusmn;${f1(m.sd)}</td>`+
+      `<td class="hide-sm num">${m.ball}</td>`+
+      `<td class="hide-sm num">${f1(m.launch)}\u00b0</td>`+
+      `<td class="hide-sm num">${comma(m.spin)}</td>`+
+      `<td class="hide-sm num">${m.apex}</td>`+
+      `<td class="num"${latStyle}>&plusmn;${f1(m.lat)}</td>`+
+      '</tr>';
+    // gap row to next club down
+    if(idx<disp.length-1){
+      const gap=m.carry-M[disp[idx+1].club].carry;
+      html +=
+        '<tr class="gaprow"><td></td><td></td>'+
+        `<td class="gapcell"><span class="gapval"><b>${gap}</b> yd gap</span></td>`+
+        '<td></td><td></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td></tr>';
+    }
+  });
+  document.getElementById('tbody').innerHTML=html;
+}).catch(e=>{
+  document.getElementById('tbody').innerHTML='<tr><td class="cl">Failed to load shots.json</td></tr>';
+  console.error(e);
+});
+</script>
+</body></html>
