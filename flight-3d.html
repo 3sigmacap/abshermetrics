@@ -196,13 +196,24 @@ const VEXAG=1.0;
 const FT_PER_YD=3;
 const Hscale=VEXAG/FT_PER_YD;            // multiply engine height(ft) by this -> scene units(yd)
 function P(x,y,z){return new THREE.Vector3(x, y*Hscale, z);}  // x downrange yd, y height ft->yd*VEXAG, z lateral yd
+const TUBE_R=0.5635;                     // mean-path tube radius (30% thinner than the old 0.805)
 
 // ---- ground ----
-const grid=new THREE.GridHelper(600,60,0x1c3325,0x14241b);
-grid.position.set(150,0,0);scene.add(grid);
+// Field sized to real shot extents: ~0-320 yd downrange, modest lateral spread.
+// (GridHelper is square; we build the field from explicit lines so downrange and
+// lateral can have different extents instead of a giant 600x600 yd square.)
+const FIELD_X0=-20, FIELD_X1=320;     // downrange yards
+const FIELD_Z=70;                     // lateral half-width yards
+const gridMat=new THREE.LineBasicMaterial({color:0x14241b});
+const gridGrp=new THREE.Group();
+for(let x=FIELD_X0;x<=FIELD_X1;x+=20)
+  gridGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(x,0,-FIELD_Z),P(x,0,FIELD_Z)]),gridMat));
+for(let z=-FIELD_Z;z<=FIELD_Z;z+=20)
+  gridGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(FIELD_X0,0,z),P(FIELD_X1,0,z)]),gridMat));
+scene.add(gridGrp);
 const mkMat=new THREE.LineBasicMaterial({color:0x2a4a38});
 for(let yd=0;yd<=300;yd+=50){
-  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(yd,0,-60),P(yd,0,60)]),mkMat));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(yd,0,-40),P(yd,0,40)]),mkMat));
 }
 scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(0,0,0),P(300,0,0)]),new THREE.LineBasicMaterial({color:0x39604a})));
 const tee=new THREE.Mesh(new THREE.SphereGeometry(2.4,16,16),new THREE.MeshBasicMaterial({color:0xd4ff4f}));
@@ -256,7 +267,7 @@ DATA.forEach(d=>{
 
   const meanPts=toPts(d.mean);
   const curve=new THREE.CatmullRomCurve3(meanPts);
-  const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,80,0.805,8,false),new THREE.MeshBasicMaterial({color:col}));
+  const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,80,TUBE_R,8,false),new THREE.MeshBasicMaterial({color:col}));
   // The mean path is already anchored to the measured carry (see normalizeCarries),
   // so the animated ball simply follows it and lands on the measured distance.
   const flightPts=meanPts.map(p=>new THREE.Vector3(p.x,p.y,p.z));
@@ -264,8 +275,9 @@ DATA.forEach(d=>{
   const mk=new THREE.Mesh(new THREE.SphereGeometry(1.1,16,16),new THREE.MeshBasicMaterial({color:col}));
   mk.position.copy(P(d.mean[mn-3],0,d.mean[mn-1]));
 
-  // roll-out path (bounce + roll after landing). Dimmer + thinner tube + a
-  // hollow marker at final rest. From engine `meanRoll`. May be empty/short.
+  // roll-out path (bounce + roll after landing), drawn the SAME as the aerial
+  // path (same tube radius + solid color) so it reads as one continuous
+  // trajectory. From engine `meanRoll`. May be empty/short.
   let rollTube=null, restMk=null, rollPtsClean=null;
   if(Array.isArray(d.meanRoll)&&d.meanRoll.length>=6){
     const rollPts=toPts(d.meanRoll);
@@ -275,8 +287,8 @@ DATA.forEach(d=>{
     rollPtsClean=clean;
     if(clean.length>=2){
       const rollCurve=new THREE.CatmullRomCurve3(clean);
-      rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,0.28,6,false),
-        new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5}));
+      rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,TUBE_R,8,false),
+        new THREE.MeshBasicMaterial({color:col}));
       const rn=d.meanRoll.length;
       restMk=new THREE.Mesh(new THREE.SphereGeometry(0.95,14,14),
         new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5,wireframe:true}));

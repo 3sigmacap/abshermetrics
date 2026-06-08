@@ -201,6 +201,14 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **3D field size, tube thickness, roll-path style (this session):** (1) shrank the oversized
+  ground field — was a 600x600 yd square GridHelper centered at x=150 (lateral spanned +/-300 yd
+  for shots that miss by ~+/-20); now an explicit line grid `FIELD_X0..FIELD_X1` = -20..320 yd
+  downrange, `FIELD_Z` = +/-70 yd lateral. (2) Mean-path tube 30% thinner via shared `TUBE_R`
+  const (0.805 -> 0.5635). (3) The roll-out tube is now drawn the SAME as the aerial tube (same
+  `TUBE_R`, same solid color) so carry + roll read as one continuous trajectory, instead of the
+  old dimmer/thinner (0.28, opacity 0.5) separate-looking element. Roll tube still gated by the
+  Roll-out toggle. flight-3d.html only; no engine/data change.
 - **3D launch animation: roll-out + marker sizes (this session):** the ball animation now
   continues through the GROUND interaction (bounce + roll to rest) instead of stopping at
   touchdown, like the libgolf visualizer. Two phases in stepFlights: `phase:'air'` (aerial,
