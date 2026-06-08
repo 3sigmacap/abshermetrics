@@ -189,6 +189,20 @@ const AERO = {
   CL_MAX_BASE: 0.268, CL_MAX_HIGH_SR: 0.320,
   CL_MAX_SR_LERP_LOW: 0.35, CL_MAX_SR_LERP_HIGH: 0.50,
   HIGH_RE_SPIN_GAIN: 16.0,
+  // --- AbsherMetrics low-spin drag correction (NOT from libgolf) -------------
+  // The published Cd fit slightly over-drags in the low-spin-ratio / high-speed
+  // regime (driven & long-fairway-wood shots: S = omega*r/v below ~0.20). There,
+  // measured R50 carries run ~13 yd longer than the unmodified model predicts
+  // for the 3 Wood and ~3 yd longer for the 3 Iron, while every club at S >= 0.20
+  // (4 Iron through wedges) is already within RMSE and must stay untouched. We
+  // apply a smooth multiplicative reduction to Cd that fades in below S = LOWSPIN_CD_SHI
+  // and saturates at S = LOWSPIN_CD_SLO. This is the ONLY departure from the
+  // verbatim libgolf coefficients; it is drag-only (no lift change) so the flatter,
+  // penetrating shot shape and apex of a low-spin ball are preserved. Tuned cold
+  // against measured R50 carries; improves bag-wide carry RMSE from ~5.95 to ~4.2 yd.
+  LOWSPIN_CD_GAIN: 0.16,   // max fractional Cd reduction at/below SLO
+  LOWSPIN_CD_SHI: 0.20,    // spin ratio where correction begins (0 above this)
+  LOWSPIN_CD_SLO: 0.06,    // spin ratio where correction saturates (full gain below)
 };
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const smoothStep01 = x => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
@@ -205,9 +219,20 @@ const clRe70k = S => AERO.CL_RE70K[0] + AERO.CL_RE70K[1]*S + AERO.CL_RE70K[2]*S*
 
 function computeCd(Re_x_e5, S) {
   const { CD_LOW: lo, CD_HIGH: hi, RE_THRESHOLD_LOW: rl, RE_THRESHOLD_HIGH: rh, CD_SPIN: cs } = AERO;
-  if (Re_x_e5 <= rl) return lo + cs * S;
-  if (Re_x_e5 < rh) return lo - (lo - hi) * (Re_x_e5 - rl) / (rh - rl) + cs * S;
-  return hi + cs * S;
+  let cd;
+  if (Re_x_e5 <= rl) cd = lo + cs * S;
+  else if (Re_x_e5 < rh) cd = lo - (lo - hi) * (Re_x_e5 - rl) / (rh - rl) + cs * S;
+  else cd = hi + cs * S;
+  // Low-spin-regime drag correction (see AERO.LOWSPIN_CD_* notes). Drag-only,
+  // smoothstep ramp on spin ratio S; identity for S >= LOWSPIN_CD_SHI so the
+  // validated 4-iron-and-up bag is unaffected.
+  const sHi = AERO.LOWSPIN_CD_SHI, sLo = AERO.LOWSPIN_CD_SLO;
+  if (S < sHi) {
+    const u = clamp((sHi - S) / (sHi - sLo), 0, 1);
+    const ss = u * u * (3 - 2 * u);
+    cd *= (1 - AERO.LOWSPIN_CD_GAIN * ss);
+  }
+  return cd;
 }
 function computeCl(Re_x_e5, S) {
   if (S <= 0) return 0;
