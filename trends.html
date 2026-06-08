@@ -197,6 +197,12 @@ function classify2(serie,m,club){
     // (e.g. lateral spread had to move >5 yd to count). Treat a change as meaningful
     // when it's a clear FRACTION of the baseline spread, with a small absolute floor.
     thresh=Math.max(first*0.15, 0.8);   // >15% change in spread, min 0.8 yd
+  }else if(m.better==='zero'){
+    // Lateral bias (mean miss left/right). The standard-error test was scatter-driven
+    // and far too strict (~5.5 yd for a club that scatters wide), so real centering
+    // improvements got dismissed. Use a fixed golf-meaningful floor instead: a ~2 yd
+    // shift in average miss is a real aim change worth flagging.
+    thresh=2.0;
   }else{
     // Mean metrics: change must beat the session-to-session sampling noise of the mean,
     // or ~2% of the value, whichever is larger.
