@@ -99,14 +99,16 @@ canvas{display:block;}
   .foot{display:none;}            /* long help text hidden on mobile */
   /* controls: stack the view buttons into a scrollable strip, keep launch reachable */
   /* controls sit ABOVE the collapsed 46px drawer handle so it never hides them */
-  .cambar{left:8px;right:8px;bottom:100px;max-width:none;gap:5px;overflow-x:auto;
+  .cambar{left:8px;right:8px;bottom:60px;max-width:none;gap:5px;overflow-x:auto;
     flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;z-index:32;}
   .cambar .gb{flex:0 0 auto;white-space:nowrap;}
   .camlbl{display:none;}
-  .launchbar{left:8px;right:8px;bottom:60px;justify-content:center;z-index:48;}
-  .launchbar .fire{font-size:18px;padding:11px 26px;}
-  .launchbar .gb{white-space:nowrap;}
-  #hint{left:8px;right:8px;bottom:154px;font-size:9px;text-align:center;z-index:31;}
+  /* Launch lives at the TOP-RIGHT of the scene on mobile, just under the nav, so it's
+     never hidden by the bottom drawer handle or the browser's bottom toolbar. */
+  .launchbar{left:auto;right:10px;top:10px;bottom:auto;justify-content:flex-end;gap:6px;z-index:48;}
+  .launchbar .fire{font-size:17px;padding:10px 22px;}
+  .launchbar .gb{white-space:nowrap;font-size:10px;}
+  #hint{left:8px;right:8px;bottom:108px;font-size:9px;text-align:center;z-index:31;}
   .tag{display:none;}
   #hud .big{font-size:46px;}
   #rdg{display:none;}             /* hover readout is desktop-only */

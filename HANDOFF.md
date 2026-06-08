@@ -144,8 +144,9 @@ inserts the flag as a minimal diff.)
    + roll-out to rest (along `meanRoll`, pace `ROLL_MS_PER_YD`) like libgolf; HUD shows live decelerating ball
    speed in mph (computed from real distance/time per frame). Drawn TRUE-TO-SCALE (height ft
    converted to yards via `Hscale=VEXAG/3`, VEXAG=1; matches libgolf's ~1:1 look — was a 3x
-   units bug before). Mobile: Launch button lives in
-   `.launchbar` (z-48); control bars hide via `body.drawer-open` when the clubs drawer is open.
+   units bug before). Mobile: the Launch bar (Landing-zones + Launch) is pinned TOP-RIGHT of the
+   scene (`.launchbar` right:10/top:10, z-48) so the bottom drawer handle and the browser's bottom
+   toolbar can't hide it; control bars still hide via `body.drawer-open` when the clubs drawer is open.
 6. **raw-data.html** — Raw Data (far right, intentionally LAST). Sortable/filterable table of all
    raw shots; session+club filter chips, search, CSV upload (browser-local). Shows an
    **"In Model" column**: red "Excluded" badge + dimmed row for the 8 dropped shots (reads the
