@@ -196,7 +196,7 @@ const VEXAG=1.0;
 const FT_PER_YD=3;
 const Hscale=VEXAG/FT_PER_YD;            // multiply engine height(ft) by this -> scene units(yd)
 function P(x,y,z){return new THREE.Vector3(x, y*Hscale, z);}  // x downrange yd, y height ft->yd*VEXAG, z lateral yd
-const TUBE_R=0.5635;                     // mean-path tube radius (30% thinner than the old 0.805)
+const TUBE_R=0.282;                      // mean-path tube radius (halved from 0.5635)
 
 // ---- ground ----
 // Field sized to real shot extents: ~0-320 yd downrange, modest lateral spread.
@@ -272,7 +272,7 @@ DATA.forEach(d=>{
   // so the animated ball simply follows it and lands on the measured distance.
   const flightPts=meanPts.map(p=>new THREE.Vector3(p.x,p.y,p.z));
   const mn=d.mean.length;
-  const mk=new THREE.Mesh(new THREE.SphereGeometry(1.1,16,16),new THREE.MeshBasicMaterial({color:col}));
+  const mk=new THREE.Mesh(new THREE.SphereGeometry(0.55,16,16),new THREE.MeshBasicMaterial({color:col}));
   mk.position.copy(P(d.mean[mn-3],0,d.mean[mn-1]));
 
   // roll-out path (bounce + roll after landing), drawn the SAME as the aerial
@@ -290,7 +290,7 @@ DATA.forEach(d=>{
       rollTube=new THREE.Mesh(new THREE.TubeGeometry(rollCurve,60,TUBE_R,8,false),
         new THREE.MeshBasicMaterial({color:col}));
       const rn=d.meanRoll.length;
-      restMk=new THREE.Mesh(new THREE.SphereGeometry(0.95,14,14),
+      restMk=new THREE.Mesh(new THREE.SphereGeometry(0.475,14,14),
         new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.5,wireframe:true}));
       restMk.position.copy(P(d.meanRoll[rn-3],0,d.meanRoll[rn-1]));
     }
@@ -304,7 +304,7 @@ DATA.forEach(d=>{
   ovl.add(disc);ovl.add(ring);ovl.add(gap);ovl.visible=false;
 
   // animated ball + trail (hidden until launched)
-  const ball=new THREE.Mesh(new THREE.SphereGeometry(0.9,16,16),new THREE.MeshBasicMaterial({color:0xffffff}));
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshBasicMaterial({color:0xffffff}));
   ball.visible=false;
   const trailGeom=new THREE.BufferGeometry();
   const TRAIL=60;trailGeom.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TRAIL*3),3));
