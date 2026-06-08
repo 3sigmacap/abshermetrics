@@ -39,11 +39,13 @@ h1.big span{color:var(--accent);}
 .panel h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;font-weight:400;margin-bottom:2px;}
 .panel .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;}
 .metricsel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-.flightviews{display:grid;grid-template-columns:1fr minmax(120px,150px);gap:14px;margin-top:6px;align-items:stretch;}
-.fv-top svg{max-width:150px;margin:0 auto;}
-.fv{background:#0b1410;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;}
+.flightviews{display:grid;grid-template-columns:1fr minmax(120px,160px);gap:14px;margin-top:6px;align-items:stretch;}
+.fv{background:#0b1410;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;display:flex;flex-direction:column;}
 .fv .lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2);margin-bottom:4px;}
 .fv svg{display:block;width:100%;height:auto;}
+/* top-down is a tall column: fill the cell HEIGHT, let width follow its aspect */
+.fv-top{align-items:center;}
+.fv-top svg{width:auto;height:100%;max-height:100%;flex:1;min-height:0;}
 @media(max-width:760px){.flightviews{grid-template-columns:1fr;}}
 .msel{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.12s;}
 .msel.on{background:var(--accent);border-color:var(--accent);color:#0a120d;font-weight:500;}
@@ -285,7 +287,7 @@ function flightViews(club,color){
   // --- TOP-DOWN: bird's-eye, shot travels BOTTOM -> TOP. carry -> vertical (tee at
   //     bottom, landing at top), lateral -> horizontal (miss-left = left, miss-right
   //     = right). TRUE 1:1 (same px/yd both axes). Tall, narrow column. ---
-  const TW=150,TH=300,tm={l:18,r:14,t:14,b:22};
+  const TW=130,TH=360,tm={l:18,r:14,t:14,b:22};
   const tPW=TW-tm.l-tm.r, tPH=TH-tm.t-tm.b;
   const xMax=maxX*1.04;
   let zLo=Math.min(0,...P.map(p=>p[2])), zHi=Math.max(0,...P.map(p=>p[2]));
