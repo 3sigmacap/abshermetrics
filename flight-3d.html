@@ -152,7 +152,7 @@ canvas{display:block;}
 <div class="tog"><button class="gb on" id="tShots">Show shots</button><button class="gb on" id="tMean">Show mean</button><button class="gb" id="tRoll">Roll-out</button></div>
 <div class="glob"><button class="gb" id="gAll">All</button><button class="gb" id="gNone">None</button><button class="gb" id="gIron">Irons</button><button class="gb" id="gWedge">Wedges</button></div>
 <div class="list" id="list"></div>
-<div class="foot">Solid bright line = mean shot. Faint lines = individual shots. Click a club name to isolate it; click its dot to toggle. <b>Launch</b> animates the ball flight; <b>Landing zones</b> shows 1&sigma; dispersion discs + carry rings. Vertical axis exaggerated 3&times;.</div>
+<div class="foot">Solid bright line = mean shot. Faint lines = individual shots. Click a club name to isolate it; click its dot to toggle. <b>Launch</b> animates the ball flight; <b>Landing zones</b> shows 1&sigma; dispersion discs + carry rings. Drawn true-to-scale (height and distance use the same yard scale, like a real ball flight).</div>
 </div></div>
 <script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"}}</script>
 <script type="module">let DATA;
@@ -186,8 +186,16 @@ const rnd=new THREE.WebGLRenderer({antialias:true});
 rnd.setPixelRatio(Math.min(devicePixelRatio,2));
 host.appendChild(rnd.domElement);
 
-const Hscale=1/3;
-function P(x,y,z){return new THREE.Vector3(x, y*Hscale*3, z);}  // x downrange yd, y height ft->yd, z lateral yd
+// Vertical exaggeration. Trajectory height comes from the engine in FEET while
+// downrange/lateral are in YARDS. To draw true-to-scale (like the libgolf
+// visualizer, which is ~1:1) we must convert feet->yards (/3). VEXAG multiplies
+// that: VEXAG=1 is true-to-scale; raise it (e.g. 1.5) if the arc reads too flat
+// when orbiting. Previously this was effectively 3x (feet plotted as yards),
+// which made every shot look like a steep iron - that was a units bug, not a choice.
+const VEXAG=1.0;
+const FT_PER_YD=3;
+const Hscale=VEXAG/FT_PER_YD;            // multiply engine height(ft) by this -> scene units(yd)
+function P(x,y,z){return new THREE.Vector3(x, y*Hscale, z);}  // x downrange yd, y height ft->yd*VEXAG, z lateral yd
 
 // ---- ground ----
 const grid=new THREE.GridHelper(600,60,0x1c3325,0x14241b);
@@ -297,8 +305,8 @@ DATA.forEach(d=>{
 });
 
 // ---- camera (orbit + presets + auto) ----
-let tgt=P(150,30,0).clone();
-let az=-0.7,el=0.5,dist=420;
+let tgt=P(150,22,0).clone();
+let az=-0.7,el=0.42,dist=400;
 // tween targets
 let camTween=null;
 function updCam(){
@@ -314,10 +322,10 @@ function tweenTo(naz,nel,ndist,ntgt,ms=900){
 function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 const PRESETS={
   free:null,
-  dtl:{az:-1.55,el:0.13,dist:430,tgt:P(150,18,0)},   // down the line (behind, looking downrange)
-  behind:{az:0,el:0.32,dist:300,tgt:P(120,25,0)},     // behind tee elevated
+  dtl:{az:-1.55,el:0.11,dist:430,tgt:P(150,16,0)},   // down the line (behind, looking downrange)
+  behind:{az:0,el:0.26,dist:300,tgt:P(120,18,0)},     // behind tee elevated
   top:{az:-0.001,el:1.40,dist:480,tgt:P(150,0,0)},    // top-down
-  side:{az:-Math.PI/2,el:0.22,dist:430,tgt:P(150,30,0)} // side-on profile
+  side:{az:-Math.PI/2,el:0.16,dist:400,tgt:P(150,22,0)} // side-on profile
 };
 let autoOrbit=false;
 function applyPreset(name){
@@ -443,10 +451,10 @@ function stepFlights(now){
     const pos=p0.clone().lerp(p1,f);
     o.ball.position.copy(pos);
     // ---- live ball speed (mph) from real distance / real time between frames ----
-    // pos units: x,z in yards, y in feet (P() maps height ft->scene with Hscale*3=1).
+    // pos units: x,z in yards; y in scene-units where feet = y/Hscale.
     if(a.lastPos){
       const dxz_x=pos.x-a.lastPos.x, dxz_z=pos.z-a.lastPos.z;          // yards
-      const dy_yd=(pos.y-a.lastPos.y)/3;                               // ft -> yd
+      const dy_yd=((pos.y-a.lastPos.y)/Hscale)/3;                      // scene->ft->yd
       const distYd=Math.sqrt(dxz_x*dxz_x+dy_yd*dy_yd+dxz_z*dxz_z);
       const dtAnim=(now-a.lastT)/1000;                                 // animation seconds
       const dtReal=dtAnim/TIMESCALE;                                   // real flight seconds
@@ -465,7 +473,7 @@ function stepFlights(now){
     o.trail.geometry.attributes.position.needsUpdate=true;
     o.trail.geometry.setDrawRange(0,Math.min(60,a.trailPos.length));
     // live HUD = the highest/most recent flight
-    const yards=Math.round(pos.x);const ht=Math.round(pos.y/Hscale/3);
+    const yards=Math.round(pos.x);const ht=Math.round(pos.y/Hscale);  // scene -> feet
     liveStats={club:d.club,carry:d.carry,cur:yards,ht,apex:d.apex,col:o.col,
                speed:Math.round(a.speed),tRemain:Math.max(0,(a.ftReal*(1-u))).toFixed(1)};
     if(u>=1){

@@ -132,7 +132,9 @@ inserts the flag as a minimal diff.)
    tube tracing each club's bounce+roll ground path (from meanRoll) to a hollow rest marker.
    normalizeCarries REMOVED — engine landing IS the carry. **Launch** animates the ball over its
    REAL hang time (uses `flightTime`; pacing const `TIMESCALE`); HUD shows live decelerating ball
-   speed in mph (computed from real distance/time per frame). Mobile: Launch button lives in
+   speed in mph (computed from real distance/time per frame). Drawn TRUE-TO-SCALE (height ft
+   converted to yards via `Hscale=VEXAG/3`, VEXAG=1; matches libgolf's ~1:1 look — was a 3x
+   units bug before). Mobile: Launch button lives in
    `.launchbar` (z-48); control bars hide via `body.drawer-open` when the clubs drawer is open.
 6. **raw-data.html** — Raw Data (far right, intentionally LAST). Sortable/filterable table of all
    raw shots; session+club filter chips, search, CSV upload (browser-local). Shows an
@@ -198,6 +200,19 @@ page. Mobile breakpoint @media(max-width:760px).
 - Claude renders nothing in a browser — flag chart/layout changes as "please eyeball once live".
 
 ## History of major changes (most recent first)
+- **3D trajectory vertical-scale fix (this session):** the 3D flight arc was being drawn
+  ~3.2x too tall, making every shot (esp. the 3W) look like a steep iron instead of the
+  flat, penetrating libgolf shape. Root cause was a units bug: engine height is in FEET but
+  downrange/lateral are in YARDS, and `P()` plotted height as `y*Hscale*3` with Hscale=1/3,
+  i.e. feet-as-yards (3x). The old "Vertical axis exaggerated 3x" footer note was a
+  post-hoc rationalization of that bug, not a design choice. Fixed: `P()` now converts
+  feet->yards via `Hscale=VEXAG/3` (VEXAG=1 => true-to-scale, matching libgolf's ~1:1
+  visualizer; raise VEXAG if the arc reads too flat when orbiting). Verified against the
+  libgolf reference image (pixel-measured): both now ~0.15 height/width and apex at ~65% of
+  carry. Also fixed the dependent feet conversions (live-speed distance calc + HUD height
+  readout: feet = pos.y/Hscale) and retuned camera presets/initial target for the flatter
+  arc. No engine/data change — purely how flight-3d.html draws. Constants at top of the
+  render section: `VEXAG`, `FT_PER_YD`, `Hscale`.
 - **3D flight animation: real-time speed + mobile launch fix (this session):**
   flight-3d.html's Launch animation now plays each shot over its REAL hang time
   (scaled by `TIMESCALE`=0.46, clamped 1.1–3.6s) instead of a flat 1.5s, so a 3W
