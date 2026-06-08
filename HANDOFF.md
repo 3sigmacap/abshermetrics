@@ -231,8 +231,11 @@ page. Mobile breakpoint @media(max-width:760px).
   classify2: SD/spread metrics used to require a change > 0.5x the pooled SD (e.g. lateral spread
   had to move >5 yd to count), so real tightenings showed gray. Now SD metrics use a fraction-of-
   baseline threshold (>15%, min 0.8 yd); mean metrics keep the sampling-noise test. Handled
-  `better:'zero'` (Lateral Bias good when |value| shrinks). Attribution panel unchanged (its
-  cyan/red is a directional decomposition of the carry delta, correct as-is). trends.html only.
+  `better:'zero'` (Lateral Bias good when |value| shrinks). The Metric-Over-Time line chart is
+  now colored by the SELECTED metric's good/bad tone (same green `--good`/red `--bad` as the table
+  rows), not the club color — neutral/non-significant metrics fall back to the club color.
+  Attribution panel unchanged (its cyan/red is a directional decomposition of the carry delta,
+  correct as-is). trends.html only.
 - **3D field size, tube thickness, roll-path style (this session):** (1) shrank the oversized
   ground field — was a 600x600 yd square GridHelper centered at x=150 (lateral spanned +/-300 yd
   for shots that miss by ~+/-20); now an explicit line grid `FIELD_X0..FIELD_X1` = -20..320 yd

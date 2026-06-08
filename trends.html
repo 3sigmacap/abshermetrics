@@ -351,11 +351,24 @@ function render(){
     </div>`;
   }).join('');
 
-  // metric selector + chart
+  // metric selector + chart. Color the line by the selected metric's good/bad
+  // TONE (same green/red as the table below), not the club color, so the trend
+  // reads as improving (green) or regressing (red) at a glance.
   const msel=METRICS.map(m=>`<button class="msel${m.key===activeMetric?' on':''}" data-m="${m.key}">${m.label}</button>`).join('');
   const am=METRICS.find(m=>m.key===activeMetric);
   const se=series(current,am);
-  const chart=lineChart(se,am,color);
+  let lineColor=color;   // default: club color (for neutral metrics / not significant)
+  if(se.length>=2){
+    const cc=classify(se,am);
+    let t='flat';
+    if(cc.sig){
+      if(am.better==='up'||am.better==='down'){ t=(cc.dir===am.better)?'good':'bad'; }
+      else if(am.better==='zero'){ t=(Math.abs(cc.last)<Math.abs(cc.first))?'good':'bad'; }
+    }
+    if(t==='good')lineColor='var(--good)';
+    else if(t==='bad')lineColor='var(--bad)';
+  }
+  const chart=lineChart(se,am,lineColor);
 
   // full table: every metric, first vs last + delta
   const trows=METRICS.map(m=>{
