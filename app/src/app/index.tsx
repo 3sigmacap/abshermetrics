@@ -1,11 +1,11 @@
 import { Link, type Href } from 'expo-router';
 import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { type ClubData } from '@/data';
-import { useAuth } from '@/lib/auth';
 import { useClubs } from '@/lib/dataStore';
-import { ABBR, C, LOFT, RED } from '@/theme';
+import { useProfile } from '@/lib/profile';
+import { ABBR, C, RED } from '@/theme';
 
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length;
 const r1 = (x: number) => (Math.round(x * 10) / 10).toFixed(1);
@@ -36,15 +36,16 @@ interface Row {
   red: boolean;
 }
 
-function buildRows(clubs: ClubData[]) {
+function buildRows(clubs: ClubData[], getLoft: (club: string) => number | null) {
   // clubs is ascending by length; the table shows longest first.
   const disp = [...clubs].reverse();
   const rows: Row[] = disp.map((c) => {
     const col = (k: 'bs' | 'la' | 'spin') =>
       c.stats.map((s) => s[k]).filter((v): v is number => v != null);
+    const lf = getLoft(c.club);
     return {
       club: c.club,
-      loft: LOFT[c.club] ?? '–',
+      loft: lf != null ? `${lf}°` : '–',
       carry: c.carry, // engine values, baked into shots.json
       total: c.total,
       apex: c.apex,
@@ -99,10 +100,10 @@ function cellText(row: Row, key: string): string {
 
 export default function Overview() {
   const { clubs, loading } = useClubs();
-  const { session, signOut } = useAuth();
+  const { getLoft } = useProfile();
   const ab = (c: string) => ABBR[c] ?? c;
 
-  const d = useMemo(() => (clubs.length ? buildRows(clubs) : null), [clubs]);
+  const d = useMemo(() => (clubs.length ? buildRows(clubs, getLoft) : null), [clubs, getLoft]);
 
   if (loading) {
     return (
@@ -130,16 +131,6 @@ export default function Overview() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
-      <Text style={styles.kicker}>
-        LAUNCH-MONITOR ANALYSIS · {d.nClubs} CLUBS · {d.totalShots} SHOTS
-      </Text>
-      <Text style={styles.title}>
-        MY <Text style={styles.titleAccent}>BAG</Text>, BY THE NUMBERS
-      </Text>
-      <Text style={styles.lead}>
-        Every carry, gap, and miss pattern from my range sessions — modeled through real
-        ball-flight physics. TaylorMade P7MB blades through the bag.
-      </Text>
 
       <View style={styles.statStrip}>
         {stats.map((s) => (
@@ -213,15 +204,6 @@ export default function Overview() {
       <Link href={'/model' as Href} style={styles.modelLink}>
         About the model →
       </Link>
-
-      <View style={styles.account}>
-        <Text style={styles.accountEmail} numberOfLines={1}>
-          {session?.user?.email ?? ''}
-        </Text>
-        <Pressable onPress={signOut} hitSlop={8}>
-          <Text style={styles.signOut}>Sign out</Text>
-        </Pressable>
-      </View>
     </ScrollView>
   );
 }

@@ -19,6 +19,12 @@ export const CLUB_COLORS: Record<string, string> = {
   '6 Iron': '#ff6bd0', '7 Iron': '#ff7a7a', '8 Iron': '#ff9d52', '9 Iron': '#ffc24f',
   'Pitching Wedge': '#ffe94f', 'Gap Wedge': '#d4ff4f', 'Sand Wedge': '#9dff7f',
 };
+// Standard TaylorMade-ish defaults (degrees); users override per club in Settings.
+export const DEFAULT_LOFTS: Record<string, number> = {
+  '3 Wood': 15, '3 Iron': 20, '4 Iron': 23, '5 Iron': 26, '6 Iron': 30, '7 Iron': 34,
+  '8 Iron': 39, '9 Iron': 42.5, 'Pitching Wedge': 47, 'Gap Wedge': 52, 'Sand Wedge': 56,
+};
+
 const FALLBACK_COLORS = ['#d4ff4f', '#7fd4ff', '#ff9d9d', '#b6f24f', '#4fd6a8', '#f2b24f', '#c98fff'];
 export const clubColor = (club: string, i = 0) => CLUB_COLORS[club] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length];
 

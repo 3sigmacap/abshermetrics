@@ -3,6 +3,7 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
 import { simulateFlight } from '@/engine';
+import { useProfile } from '@/lib/profile';
 import { C } from '@/theme';
 
 /* Engine-computed average-shot views (side profile + top-down), animated at real
@@ -37,6 +38,7 @@ export default function AverageShot({
 }) {
   const { width } = useWindowDimensions();
   const narrow = width < 520; // phones: stack the two views vertically
+  const reduceMotion = !!useProfile().prefs.reduceMotion;
   const [side, setSide] = useState<Pt | null>(null);
   const [top, setTop] = useState<Pt | null>(null);
 
@@ -147,6 +149,12 @@ export default function AverageShot({
       setTop(null);
       return;
     }
+    // Reduce-motion: show the static trajectory with no looping ball.
+    if (reduceMotion) {
+      setSide(null);
+      setTop(null);
+      return;
+    }
     setSide(built.sStart);
     setTop(built.tStart);
     const FLIGHT_MS = built.ft * 1000;
@@ -172,7 +180,7 @@ export default function AverageShot({
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [built]);
+  }, [built, reduceMotion]);
 
   if (!result || !built) return null;
 

@@ -1,0 +1,119 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+
+import { useAuth } from '@/lib/auth';
+import { DEFAULT_LOFTS } from '@/lib/clubData';
+import { supabase } from '@/lib/supabase';
+
+export interface ClubSpec {
+  loft?: number;
+  inBag?: boolean;
+}
+export interface AppPrefs {
+  reduceMotion?: boolean;
+}
+
+interface ProfileState {
+  displayName: string;
+  email: string;
+  clubSpecs: Record<string, ClubSpec>;
+  prefs: AppPrefs;
+  loading: boolean;
+  /** loft for a club: user override, else standard default, else null */
+  getLoft: (club: string) => number | null;
+  inBag: (club: string) => boolean;
+  updateName: (name: string) => Promise<{ error?: string }>;
+  saveClubSpecs: (specs: Record<string, ClubSpec>) => Promise<{ error?: string }>;
+  updatePrefs: (p: Partial<AppPrefs>) => Promise<{ error?: string }>;
+  changePassword: (password: string) => Promise<{ error?: string }>;
+}
+
+const ProfileContext = createContext<ProfileState | undefined>(undefined);
+
+export function ProfileProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth();
+  const [displayName, setDisplayName] = useState('');
+  const [clubSpecs, setClubSpecs] = useState<Record<string, ClubSpec>>({});
+  const [prefs, setPrefs] = useState<AppPrefs>({});
+  const [loading, setLoading] = useState(true);
+
+  const email = session?.user?.email ?? '';
+  const uid = session?.user?.id;
+
+  const refresh = useCallback(async () => {
+    if (!uid) {
+      setDisplayName('');
+      setClubSpecs({});
+      setPrefs({});
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    // select('*') so it works even if the club_specs/prefs columns aren't added yet
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (!error && data) {
+      setDisplayName((data.display_name as string) ?? '');
+      setClubSpecs((data.club_specs as Record<string, ClubSpec>) ?? {});
+      setPrefs((data.prefs as AppPrefs) ?? {});
+    }
+    setLoading(false);
+  }, [uid]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const value = useMemo<ProfileState>(
+    () => ({
+      displayName,
+      email,
+      clubSpecs,
+      prefs,
+      loading,
+      getLoft: (club) => clubSpecs[club]?.loft ?? DEFAULT_LOFTS[club] ?? null,
+      inBag: (club) => clubSpecs[club]?.inBag ?? true,
+      updateName: async (name) => {
+        if (!uid) return { error: 'Not signed in' };
+        const { error } = await supabase.from('profiles').update({ display_name: name }).eq('id', uid);
+        if (error) return { error: error.message };
+        setDisplayName(name);
+        return {};
+      },
+      saveClubSpecs: async (specs) => {
+        if (!uid) return { error: 'Not signed in' };
+        const { error } = await supabase.from('profiles').update({ club_specs: specs }).eq('id', uid);
+        if (error) return { error: error.message };
+        setClubSpecs(specs);
+        return {};
+      },
+      updatePrefs: async (p) => {
+        if (!uid) return { error: 'Not signed in' };
+        const next = { ...prefs, ...p };
+        const { error } = await supabase.from('profiles').update({ prefs: next }).eq('id', uid);
+        if (error) return { error: error.message };
+        setPrefs(next);
+        return {};
+      },
+      changePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password });
+        return error ? { error: error.message } : {};
+      },
+    }),
+    [displayName, email, clubSpecs, prefs, loading, uid],
+  );
+
+  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
+}
+
+export function useProfile(): ProfileState {
+  const v = useContext(ProfileContext);
+  if (!v) throw new Error('useProfile must be used within a <ProfileProvider>');
+  return v;
+}

@@ -22,6 +22,10 @@ create policy "profiles select own" on public.profiles for select using (auth.ui
 create policy "profiles insert own" on public.profiles for insert with check (auth.uid() = id);
 create policy "profiles update own" on public.profiles for update using (auth.uid() = id);
 
+-- per-user club specs (lofts, in-bag) + app preferences (added for Settings).
+alter table public.profiles add column if not exists club_specs jsonb not null default '{}'::jsonb;
+alter table public.profiles add column if not exists prefs jsonb not null default '{}'::jsonb;
+
 -- auto-create a profile row when a new auth user signs up
 create or replace function public.handle_new_user()
 returns trigger

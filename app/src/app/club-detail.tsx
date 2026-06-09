@@ -353,8 +353,6 @@ export default function ClubDetail() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
-      <Text style={styles.kicker}>DEEP DIVE</Text>
-
       {/* club picker chips */}
       <ScrollView
         horizontal

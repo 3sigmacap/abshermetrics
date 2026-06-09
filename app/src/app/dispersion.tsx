@@ -603,11 +603,6 @@ export default function Dispersion() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
-      <Text style={styles.kicker}>SIDE PROFILE + TOP-DOWN · TRUE 1:1 SCALE</Text>
-      <Text style={styles.title}>
-        2D <Text style={styles.titleAccent}>DISPERSION</Text> VIEWS
-      </Text>
-
       {/* club chips */}
       <View style={styles.chips}>
         {data.map((d) => {
