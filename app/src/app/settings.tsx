@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
 import { useProfile } from '@/lib/profile';
+import { supabase } from '@/lib/supabase';
 import { C } from '@/theme';
 
 const mono = 'monospace';
@@ -69,6 +71,30 @@ export default function Settings() {
     setBusy(false);
     setPw('');
     flash(error ?? 'Password updated', !!error);
+  };
+
+  const deleteAccount = () => {
+    Alert.alert(
+      'Delete account',
+      'This permanently deletes your account and all your shots and sessions. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setBusy(true);
+            const { error } = await supabase.functions.invoke('delete-account');
+            setBusy(false);
+            if (error) {
+              flash(`Could not delete account: ${error.message}`, true);
+              return;
+            }
+            await signOut();
+          },
+        },
+      ],
+    );
   };
 
   const saveClubs = async () => {
@@ -128,6 +154,9 @@ export default function Settings() {
 
         <Pressable onPress={signOut} style={styles.signOut}>
           <Text style={styles.signOutTxt}>Sign out</Text>
+        </Pressable>
+        <Pressable onPress={deleteAccount} style={styles.deleteBtn} disabled={busy}>
+          <Text style={styles.deleteTxt}>Delete account</Text>
         </Pressable>
       </Section>
 
@@ -210,6 +239,8 @@ const styles = StyleSheet.create({
   smallBtnTxt: { color: C.ink, fontWeight: '700', fontSize: 13 },
   signOut: { marginTop: 18, borderWidth: 1, borderColor: '#5e2b2b', borderRadius: 8, paddingVertical: 12, alignItems: 'center' },
   signOutTxt: { color: C.bad, fontWeight: '700', fontSize: 15 },
+  deleteBtn: { marginTop: 10, paddingVertical: 10, alignItems: 'center' },
+  deleteTxt: { color: C.dim2, fontSize: 13, textDecorationLine: 'underline' },
   help: { fontFamily: mono, fontSize: 11, color: C.dim2, lineHeight: 16, marginBottom: 8 },
   clubRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#142219' },
   clubHead: { borderBottomColor: C.line2 },
