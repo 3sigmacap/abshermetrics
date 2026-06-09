@@ -48,6 +48,12 @@ const BASE = raw as unknown as {
 
 export const CLUB_ORDER: string[] = BASE.club_order || [];
 export const BASE_COLORS: Record<string, string> = BASE.colors || {};
+
+/** Bundled sample data (the developer's R50 history) for the in-app "Load sample data" action. */
+export const SAMPLE_DATA: { sessions: Session[]; shots: RawShot[] } = {
+  sessions: BASE.sessions ?? [],
+  shots: BASE.shots ?? [],
+};
 export const orderIdx = (c: string) => {
   const i = CLUB_ORDER.indexOf(c);
   return i < 0 ? 999 : i;

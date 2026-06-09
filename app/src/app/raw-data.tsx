@@ -3,6 +3,7 @@ import { File } from 'expo-file-system';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,7 +14,7 @@ import {
 
 import BackBar from '@/components/BackBar';
 import { useAuth } from '@/lib/auth';
-import { useRawData } from '@/lib/dataStore';
+import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { orderIdx, type RawShot } from '@/rawData';
@@ -167,6 +168,28 @@ export default function RawData() {
   const [query, setQuery] = useState('');
   const [uploadMsg, setUploadMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { deleteAllData } = useDataActions();
+
+  const confirmDeleteAll = useCallback(() => {
+    Alert.alert(
+      'Delete all data',
+      'This permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete all',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            const { error } = await deleteAllData();
+            setDeleting(false);
+            if (error) Alert.alert('Could not delete', error);
+          },
+        },
+      ],
+    );
+  }, [deleteAllData]);
 
   // Table rows = each RawShot tagged with display index + resolved color.
   const rows = useMemo<Row[]>(
@@ -450,6 +473,15 @@ export default function RawData() {
       </View>
       {uploadMsg ? <Text style={styles.uploadMsg}>{uploadMsg}</Text> : null}
 
+      {totalCount > 0 ? (
+        <Pressable
+          onPress={confirmDeleteAll}
+          disabled={deleting}
+          style={[styles.deleteAllBtn, deleting && styles.uploadBusy]}>
+          <Text style={styles.deleteAllTxt}>{deleting ? '… deleting' : 'Delete all data'}</Text>
+        </Pressable>
+      ) : null}
+
       {/* table */}
       <View style={styles.tableWrap}>
         <ScrollView horizontal showsHorizontalScrollIndicator>
@@ -486,7 +518,7 @@ export default function RawData() {
             {shots.length === 0 ? (
               <View style={styles.emptyRow}>
                 <Text style={styles.emptyTitle}>No shots yet</Text>
-                <Text style={styles.emptyHint}>Upload a session on the Raw tab to get started.</Text>
+                <Text style={styles.emptyHint}>Upload a session CSV above, or load sample data from the Bag tab.</Text>
               </View>
             ) : shown.length === 0 ? (
               <View style={styles.emptyRow}>
@@ -640,6 +672,16 @@ const styles = StyleSheet.create({
   uploadChip: { borderStyle: 'dashed', borderColor: C.accent2, backgroundColor: C.bg2 },
   uploadBusy: { opacity: 0.6 },
   uploadTxt: { fontFamily: mono, fontSize: 11, color: C.accent2 },
+  deleteAllBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#5e2b2b',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+  },
+  deleteAllTxt: { fontFamily: mono, fontSize: 12, color: C.bad, fontWeight: '700' },
   uploadMsg: { fontFamily: mono, fontSize: 11, color: C.dim, marginTop: 8, minHeight: 14 },
 
   tableWrap: {

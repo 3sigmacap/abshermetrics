@@ -1,9 +1,9 @@
 import { Link, type Href } from 'expo-router';
-import { useMemo } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { type ClubData } from '@/data';
-import { useClubs } from '@/lib/dataStore';
+import { useClubs, useDataActions } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
 import { ABBR, C, RED } from '@/theme';
 
@@ -101,6 +101,9 @@ function cellText(row: Row, key: string): string {
 export default function Overview() {
   const { clubs, loading } = useClubs();
   const { getLoft } = useProfile();
+  const { loadSampleData } = useDataActions();
+  const [seeding, setSeeding] = useState(false);
+  const [seedErr, setSeedErr] = useState<string | null>(null);
   const ab = (c: string) => ABBR[c] ?? c;
 
   const d = useMemo(() => (clubs.length ? buildRows(clubs, getLoft) : null), [clubs, getLoft]);
@@ -117,7 +120,26 @@ export default function Overview() {
     return (
       <View style={styles.center}>
         <Text style={styles.emptyTitle}>No shots yet</Text>
-        <Text style={styles.emptyDim}>Upload a session on the Raw tab to get started.</Text>
+        <Text style={styles.emptyDim}>
+          Upload a CSV from Settings → Raw shot data, or load sample data to explore the app.
+        </Text>
+        <Pressable
+          onPress={async () => {
+            setSeeding(true);
+            setSeedErr(null);
+            const { error } = await loadSampleData();
+            setSeeding(false);
+            if (error) setSeedErr(error);
+          }}
+          style={styles.sampleBtn}
+          disabled={seeding}>
+          {seeding ? (
+            <ActivityIndicator color="#0a120d" />
+          ) : (
+            <Text style={styles.sampleBtnTxt}>Load sample data</Text>
+          )}
+        </Pressable>
+        {seedErr ? <Text style={styles.seedErr}>{seedErr}</Text> : null}
       </View>
     );
   }
@@ -230,7 +252,18 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: C.ink },
-  emptyDim: { fontFamily: mono, fontSize: 13, color: C.dim, marginTop: 8, textAlign: 'center' },
+  emptyDim: { fontFamily: mono, fontSize: 13, color: C.dim, marginTop: 8, textAlign: 'center', lineHeight: 19 },
+  sampleBtn: {
+    marginTop: 22,
+    backgroundColor: C.accent,
+    borderRadius: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 26,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  sampleBtnTxt: { color: '#0a120d', fontWeight: '800', fontSize: 15 },
+  seedErr: { fontFamily: mono, fontSize: 12, color: C.bad, marginTop: 12, textAlign: 'center' },
   kicker: { fontFamily: mono, fontSize: 11, letterSpacing: 2, color: C.accent },
   title: { fontSize: 38, fontWeight: '800', color: C.ink, marginTop: 8, letterSpacing: 0.5 },
   titleAccent: { color: C.accent },
