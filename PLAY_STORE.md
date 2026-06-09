@@ -114,6 +114,11 @@ Notes for the reviewer's questions:
 
 ## 4. App content questionnaires
 - **Privacy policy:** https://abshermetrics.com/privacy.html
+- **App access:** the app is login-gated, so a reviewer needs a demo login.
+  Choose "All or some functionality is restricted" and add a demo credential:
+  - Username: `demo@abshermetrics.com` (password kept out of git — paste it from chat / your notes)
+  - Pre-seeded with 5 sessions / 242 shots / 11 clubs so all charts render.
+  - Instruction text: "Sign in with the email and password below. The account is pre-loaded with sample golf launch-monitor data."
 - **Ads:** No, the app does not contain ads.
 - **Content rating (IARC):** category "Reference, News, or Educational" (or "Utility");
   answer **No** to all violence / sexual / language / controlled-substance / gambling /
