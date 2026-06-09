@@ -112,7 +112,8 @@ export default function Flight3D() {
     setView((v) => ({
       ...v,
       az: start.current.az + tx * 0.006,
-      el: Math.max(-0.25, Math.min(1.55, start.current.el - ty * 0.006)),
+      // drag up tilts the view up (was inverted)
+      el: Math.max(-0.25, Math.min(1.55, start.current.el + ty * 0.006)),
     }));
   }, []);
   const beginPinch = useCallback(() => {

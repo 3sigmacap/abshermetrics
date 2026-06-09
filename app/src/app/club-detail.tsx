@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Circle, Line, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
+import AverageShot, { type LaunchMeans } from '@/components/AverageShot';
 import CLUBS, { type ClubData } from '@/data';
 import { fmt, mean, sd } from '@/lib/format';
 import { C } from '@/theme';
@@ -288,6 +289,13 @@ export default function ClubDetail() {
 
   const d = useMemo(() => clubs.find((c) => c.club === current), [clubs, current]);
 
+  // mean launch for the engine-computed Average Shot views
+  const launch = useMemo<LaunchMeans | null>(() => {
+    if (!d) return null;
+    const m = (k: string) => mean(d.stats.map((s) => (s as any)[k]).filter((v: any) => v != null) as number[]);
+    return { bs: m('bs'), la: m('la'), spin: m('spin'), axis: m('axis') || 0, ld: m('ld') || 0 };
+  }, [d]);
+
   const view = useMemo(() => {
     if (!d) return null;
     const S = buildShots(d);
@@ -386,6 +394,9 @@ export default function ClubDetail() {
             />
             <HCard v={String(view.S.length)} label="Shots" sub={`#${view.rank} longest in bag`} />
           </View>
+
+          {/* Average shot (engine-computed, animated) — moved here from Trends */}
+          <AverageShot club={d.club} color={d.color} launch={launch} />
 
           {/* Carry Distribution */}
           <View style={styles.panel}>

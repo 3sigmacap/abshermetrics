@@ -12,15 +12,12 @@ const comma = (x: number) => Math.round(x).toLocaleString('en-US');
 type Col = { key: string; label: string; w: number; left?: boolean; accent?: boolean };
 const COLS: Col[] = [
   { key: 'club', label: 'Club', w: 140, left: true },
-  { key: 'loft', label: 'Loft', w: 54 },
+  { key: 'loft', label: 'Loft', w: 64 },
   { key: 'carry', label: 'Carry', w: 62, accent: true },
   { key: 'total', label: 'Total', w: 58 },
-  { key: 'sd', label: '±SD', w: 70 },
   { key: 'ball', label: 'Ball', w: 54 },
   { key: 'launch', label: 'Launch', w: 68 },
-  { key: 'spin', label: 'Spin', w: 76 },
   { key: 'apex', label: 'Apex', w: 56 },
-  { key: 'lat', label: 'Lat SD', w: 72 },
 ];
 
 interface Row {
@@ -187,9 +184,8 @@ export default function Overview() {
       </ScrollView>
 
       <Text style={styles.note}>
-        Carry & apex in yards/feet · ball speed mph · spin rpm · lateral SD = sideways spread
-        (1σ). The gap between two clubs is the carry difference. Red lateral values flag the
-        two-way-miss clubs (3-Wood, Gap Wedge).
+        Carry & apex in yards/feet · ball speed mph · launch in degrees. The number between two
+        clubs is the carry gap. Tap the Clubs tab for full per-club detail.
       </Text>
 
       <Link href={'/model' as Href} style={styles.modelLink}>
