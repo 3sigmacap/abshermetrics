@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
 import { simulateFlight } from '@/engine';
@@ -35,6 +35,8 @@ export default function AverageShot({
   color: string;
   launch: LaunchMeans | null;
 }) {
+  const { width } = useWindowDimensions();
+  const narrow = width < 520; // phones: stack the two views vertically
   const [side, setSide] = useState<Pt | null>(null);
   const [top, setTop] = useState<Pt | null>(null);
 
@@ -180,8 +182,8 @@ export default function AverageShot({
       <Text style={styles.hint}>
         ENGINE-COMPUTED MEAN TRAJECTORY · SIDE + TOP-DOWN (TRUE 1:1) · REAL-TIME ({built.ft.toFixed(1)}s FLIGHT)
       </Text>
-      <View style={styles.flightRow}>
-        <View style={[styles.fv, { flex: 1 }]}>
+      <View style={[styles.flightRow, narrow && styles.flightCol]}>
+        <View style={[styles.fv, narrow ? styles.fvFull : styles.fvSide]}>
           <Text style={styles.fvLbl}>SIDE VIEW — HEIGHT VS CARRY</Text>
           <Svg viewBox={`0 0 ${built.SW} ${built.SH}`} width="100%" height={140}>
             {built.sGridLines.map((g, i) => (
@@ -203,7 +205,7 @@ export default function AverageShot({
             {side && <Circle cx={side[0]} cy={side[1]} r={3.4} fill="#fff" />}
           </Svg>
         </View>
-        <View style={[styles.fv, styles.fvTop]}>
+        <View style={[styles.fv, styles.fvTop, narrow && styles.fvTopNarrow]}>
           <Text style={styles.fvLbl}>TOP DOWN · ←L / R→</Text>
           <Svg viewBox={`0 0 ${built.TW} ${built.TH}`} width={108} height={300}>
             <Rect x={built.tm.l} y={built.tm.t} width={built.tPW} height={built.tPH} fill="#16271d" />
@@ -245,7 +247,11 @@ const styles = StyleSheet.create({
   h2: { fontSize: 20, fontWeight: '700', marginBottom: 2 },
   hint: { fontFamily: 'monospace', fontSize: 9, color: C.dim2, letterSpacing: 0.5, marginBottom: 10 },
   flightRow: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
+  flightCol: { flexDirection: 'column' },
   fv: { backgroundColor: '#0b1410', borderWidth: 1, borderColor: C.line, borderRadius: 10, padding: 8 },
+  fvSide: { flex: 1 },
+  fvFull: { alignSelf: 'stretch' },
   fvTop: { alignItems: 'center' },
+  fvTopNarrow: { alignSelf: 'center' },
   fvLbl: { fontFamily: 'monospace', fontSize: 8.5, color: C.dim2, letterSpacing: 0.5, marginBottom: 4, textTransform: 'uppercase' },
 });

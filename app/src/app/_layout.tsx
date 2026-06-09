@@ -1,18 +1,29 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { StatusBar } from 'expo-status-bar';
-import { Text } from 'react-native';
+import { useEffect } from 'react';
+import { type ColorValue } from 'react-native';
 
 import { C } from '@/theme';
 
-// Lightweight emoji tab icons (no extra dependency). Keyed per route.
-const icon =
-  (glyph: string) =>
-  ({ focused }: { focused: boolean }) => (
-    <Text style={{ fontSize: 17, opacity: focused ? 1 : 0.55 }}>{glyph}</Text>
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+// Monochrome icons tinted by the tab color (accent when active, dim when not) —
+// matches the app palette. Concepts mirror the old emoji.
+const tabIcon =
+  (name: IconName) =>
+  ({ color, size }: { color: ColorValue; size: number }) => (
+    <MaterialCommunityIcons name={name} size={size ?? 22} color={color as string} />
   );
 
 // Tab order mirrors the web app's nav: Overview · Club Detail · Trends · 2D · 3D · Raw.
 export default function RootLayout() {
+  // Portrait everywhere; the 3D screen unlocks landscape on focus (see flight-3d.tsx).
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+  }, []);
+
   return (
     <>
       <StatusBar style="light" />
@@ -27,12 +38,12 @@ export default function RootLayout() {
           tabBarInactiveTintColor: C.dim,
           tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         }}>
-        <Tabs.Screen name="index" options={{ title: 'Bag', tabBarIcon: icon('⛳') }} />
-        <Tabs.Screen name="club-detail" options={{ title: 'Clubs', tabBarIcon: icon('🏌️') }} />
-        <Tabs.Screen name="trends" options={{ title: 'Trends', tabBarIcon: icon('📈') }} />
-        <Tabs.Screen name="dispersion" options={{ title: '2D', tabBarIcon: icon('🎯') }} />
-        <Tabs.Screen name="flight-3d" options={{ title: '3D', tabBarIcon: icon('✈️') }} />
-        <Tabs.Screen name="raw-data" options={{ title: 'Raw', tabBarIcon: icon('📋') }} />
+        <Tabs.Screen name="index" options={{ title: 'Bag', tabBarIcon: tabIcon('golf') }} />
+        <Tabs.Screen name="club-detail" options={{ title: 'Clubs', tabBarIcon: tabIcon('golf-tee') }} />
+        <Tabs.Screen name="trends" options={{ title: 'Trends', tabBarIcon: tabIcon('chart-line') }} />
+        <Tabs.Screen name="dispersion" options={{ title: '2D', tabBarIcon: tabIcon('target') }} />
+        <Tabs.Screen name="flight-3d" options={{ title: '3D', tabBarIcon: tabIcon('airplane-takeoff') }} />
+        <Tabs.Screen name="raw-data" options={{ title: 'Raw', tabBarIcon: tabIcon('clipboard-text-outline') }} />
         {/* Linked from the Bag screen, not shown as a tab (mirrors the web). */}
         <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
       </Tabs>

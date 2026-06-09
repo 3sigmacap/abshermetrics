@@ -1,5 +1,7 @@
+import { useFocusEffect } from 'expo-router';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { Circle, G, Line, Path, Polygon, Svg } from 'react-native-svg';
@@ -78,6 +80,18 @@ const CAMS = [
 
 export default function Flight3D() {
   const clubs = useMemo(() => [...data].sort((a, b) => b.carry - a.carry), []);
+  const { width: winW, height: winH } = useWindowDimensions();
+  const landscape = winW > winH;
+
+  // Allow landscape while viewing 3D; restore portrait when leaving the tab.
+  useFocusEffect(
+    useCallback(() => {
+      ScreenOrientation.unlockAsync().catch(() => {});
+      return () => {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      };
+    }, []),
+  );
 
   const [view, setView] = useState<View3>({ ...PRESETS.free, ox: 0, oy: 30 });
   const [visible, setVisible] = useState<Record<string, boolean>>(() =>
@@ -396,6 +410,81 @@ export default function Flight3D() {
   });
   const chipTxt = (on: boolean, color?: string) => ({ color: on ? '#0a120d' : color || C.dim });
 
+  const scene3d = (
+    <View style={[styles.frame, landscape && styles.frameFill]}>
+      <GestureDetector gesture={gesture}>
+        <View style={landscape ? styles.sceneFill : styles.sceneAspect}>
+          <Svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%">
+            <G>{scene}</G>
+            {ballNodes}
+          </Svg>
+          {hud && (
+            <View pointerEvents="none" style={styles.hud}>
+              <Text style={[styles.hudClub, { color: hud.color }]}>{hud.club}</Text>
+              <Text style={styles.hudBig}>
+                {hud.mph}
+                <Text style={styles.hudUnit}> mph</Text>
+              </Text>
+              <Text style={styles.hudSub}>
+                {hud.yd} yd carry · {hud.ft} ft high
+              </Text>
+            </View>
+          )}
+        </View>
+      </GestureDetector>
+    </View>
+  );
+
+  const controlsContent = (
+    <>
+      <View style={styles.row}>
+        <Pressable onPress={launching ? stopLaunch : launch} style={[styles.btn, styles.fire, { backgroundColor: launching ? C.bad : C.accent }]}>
+          <Text style={styles.fireTxt}>{launching ? '■ Stop' : '▶ Launch'}</Text>
+        </Pressable>
+        <Pressable onPress={() => setShowMean((s) => !s)} style={[styles.btn, chip(showMean)]}>
+          <Text style={[styles.btnTxt, chipTxt(showMean)]}>Show mean</Text>
+        </Pressable>
+        <Pressable onPress={() => setShowShots((s) => !s)} style={[styles.btn, chip(showShots)]}>
+          <Text style={[styles.btnTxt, chipTxt(showShots)]}>Show shots</Text>
+        </Pressable>
+      </View>
+      <View style={styles.row}>
+        <Pressable onPress={() => setGroup(() => true)} style={[styles.btn, styles.ghost]}>
+          <Text style={[styles.btnTxt, { color: C.dim }]}>All</Text>
+        </Pressable>
+        <Pressable onPress={() => setGroup(() => false)} style={[styles.btn, styles.ghost]}>
+          <Text style={[styles.btnTxt, { color: C.dim }]}>None</Text>
+        </Pressable>
+      </View>
+      <View style={styles.row}>
+        {clubs.map((c) => {
+          const on = visible[c.club];
+          return (
+            <Pressable key={c.club} onPress={() => toggle(c.club)} style={[styles.clubChip, chip(on, c.color)]}>
+              <View style={[styles.dot, { backgroundColor: on ? '#0a120d' : c.color }]} />
+              <Text style={[styles.clubTxt, chipTxt(on, c.color)]}>{c.club}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </>
+  );
+
+  // Landscape: scene fills the screen, controls in a scrollable side panel.
+  if (landscape) {
+    return (
+      <GestureHandlerRootView style={styles.page}>
+        <View style={styles.landRow}>
+          {scene3d}
+          <ScrollView style={styles.sidePanel} contentContainerStyle={styles.sidePanelInner}>
+            {controlsContent}
+          </ScrollView>
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
+  // Portrait: header, scene (aspect), controls below.
   return (
     <GestureHandlerRootView style={styles.page}>
       <View style={styles.header}>
@@ -404,66 +493,8 @@ export default function Flight3D() {
         </Text>
         <Text style={styles.hint}>drag · orbit   ·   pinch · zoom   ·   two-finger · pan</Text>
       </View>
-
-      {/* scene */}
-      <View style={styles.frame}>
-        <GestureDetector gesture={gesture}>
-          <View style={styles.sceneBox}>
-            <Svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%">
-              <G>{scene}</G>
-              {ballNodes}
-            </Svg>
-            {hud && (
-              <View pointerEvents="none" style={styles.hud}>
-                <Text style={[styles.hudClub, { color: hud.color }]}>{hud.club}</Text>
-                <Text style={styles.hudBig}>
-                  {hud.mph}
-                  <Text style={styles.hudUnit}> mph</Text>
-                </Text>
-                <Text style={styles.hudSub}>
-                  {hud.yd} yd carry · {hud.ft} ft high
-                </Text>
-              </View>
-            )}
-          </View>
-        </GestureDetector>
-      </View>
-
-      {/* controls (scrollable row sets) */}
-      <View style={styles.controls}>
-        <View style={styles.row}>
-          <Pressable onPress={launching ? stopLaunch : launch} style={[styles.btn, styles.fire, { backgroundColor: launching ? C.bad : C.accent }]}>
-            <Text style={styles.fireTxt}>{launching ? '■ Stop' : '▶ Launch'}</Text>
-          </Pressable>
-          <Pressable onPress={() => setShowMean((s) => !s)} style={[styles.btn, chip(showMean)]}>
-            <Text style={[styles.btnTxt, chipTxt(showMean)]}>Show mean</Text>
-          </Pressable>
-          <Pressable onPress={() => setShowShots((s) => !s)} style={[styles.btn, chip(showShots)]}>
-            <Text style={[styles.btnTxt, chipTxt(showShots)]}>Show shots</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.row}>
-          <Pressable onPress={() => setGroup(() => true)} style={[styles.btn, styles.ghost]}>
-            <Text style={[styles.btnTxt, { color: C.dim }]}>All</Text>
-          </Pressable>
-          <Pressable onPress={() => setGroup(() => false)} style={[styles.btn, styles.ghost]}>
-            <Text style={[styles.btnTxt, { color: C.dim }]}>None</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.row}>
-          {clubs.map((c) => {
-            const on = visible[c.club];
-            return (
-              <Pressable key={c.club} onPress={() => toggle(c.club)} style={[styles.clubChip, chip(on, c.color)]}>
-                <View style={[styles.dot, { backgroundColor: on ? '#0a120d' : c.color }]} />
-                <Text style={[styles.clubTxt, chipTxt(on, c.color)]}>{c.club}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      {scene3d}
+      <View style={styles.controls}>{controlsContent}</View>
     </GestureHandlerRootView>
   );
 }
@@ -474,7 +505,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: 0.5 },
   hint: { fontFamily: MONO, fontSize: 10.5, color: C.dim2, marginTop: 2, letterSpacing: 0.5 },
   frame: { marginHorizontal: 12, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#070f0b', overflow: 'hidden' },
-  sceneBox: { width: '100%', aspectRatio: W / H },
+  frameFill: { flex: 1, minWidth: 0, margin: 8 },
+  sceneAspect: { width: '100%', aspectRatio: W / H },
+  sceneFill: { flex: 1, minHeight: 200 },
+  landRow: { flex: 1, flexDirection: 'row' },
+  sidePanel: { width: 200, flexGrow: 0, flexShrink: 0, borderLeftWidth: 1, borderLeftColor: C.line },
+  sidePanelInner: { padding: 8, paddingBottom: 28, gap: 6 },
   hud: { position: 'absolute', top: 14, left: 0, right: 0, alignItems: 'center' },
   hudClub: { fontFamily: MONO, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   hudBig: { fontFamily: MONO, fontSize: 44, color: '#fff', fontWeight: '800', lineHeight: 46 },
