@@ -8,7 +8,11 @@
     "scheme": "abshermetrics",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.abshermetrics.app"
+      "bundleIdentifier": "com.abshermetrics.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.abshermetrics.app",
