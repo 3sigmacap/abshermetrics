@@ -81,14 +81,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       inBag: (club) => clubSpecs[club]?.inBag ?? true,
       updateName: async (name) => {
         if (!uid) return { error: 'Not signed in' };
-        const { error } = await supabase.from('profiles').update({ display_name: name }).eq('id', uid);
+        // upsert (not update) so the save never silently no-ops if the profile
+        // row is somehow missing — the INSERT path passes RLS (auth.uid() = id).
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ id: uid, display_name: name }, { onConflict: 'id' });
         if (error) return { error: error.message };
         setDisplayName(name);
         return {};
       },
       saveClubSpecs: async (specs) => {
         if (!uid) return { error: 'Not signed in' };
-        const { error } = await supabase.from('profiles').update({ club_specs: specs }).eq('id', uid);
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ id: uid, club_specs: specs }, { onConflict: 'id' });
         if (error) return { error: error.message };
         setClubSpecs(specs);
         return {};
@@ -96,7 +102,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       updatePrefs: async (p) => {
         if (!uid) return { error: 'Not signed in' };
         const next = { ...prefs, ...p };
-        const { error } = await supabase.from('profiles').update({ prefs: next }).eq('id', uid);
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({ id: uid, prefs: next }, { onConflict: 'id' });
         if (error) return { error: error.message };
         setPrefs(next);
         return {};

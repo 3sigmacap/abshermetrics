@@ -87,7 +87,8 @@ export default function Settings() {
             const { error } = await supabase.functions.invoke('delete-account');
             setBusy(false);
             if (error) {
-              flash(`Could not delete account: ${error.message}`, true);
+              const m = error.message || 'Unknown error';
+              flash(`Could not delete account: ${m}`, true);
               return;
             }
             await signOut();
