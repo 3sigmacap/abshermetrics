@@ -85,9 +85,9 @@ export default function Flight3D() {
   );
   const [showShots, setShowShots] = useState(true);
   const [showMean, setShowMean] = useState(true);
-  const [showRoll, setShowRoll] = useState(false);
-  const [showZones, setShowZones] = useState(false);
-  const [autoOrbit, setAutoOrbit] = useState(false);
+  const showRoll = true; // always on, no toggle (per request)
+  const showZones = false; // landing zones removed from UI (render code kept, dormant)
+  const [autoOrbit, setAutoOrbit] = useState(false); // button removed; rotate manually. code kept.
   const [interacting, setInteracting] = useState(false);
   const [cam, setCam] = useState('free');
 
@@ -434,28 +434,11 @@ export default function Flight3D() {
           <Pressable onPress={launching ? stopLaunch : launch} style={[styles.btn, styles.fire, { backgroundColor: launching ? C.bad : C.accent }]}>
             <Text style={styles.fireTxt}>{launching ? '■ Stop' : '▶ Launch'}</Text>
           </Pressable>
-          {CAMS.map((cc) => (
-            <Pressable key={cc.k} onPress={() => preset(cc.k)} style={[styles.btn, chip(cam === cc.k)]}>
-              <Text style={[styles.btnTxt, chipTxt(cam === cc.k)]}>{cc.label}</Text>
-            </Pressable>
-          ))}
-          <Pressable onPress={() => setAutoOrbit((a) => !a)} style={[styles.btn, chip(autoOrbit)]}>
-            <Text style={[styles.btnTxt, chipTxt(autoOrbit)]}>Auto-orbit</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.row}>
           <Pressable onPress={() => setShowMean((s) => !s)} style={[styles.btn, chip(showMean)]}>
             <Text style={[styles.btnTxt, chipTxt(showMean)]}>Show mean</Text>
           </Pressable>
           <Pressable onPress={() => setShowShots((s) => !s)} style={[styles.btn, chip(showShots)]}>
             <Text style={[styles.btnTxt, chipTxt(showShots)]}>Show shots</Text>
-          </Pressable>
-          <Pressable onPress={() => setShowRoll((s) => !s)} style={[styles.btn, chip(showRoll)]}>
-            <Text style={[styles.btnTxt, chipTxt(showRoll)]}>Roll-out</Text>
-          </Pressable>
-          <Pressable onPress={() => setShowZones((s) => !s)} style={[styles.btn, chip(showZones)]}>
-            <Text style={[styles.btnTxt, chipTxt(showZones)]}>Landing zones</Text>
           </Pressable>
         </View>
 
@@ -465,12 +448,6 @@ export default function Flight3D() {
           </Pressable>
           <Pressable onPress={() => setGroup(() => false)} style={[styles.btn, styles.ghost]}>
             <Text style={[styles.btnTxt, { color: C.dim }]}>None</Text>
-          </Pressable>
-          <Pressable onPress={() => setGroup((c) => c.includes('Iron') || c.includes('Wood'))} style={[styles.btn, styles.ghost]}>
-            <Text style={[styles.btnTxt, { color: C.dim }]}>Irons</Text>
-          </Pressable>
-          <Pressable onPress={() => setGroup((c) => c.includes('Wedge'))} style={[styles.btn, styles.ghost]}>
-            <Text style={[styles.btnTxt, { color: C.dim }]}>Wedges</Text>
           </Pressable>
         </View>
 
