@@ -1,3 +1,4 @@
+import { Link, type Href } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -188,6 +189,10 @@ export default function Overview() {
         (1σ). The gap between two clubs is the carry difference. Red lateral values flag the
         two-way-miss clubs (3-Wood, Gap Wedge).
       </Text>
+
+      <Link href={'/model' as Href} style={styles.modelLink}>
+        About the model →
+      </Link>
     </ScrollView>
   );
 }
@@ -236,4 +241,5 @@ const styles = StyleSheet.create({
   gapText: { fontFamily: mono, fontSize: 10, color: C.dim2, textAlign: 'right', letterSpacing: 0.5 },
 
   note: { fontFamily: mono, fontSize: 11, color: C.dim2, marginTop: 16, lineHeight: 18 },
+  modelLink: { fontFamily: mono, fontSize: 12, color: C.accent2, marginTop: 18, letterSpacing: 0.5 },
 });

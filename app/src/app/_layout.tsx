@@ -25,6 +25,8 @@ export default function RootLayout() {
         <Tabs.Screen name="dispersion" options={{ title: '2D' }} />
         <Tabs.Screen name="flight-3d" options={{ title: '3D' }} />
         <Tabs.Screen name="raw-data" options={{ title: 'Raw' }} />
+        {/* Linked from the Bag screen, not shown as a tab (mirrors the web). */}
+        <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
       </Tabs>
     </>
   );
