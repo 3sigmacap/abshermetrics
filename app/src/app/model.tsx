@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import BackBar from '@/components/BackBar';
 import { C } from '@/theme';
 
 /**
@@ -122,6 +123,7 @@ function CoefTable() {
 export default function ModelScreen() {
   return (
     <ScrollView style={s.page} contentContainerStyle={s.content}>
+      <BackBar label="Bag" />
       <Kicker>THE ENGINE</Kicker>
       <H1>
         From launch numbers to <Text style={s.h1Accent}>ball flight</Text>

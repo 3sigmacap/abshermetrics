@@ -1,3 +1,5 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -31,6 +33,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function Settings() {
   const { signOut } = useAuth();
   const profile = useProfile();
+  const router = useRouter();
 
   const [name, setName] = useState(profile.displayName);
   const [pw, setPw] = useState('');
@@ -161,6 +164,18 @@ export default function Settings() {
         </Pressable>
       </Section>
 
+      {/* DATA */}
+      <Section title="DATA">
+        <Pressable onPress={() => router.push('/raw-data' as Href)} style={styles.navRow}>
+          <MaterialCommunityIcons name="clipboard-text-outline" size={20} color={C.accent} />
+          <View style={styles.navText}>
+            <Text style={styles.navLabel}>Raw shot data</Text>
+            <Text style={styles.help}>Every shot exactly as measured, filterable by session.</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={C.dim2} />
+        </Pressable>
+      </Section>
+
       {/* MY CLUBS */}
       <Section title="MY CLUBS">
         <Text style={styles.help}>
@@ -256,6 +271,9 @@ const styles = StyleSheet.create({
   cBag: { width: 64, alignItems: 'center' },
   saveBtn: { backgroundColor: C.accent, borderRadius: 9, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
   saveBtnTxt: { color: '#0a120d', fontWeight: '800', fontSize: 15 },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  navText: { flex: 1 },
+  navLabel: { color: C.ink, fontSize: 15, fontWeight: '600', marginBottom: 2 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   toggleLabel: { color: C.ink, fontSize: 15, fontWeight: '600', marginBottom: 2 },
   foot: { fontFamily: mono, fontSize: 11, color: C.dim2, textAlign: 'center', marginTop: 8 },

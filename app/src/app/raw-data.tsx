@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import BackBar from '@/components/BackBar';
 import { useAuth } from '@/lib/auth';
 import { useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
@@ -364,6 +365,7 @@ export default function RawData() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+      <BackBar label="Settings" />
       <Text style={styles.kicker}>GARMIN APPROACH R50</Text>
       <Text style={styles.title}>
         Raw <Text style={styles.titleAccent}>Shot Data</Text>

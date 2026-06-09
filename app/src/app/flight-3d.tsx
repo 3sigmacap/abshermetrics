@@ -1,4 +1,4 @@
-import { useFocusEffect, useNavigation } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -84,12 +84,6 @@ export default function Flight3D() {
   const clubs = useMemo(() => [...data].sort((a, b) => b.carry - a.carry), [data]);
   const { width: winW, height: winH } = useWindowDimensions();
   const landscape = winW > winH;
-
-  // Hide the nav header ("3D" title) in landscape so the plot fills that space.
-  const navigation = useNavigation();
-  useEffect(() => {
-    navigation.setOptions({ headerShown: !landscape });
-  }, [landscape, navigation]);
 
   // Allow landscape while viewing 3D; restore portrait when leaving the tab.
   useFocusEffect(
