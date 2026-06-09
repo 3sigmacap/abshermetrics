@@ -1,8 +1,9 @@
 import { Link, type Href } from 'expo-router';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import CLUBS, { type ClubData } from '@/data';
+import { useAuth } from '@/lib/auth';
 import { ABBR, C, LOFT, RED } from '@/theme';
 
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length;
@@ -97,6 +98,7 @@ function cellText(row: Row, key: string): string {
 
 export default function Overview() {
   const d = useMemo(buildRows, []);
+  const { session, signOut } = useAuth();
   const ab = (c: string) => ABBR[c] ?? c;
 
   const stats = [
@@ -191,6 +193,15 @@ export default function Overview() {
       <Link href={'/model' as Href} style={styles.modelLink}>
         About the model →
       </Link>
+
+      <View style={styles.account}>
+        <Text style={styles.accountEmail} numberOfLines={1}>
+          {session?.user?.email ?? ''}
+        </Text>
+        <Pressable onPress={signOut} hitSlop={8}>
+          <Text style={styles.signOut}>Sign out</Text>
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }
@@ -248,4 +259,16 @@ const styles = StyleSheet.create({
 
   note: { fontFamily: mono, fontSize: 11, color: C.dim2, marginTop: 16, lineHeight: 18 },
   modelLink: { fontFamily: mono, fontSize: 12, color: C.accent2, marginTop: 18, letterSpacing: 0.5 },
+  account: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 26,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: C.line,
+  },
+  accountEmail: { fontFamily: mono, fontSize: 11, color: C.dim2, flex: 1, marginRight: 10 },
+  signOut: { fontFamily: mono, fontSize: 12, color: C.bad },
 });
+
