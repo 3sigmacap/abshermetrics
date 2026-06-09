@@ -575,6 +575,14 @@ export default function Trends() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+      <Text style={styles.kicker}>OVER TIME</Text>
+      <Text style={styles.title}>
+        Performance <Text style={styles.titleAccent}>Trends</Text>
+      </Text>
+      <Text style={styles.lead}>
+        How each club's numbers have moved session to session. Pick a club to see its biggest changes, then drill into
+        any single metric. Meaningful shifts are flagged — small session-to-session noise is not.
+      </Text>
 
       {/* legend */}
       <View style={styles.legend}>

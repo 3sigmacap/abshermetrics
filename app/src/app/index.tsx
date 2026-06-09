@@ -131,6 +131,16 @@ export default function Overview() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+      <Text style={styles.kicker}>
+        LAUNCH-MONITOR ANALYSIS · {d.nClubs} CLUBS · {d.totalShots} SHOTS
+      </Text>
+      <Text style={styles.title}>
+        MY <Text style={styles.titleAccent}>BAG</Text>, BY THE NUMBERS
+      </Text>
+      <Text style={styles.lead}>
+        Every carry, gap, and miss pattern from my range sessions — modeled through real
+        ball-flight physics. TaylorMade P7MB blades through the bag.
+      </Text>
 
       <View style={styles.statStrip}>
         {stats.map((s) => (

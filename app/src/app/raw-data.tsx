@@ -364,6 +364,16 @@ export default function RawData() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+      <Text style={styles.kicker}>GARMIN APPROACH R50</Text>
+      <Text style={styles.title}>
+        Raw <Text style={styles.titleAccent}>Shot Data</Text>
+      </Text>
+      <Text style={styles.lead}>
+        Every individual shot exactly as measured by the launch monitor — no smoothing, no
+        modeling. Tap any column header to sort; filter by club or session. Shots marked{' '}
+        <Text style={styles.exInline}>Excluded</Text> were dropped during cleaning
+        (mishits/outliers) and don&apos;t feed the charts, averages, or 3D flight.
+      </Text>
 
       {/* search + count */}
       <View style={styles.row}>

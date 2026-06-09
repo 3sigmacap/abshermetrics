@@ -75,6 +75,9 @@ export default function RootLayout() {
                 headerShadowVisible: false,
                 headerTitleStyle: { color: C.ink, fontWeight: '700' },
                 headerTintColor: C.accent,
+                // No header title text — each screen has its own in-screen title.
+                // The bar stays (gear + safe-area spacing); tab labels use `title`.
+                headerTitle: () => null,
                 headerRight: () => <HeaderGear />,
                 tabBarStyle: { backgroundColor: C.bg2, borderTopColor: C.line },
                 tabBarActiveTintColor: C.accent,

@@ -530,6 +530,9 @@ export default function Flight3D() {
   return (
     <GestureHandlerRootView style={styles.page}>
       <View style={styles.header}>
+        <Text style={styles.title}>
+          Ball <Text style={{ color: C.accent }}>Flight</Text>
+        </Text>
         <Text style={styles.hint}>drag · orbit   ·   pinch · zoom   ·   two-finger · pan</Text>
       </View>
       {scene3d}
