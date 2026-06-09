@@ -31,7 +31,8 @@
       "ios": {
         "ascApiKeyPath": "./appstore-api-key.p8",
         "ascApiKeyId": "B9DKR3PSS8",
-        "ascApiKeyIssuerId": "9fbb029e-05c2-4769-8630-67d6624232c5"
+        "ascApiKeyIssuerId": "9fbb029e-05c2-4769-8630-67d6624232c5",
+        "ascAppId": "6778607525"
       }
     }
   }
