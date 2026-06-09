@@ -77,6 +77,11 @@ const FIELD_MAP: Record<string, string> = {
 // Intermediate parsed shot, carrying a JS Date until sessionFromFile resolves it.
 type ParsedShot = RawShot & { _ts?: Date };
 
+// Abuse guards. RLS already scopes any uploaded data to the uploader's own
+// account, so these protect device memory + the shared DB quota, not isolation.
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB per file
+const MAX_ROWS = 10_000; // per file — a real range session is a few hundred shots
+
 function parseCSV(text: string): ParsedShot[] {
   const lines = text
     .replace(/^﻿/, '')
@@ -98,7 +103,9 @@ function parseCSV(text: string): ParsedShot[] {
     for (const [csvName, key] of Object.entries(FIELD_MAP)) {
       if (row[csvName] !== undefined && row[csvName] !== '') {
         const n = parseFloat(row[csvName]);
-        if (!Number.isNaN(n)) (o as Record<string, unknown>)[key] = Math.round(n * 100) / 100;
+        const r = Math.round(n * 100) / 100;
+        // Number.isFinite rejects NaN AND Infinity (e.g. "1e308" overflows on round).
+        if (Number.isFinite(r)) (o as Record<string, unknown>)[key] = r;
       }
     }
     // parse date: "06/05/26 15:24:33 PM"
@@ -111,6 +118,7 @@ function parseCSV(text: string): ParsedShot[] {
       o._ts = new Date();
     }
     out.push(o);
+    if (out.length >= MAX_ROWS) break; // cap rows per file
   }
   return out;
 }
@@ -314,6 +322,10 @@ export default function RawData() {
       // Each file = one session's worth of shots.
       const files: RawShot[][] = [];
       for (const asset of res.assets) {
+        if (asset.size && asset.size > MAX_FILE_BYTES) {
+          setUploadMsg('Skipped "' + (asset.name ?? 'file') + '": larger than 10 MB.');
+          continue;
+        }
         const txt = asset.base64
           ? decodeBase64Utf8(asset.base64)
           : await new File(asset.uri).text();
@@ -360,11 +372,14 @@ export default function RawData() {
           total: s.total ?? null,
           dev: s.dev ?? null,
         }));
-        const { error: ie } = await supabase.from('shots').insert(insertRows);
-        if (ie) {
-          setUploadMsg('Could not save shots (' + ie.message + ').');
-          setBusy(false);
-          return;
+        // Chunked inserts so a large session doesn't blow up a single request.
+        for (let i = 0; i < insertRows.length; i += 500) {
+          const { error: ie } = await supabase.from('shots').insert(insertRows.slice(i, i + 500));
+          if (ie) {
+            setUploadMsg('Could not save shots (' + ie.message + ').');
+            setBusy(false);
+            return;
+          }
         }
         added += insertRows.length;
       }
