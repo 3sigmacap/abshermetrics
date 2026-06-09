@@ -40,37 +40,47 @@ AbsherMetrics
 
 **Short description** (≤80 chars)
 ```
-Track, analyze, and visualize your golf launch-monitor data in stunning 3D.
+Why did your carry change? Golf analytics powered by a real ball-flight model.
 ```
 
 **Full description** (≤4000 chars)
 ```
-AbsherMetrics turns your launch-monitor numbers into clear, beautiful insight.
-Upload your shot data and instantly see your bag come to life — carry, total,
-apex, spin, and dispersion for every club, plus an interactive 3D view of your
-ball flight.
+Most golf apps show you WHAT your numbers are. AbsherMetrics shows you WHY they
+changed.
 
-WHAT YOU GET
+Upload your launch-monitor data and AbsherMetrics runs a real ball-flight physics
+model on your shots — turning raw numbers into answers, not just charts.
+
+WHY DID MY CARRY CHANGE? (the insight no other app gives you)
+When your carry moves from one range session to the next, AbsherMetrics breaks the
+change down to its true causes. Pick any two sessions and the physics model
+attributes the yardage difference across the three things that actually move the
+ball — ball speed, launch angle, and spin. So you don't just see that your 7-iron
+lost 5 yards; you see that 4 of them came from slower ball speed and 1 from added
+spin. That's a diagnosis of your game, not just a dashboard.
+
+POWERFUL ANALYTICS
+• Trends — compare any set of sessions and watch carry, launch, spin, and ball
+  speed move over time, with the physics-based attribution of every carry change.
 • Your bag at a glance — carry, total, apex, ball speed, and loft for every club.
 • Per-club detail — an animated "average shot" from the side and top down.
-• 2D dispersion — see your shot pattern and consistency for each club.
+• 2D dispersion — your shot pattern and consistency for each club.
 • Interactive 3D ball flight — orbit, zoom, and pan a true-to-physics trajectory;
-  tap Launch to watch the shot fly. Open it in landscape for a full-screen view.
-• Trends — compare any set of range sessions to see how your numbers are moving.
+  tap Launch to watch the shot fly. Full-screen in landscape.
 • Raw data — every shot in a sortable table, filterable by session.
 
-BUILT FOR YOUR DATA
-• Upload a CSV from your launch monitor and your whole bag is computed on-device.
-• Set your clubs and lofts once; the rest of the app uses them everywhere.
-• Ball flight is computed with a real physics model — not canned animations.
+BUILT ON REAL PHYSICS
+• Upload a CSV from your launch monitor; your whole bag is computed on-device with
+  the same ball-flight model used to simulate the trajectories — no guesswork, no
+  canned animations.
+• Set your clubs and lofts once; the app uses them everywhere.
 
 PRIVATE BY DESIGN
 • Your account and shots are yours alone, protected by database row-level security.
 • No ads. No third-party analytics. We don't sell or share your data.
 • Delete your account and all your data anytime, instantly, right in the app.
 
-Whether you're dialing in gapping, chasing consistency, or just love the numbers,
-AbsherMetrics helps you understand your game.
+Stop guessing why you hit it shorter today. AbsherMetrics tells you why.
 ```
 
 **App category:** Sports
