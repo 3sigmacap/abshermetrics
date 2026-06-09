@@ -11,16 +11,16 @@ const comma = (x: number) => Math.round(x).toLocaleString('en-US');
 
 type Col = { key: string; label: string; w: number; left?: boolean; accent?: boolean };
 const COLS: Col[] = [
-  { key: 'club', label: 'Club', w: 116, left: true },
-  { key: 'loft', label: 'Loft', w: 56 },
-  { key: 'carry', label: 'Carry', w: 60, accent: true },
-  { key: 'total', label: 'Total', w: 56 },
-  { key: 'sd', label: '±SD', w: 58 },
-  { key: 'ball', label: 'Ball', w: 52 },
-  { key: 'launch', label: 'Launch', w: 64 },
-  { key: 'spin', label: 'Spin', w: 66 },
-  { key: 'apex', label: 'Apex', w: 54 },
-  { key: 'lat', label: 'Lat SD', w: 66 },
+  { key: 'club', label: 'Club', w: 140, left: true },
+  { key: 'loft', label: 'Loft', w: 54 },
+  { key: 'carry', label: 'Carry', w: 62, accent: true },
+  { key: 'total', label: 'Total', w: 58 },
+  { key: 'sd', label: '±SD', w: 70 },
+  { key: 'ball', label: 'Ball', w: 54 },
+  { key: 'launch', label: 'Launch', w: 68 },
+  { key: 'spin', label: 'Spin', w: 76 },
+  { key: 'apex', label: 'Apex', w: 56 },
+  { key: 'lat', label: 'Lat SD', w: 72 },
 ];
 
 interface Row {
@@ -143,6 +143,7 @@ export default function Overview() {
             {COLS.map((c) => (
               <Text
                 key={c.key}
+                numberOfLines={1}
                 style={[styles.th, { width: c.w }, c.left ? styles.left : styles.right]}>
                 {c.label}
               </Text>
@@ -150,7 +151,7 @@ export default function Overview() {
           </View>
 
           {d.rows.map((row, idx) => (
-            <View key={row.club}>
+            <View key={row.club} style={styles.groupRow}>
               <View style={styles.tr}>
                 {COLS.map((c) => {
                   const isClub = c.key === 'club';
@@ -158,6 +159,7 @@ export default function Overview() {
                   return (
                     <Text
                       key={c.key}
+                      numberOfLines={1}
                       style={[
                         styles.td,
                         { width: c.w },
@@ -174,7 +176,7 @@ export default function Overview() {
               {idx < d.rows.length - 1 && (
                 <View style={[styles.tr, styles.gapRow]}>
                   <View style={{ width: COLS[0].w + COLS[1].w }} />
-                  <Text style={[styles.gapText, { width: COLS[2].w }]}>
+                  <Text numberOfLines={1} style={[styles.gapText, { width: COLS[2].w }]}>
                     ↕ {row.carry - d.rows[idx + 1].carry} yd
                   </Text>
                 </View>
@@ -206,8 +208,15 @@ const styles = StyleSheet.create({
   titleAccent: { color: C.accent },
   lead: { fontSize: 15, color: C.dim, marginTop: 10, lineHeight: 21 },
 
-  statStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: 22, marginTop: 22, marginBottom: 8 },
-  stat: { minWidth: 90 },
+  statStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 18,
+    marginTop: 22,
+    marginBottom: 8,
+  },
+  stat: { width: '47%' },
   statV: { fontFamily: mono, fontSize: 30, color: C.accent },
   statL: { fontFamily: mono, fontSize: 10, color: C.dim, letterSpacing: 1, marginTop: 3 },
 
@@ -222,6 +231,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg2,
   },
   tr: { flexDirection: 'row', alignItems: 'center' },
+  groupRow: { borderBottomWidth: 1, borderBottomColor: '#142219' },
   headRow: { borderBottomWidth: 1, borderBottomColor: C.line, paddingVertical: 10 },
   th: {
     fontFamily: mono,
@@ -231,13 +241,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     paddingHorizontal: 10,
   },
-  td: { fontFamily: mono, fontSize: 13, color: C.dim, paddingHorizontal: 10, paddingVertical: 11 },
+  td: { fontFamily: mono, fontSize: 13, color: C.dim, paddingHorizontal: 10, paddingTop: 10 },
   left: { textAlign: 'left' },
   right: { textAlign: 'right' },
-  clubCell: { color: C.ink, fontWeight: '700', fontFamily: 'System', fontSize: 15 },
+  clubCell: { color: C.ink, fontWeight: '700', fontFamily: 'System', fontSize: 14 },
   accentCell: { color: C.accent, fontSize: 15, fontWeight: '600' },
   redCell: { color: C.bad },
-  gapRow: { paddingBottom: 6, marginTop: -4 },
+  gapRow: { paddingTop: 2, paddingBottom: 8 },
   gapText: { fontFamily: mono, fontSize: 10, color: C.dim2, textAlign: 'right', letterSpacing: 0.5 },
 
   note: { fontFamily: mono, fontSize: 11, color: C.dim2, marginTop: 16, lineHeight: 18 },

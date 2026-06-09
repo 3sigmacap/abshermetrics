@@ -371,7 +371,7 @@ export default function ClubDetail() {
               v={fmt(mean(view.totals), 0)}
               unit=" yd"
               label="Avg Total"
-              sub={`+${fmt(mean(view.totals) - view.cMean, 1)} roll`}
+              sub={`${fmt(mean(view.totals) - view.cMean, 1, true)} roll`}
             />
             <HCard
               v={fmt(mean(view.apexes), 0)}
