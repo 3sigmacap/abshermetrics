@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "AbsherMetrics",
+    "slug": "abshermetrics",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "abshermetrics",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.abshermetrics.app"
     },
     "android": {
+      "package": "com.abshermetrics.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

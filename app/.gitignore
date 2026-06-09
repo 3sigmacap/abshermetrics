@@ -21,8 +21,10 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# Generated copies of shared web-app files (source of truth lives at repo root)
-src/shared/
+# NOTE: src/shared/ holds generated copies of the repo-root engine + datasets.
+# They are COMMITTED (not ignored) so EAS cloud builds always have them.
+# Source of truth remains the repo-root files; re-run `npm run sync-shared`
+# (auto-runs before start/build) after editing flight-engine.js or shots.json.
 
 # debug
 npm-debug.*
