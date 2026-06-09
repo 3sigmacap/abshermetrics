@@ -25,6 +25,14 @@ h1.big span{color:var(--accent);}
 .pchip:hover{color:var(--ink);}
 .pchip.on{color:#0a120d;font-weight:600;}
 
+/* session selector (mirrors Raw Data) — global, persists across club switches */
+.sesswrap{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin:16px 0 2px;}
+.sesslabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
+.sesschips{display:flex;flex-wrap:wrap;gap:6px;}
+.schip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.13s;white-space:nowrap;}
+.schip:hover{color:var(--ink);}
+.schip.mini{padding:6px 9px;color:var(--accent2);border-color:#2a4a52;}
+
 .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0;}
 .ins{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;border-left:3px solid var(--line2);}
 .ins.big-up{border-left-color:var(--up);} .ins.big-down{border-left-color:var(--down);}
@@ -100,6 +108,12 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
   <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff9d9d;box-shadow:0 0 6px #ff9d9d;margin-right:6px"></span>needs a look</span>
 </div>
 
+<div class="sesswrap">
+  <span class="sesslabel">Compare sessions</span>
+  <div class="sesschips" id="sessPicker"></div>
+  <button class="schip mini" id="sessAll">All</button>
+  <button class="schip mini" id="sessNone">None</button>
+</div>
 <div class="picker" id="picker"></div>
 <div id="content"></div>
 
@@ -109,6 +123,7 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 <script type="module">
 import { attributeCarryChange, simulateFlight } from './flight-engine.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
+const sessState={};   // session id -> shown bool. Global: persists across club switches.
 const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
 
 async function loadUploaded(){try{const r=await window.storage.get('uploaded_shots');return r&&r.value?JSON.parse(r.value):[];}catch(e){return [];}}
@@ -122,6 +137,7 @@ try{
   const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
   up.forEach(s=>{if(!sm[s.session])sm[s.session]={id:s.session,label:s.session_label||s.session,date:s.date||'',_uploaded:true};});
   SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
+  SESSIONS.forEach(s=>sessState[s.id]=true);
   let ci=0; SHOTS.forEach(s=>{if(!COLORS[s.club]){COLORS[s.club]=FALLBACK[ci%FALLBACK.length];ci++;}});
 }catch(e){
   document.getElementById('content').innerHTML='<div class="panel empty">Could not load raw-shots.json ('+e.message+'). Serve over http, not file://.</div>';
@@ -150,6 +166,7 @@ let current=null, activeMetric='carry';
 function series(club,m){
   const out=[];
   SESSIONS.forEach(s=>{
+    if(sessState[s.id]===false)return;   // only the sessions chosen in the picker
     const vals=SHOTS.filter(x=>x.club===club&&x.session===s.id&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
     if(!vals.length)return;
     let v;
@@ -197,7 +214,7 @@ function clubHealth(club){
 function classify2(serie,m,club){
   if(serie.length<2)return {dir:'flat',sig:false};
   const first=serie[0].value,last=serie[serie.length-1].value,d=last-first;
-  const allv=SHOTS.filter(x=>x.club===club&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
+  const allv=SHOTS.filter(x=>x.club===club&&sessState[x.session]!==false&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
   let thresh;
   if(m.derived==='sd'){
     // Spread/consistency metrics (SD of carry, dev). The OLD test compared the change
@@ -370,7 +387,7 @@ function animateFlightViews(){
 // mean ball speed / launch / spin, asks the engine how much of the modeled
 // carry change each input is responsible for (Shapley split, parts sum to total).
 function carryAttribution(club){
-  const sess=SESSIONS.filter(s=>SHOTS.some(x=>x.club===club&&x.session===s.id));
+  const sess=SESSIONS.filter(s=>sessState[s.id]!==false&&SHOTS.some(x=>x.club===club&&x.session===s.id));
   if(sess.length<2) return null;
   const agg=sid=>{
     const v=SHOTS.filter(x=>x.club===club&&x.session===sid);
@@ -386,7 +403,7 @@ function carryAttribution(club){
 
 // also report the MEASURED carry change (from the data) alongside the modeled one
 function measuredCarryChange(club){
-  const sess=SESSIONS.filter(s=>SHOTS.some(x=>x.club===club&&x.session===s.id));
+  const sess=SESSIONS.filter(s=>sessState[s.id]!==false&&SHOTS.some(x=>x.club===club&&x.session===s.id));
   if(sess.length<2)return null;
   const cm=sid=>{const v=SHOTS.filter(x=>x.club===club&&x.session===sid&&x.carry!=null);return v.length?mean(v.map(x=>x.carry)):null;};
   const a=cm(sess[0].id), b=cm(sess[sess.length-1].id);
@@ -440,10 +457,14 @@ function render(){
   if(!current){document.getElementById('content').innerHTML='<div class="panel empty">No club data.</div>';return;}
   const color=COLORS[current]||'#d4ff4f';
 
-  // need >=2 sessions with data for trends
-  const sessForClub=SESSIONS.filter(s=>SHOTS.some(x=>x.club===current&&x.session===s.id));
+  // need >=2 SELECTED sessions with data for trends
+  const sessForClub=SESSIONS.filter(s=>sessState[s.id]!==false&&SHOTS.some(x=>x.club===current&&x.session===s.id));
   if(sessForClub.length<2){
-    document.getElementById('content').innerHTML=`<div class="panel"><h2 style="color:${color}">${current}</h2><div class="empty">Only ${sessForClub.length} session has data for this club — need at least 2 to show a trend. Log another range session and upload it on the Raw Data page.</div></div>`;
+    const totalForClub=SESSIONS.filter(s=>SHOTS.some(x=>x.club===current&&x.session===s.id)).length;
+    const msg=totalForClub<2
+      ? `Only ${totalForClub} session has data for this club — need at least 2 to show a trend. Log another range session and upload it on the Raw Data page.`
+      : `Only ${sessForClub.length} of this club's ${totalForClub} sessions are selected — pick at least 2 sessions above to compare.`;
+    document.getElementById('content').innerHTML=`<div class="panel"><h2 style="color:${color}">${current}</h2><div class="empty">${msg}</div></div>`;
     return;
   }
 
@@ -517,13 +538,13 @@ function render(){
     ${attributionPanel(current,color)}
     <div class="panel">
       <h2 style="color:${color}">${current} — Metric Over Time</h2>
-      <div class="hint">first to latest session · dots show session average · n = shots that session</div>
+      <div class="hint">selected sessions · dots show session average · n = shots that session</div>
       <div class="metricsel" id="msel">${msel}</div>
       ${chart}
     </div>
     ${flightViews(current,color)}
     <div class="panel">
-      <h2>All Metrics: First vs Latest</h2>
+      <h2>All Metrics: First vs Latest <span style="font-size:13px;color:var(--dim2)">(of selected)</span></h2>
       <div class="hint">● = meaningful change · ○ = within normal session noise</div>
       <table class="t"><thead><tr><th>Metric</th><th>First</th><th>Latest</th><th>Δ</th><th>Sig</th></tr></thead><tbody>${trows}</tbody></table>
       <div class="note">"Meaningful" compares the change against this club's shot-to-shot scatter, so a 2-yard carry bump on a club that swings ±8 yards won't get flagged, but a real tightening of your dispersion will.</div>
@@ -533,6 +554,27 @@ function render(){
   animateFlightViews();
   document.querySelectorAll('#msel .msel').forEach(b=>{b.onclick=()=>{activeMetric=b.dataset.m;render();};});
 }
+
+// ---- session selector (global; persists across club switches) ----
+const sessPicker=document.getElementById('sessPicker');
+function buildSessionChips(){
+  sessPicker.innerHTML='';
+  SESSIONS.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='schip';b.dataset.sess=s.id;
+    const n=SHOTS.filter(x=>x.session===s.id).length;
+    b.textContent=s.label+(s._uploaded?' •':'')+' ('+n+')';
+    function paint(){const on=sessState[s.id]!==false;if(on){b.style.background='var(--accent2)';b.style.borderColor='var(--accent2)';b.style.color='#0a120d';}else{b.style.background='var(--bg2)';b.style.borderColor='var(--line2)';b.style.color='var(--dim)';}}
+    b.onclick=()=>{sessState[s.id]=(sessState[s.id]===false);paint();paintHealthDots();render();};
+    paint();
+    sessPicker.appendChild(b);
+  });
+}
+function setAllSessions(on){SESSIONS.forEach(s=>sessState[s.id]=on);buildSessionChips();paintHealthDots();render();}
+const sessAllBtn=document.getElementById('sessAll'), sessNoneBtn=document.getElementById('sessNone');
+if(sessAllBtn)sessAllBtn.onclick=()=>setAllSessions(true);
+if(sessNoneBtn)sessNoneBtn.onclick=()=>setAllSessions(false);
+buildSessionChips();
 
 if(clubsWithData.length){current=clubsWithData[0];paintPicker();paintHealthDots();render();}
 else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
