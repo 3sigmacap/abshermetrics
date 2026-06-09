@@ -1,0 +1,239 @@
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import CLUBS, { type ClubData } from '@/data';
+import { ABBR, C, LOFT, RED } from '@/theme';
+
+const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length;
+const r1 = (x: number) => (Math.round(x * 10) / 10).toFixed(1);
+const comma = (x: number) => Math.round(x).toLocaleString('en-US');
+
+type Col = { key: string; label: string; w: number; left?: boolean; accent?: boolean };
+const COLS: Col[] = [
+  { key: 'club', label: 'Club', w: 116, left: true },
+  { key: 'loft', label: 'Loft', w: 56 },
+  { key: 'carry', label: 'Carry', w: 60, accent: true },
+  { key: 'total', label: 'Total', w: 56 },
+  { key: 'sd', label: '±SD', w: 58 },
+  { key: 'ball', label: 'Ball', w: 52 },
+  { key: 'launch', label: 'Launch', w: 64 },
+  { key: 'spin', label: 'Spin', w: 66 },
+  { key: 'apex', label: 'Apex', w: 54 },
+  { key: 'lat', label: 'Lat SD', w: 66 },
+];
+
+interface Row {
+  club: string;
+  loft: string;
+  carry: number;
+  total: number;
+  apex: number;
+  sd: number;
+  lat: number;
+  ball: number;
+  launch: number;
+  spin: number;
+  red: boolean;
+}
+
+function buildRows() {
+  // shots.json is ascending by length; the table shows longest first.
+  const disp = [...(CLUBS as ClubData[])].reverse();
+  const rows: Row[] = disp.map((c) => {
+    const col = (k: 'bs' | 'la' | 'spin') =>
+      c.stats.map((s) => s[k]).filter((v): v is number => v != null);
+    return {
+      club: c.club,
+      loft: LOFT[c.club] ?? '–',
+      carry: c.carry, // engine values, baked into shots.json
+      total: c.total,
+      apex: c.apex,
+      sd: c.ell ? c.ell.rx : 0,
+      lat: c.ell ? c.ell.rz : 0,
+      ball: Math.round(mean(col('bs'))), // R50 launch inputs
+      launch: Math.round(mean(col('la')) * 10) / 10,
+      spin: Math.round(mean(col('spin'))),
+      red: RED.has(c.club),
+    };
+  });
+  const carries = rows.map((r) => r.carry);
+  const longest = Math.max(...carries);
+  const shortest = Math.min(...carries);
+  return {
+    rows,
+    longest,
+    shortest,
+    longClub: rows.find((r) => r.carry === longest)!.club,
+    shortClub: rows.find((r) => r.carry === shortest)!.club,
+    nClubs: CLUBS.length,
+    totalShots: CLUBS.reduce((s, c) => s + c.stats.length, 0),
+  };
+}
+
+function cellText(row: Row, key: string): string {
+  switch (key) {
+    case 'club':
+      return row.club;
+    case 'loft':
+      return row.loft;
+    case 'carry':
+      return String(row.carry);
+    case 'total':
+      return String(row.total);
+    case 'apex':
+      return String(row.apex);
+    case 'ball':
+      return String(row.ball);
+    case 'launch':
+      return r1(row.launch) + '°';
+    case 'spin':
+      return comma(row.spin);
+    case 'sd':
+      return '±' + r1(row.sd);
+    case 'lat':
+      return '±' + r1(row.lat);
+    default:
+      return '';
+  }
+}
+
+export default function Overview() {
+  const d = useMemo(buildRows, []);
+  const ab = (c: string) => ABBR[c] ?? c;
+
+  const stats = [
+    { v: d.longest, l: `Longest carry (${ab(d.longClub)})` },
+    { v: d.shortest, l: `Shortest carry (${ab(d.shortClub)})` },
+    { v: d.nClubs, l: 'Clubs tracked' },
+    { v: d.totalShots, l: 'Shots analyzed' },
+  ];
+
+  return (
+    <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+      <Text style={styles.kicker}>
+        LAUNCH-MONITOR ANALYSIS · {d.nClubs} CLUBS · {d.totalShots} SHOTS
+      </Text>
+      <Text style={styles.title}>
+        MY <Text style={styles.titleAccent}>BAG</Text>, BY THE NUMBERS
+      </Text>
+      <Text style={styles.lead}>
+        Every carry, gap, and miss pattern from my range sessions — modeled through real
+        ball-flight physics. TaylorMade P7MB blades through the bag.
+      </Text>
+
+      <View style={styles.statStrip}>
+        {stats.map((s) => (
+          <View key={s.l} style={styles.stat}>
+            <Text style={styles.statV}>{s.v}</Text>
+            <Text style={styles.statL}>{s.l}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.tableHead}>
+        <Text style={styles.tableTitle}>CLUB SUMMARY</Text>
+        <Text style={styles.tableSub}>carry & gapping · averages per club · swipe →</Text>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator style={styles.tableWrap}>
+        <View>
+          {/* header */}
+          <View style={[styles.tr, styles.headRow]}>
+            {COLS.map((c) => (
+              <Text
+                key={c.key}
+                style={[styles.th, { width: c.w }, c.left ? styles.left : styles.right]}>
+                {c.label}
+              </Text>
+            ))}
+          </View>
+
+          {d.rows.map((row, idx) => (
+            <View key={row.club}>
+              <View style={styles.tr}>
+                {COLS.map((c) => {
+                  const isClub = c.key === 'club';
+                  const redLat = c.key === 'lat' && row.red;
+                  return (
+                    <Text
+                      key={c.key}
+                      style={[
+                        styles.td,
+                        { width: c.w },
+                        c.left ? styles.left : styles.right,
+                        isClub && styles.clubCell,
+                        c.accent && styles.accentCell,
+                        redLat && styles.redCell,
+                      ]}>
+                      {cellText(row, c.key)}
+                    </Text>
+                  );
+                })}
+              </View>
+              {idx < d.rows.length - 1 && (
+                <View style={[styles.tr, styles.gapRow]}>
+                  <View style={{ width: COLS[0].w + COLS[1].w }} />
+                  <Text style={[styles.gapText, { width: COLS[2].w }]}>
+                    ↕ {row.carry - d.rows[idx + 1].carry} yd
+                  </Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      <Text style={styles.note}>
+        Carry & apex in yards/feet · ball speed mph · spin rpm · lateral SD = sideways spread
+        (1σ). The gap between two clubs is the carry difference. Red lateral values flag the
+        two-way-miss clubs (3-Wood, Gap Wedge).
+      </Text>
+    </ScrollView>
+  );
+}
+
+const mono = 'monospace';
+const styles = StyleSheet.create({
+  page: { flex: 1, backgroundColor: C.bg },
+  pageContent: { padding: 18, paddingBottom: 40 },
+  kicker: { fontFamily: mono, fontSize: 11, letterSpacing: 2, color: C.accent },
+  title: { fontSize: 38, fontWeight: '800', color: C.ink, marginTop: 8, letterSpacing: 0.5 },
+  titleAccent: { color: C.accent },
+  lead: { fontSize: 15, color: C.dim, marginTop: 10, lineHeight: 21 },
+
+  statStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: 22, marginTop: 22, marginBottom: 8 },
+  stat: { minWidth: 90 },
+  statV: { fontFamily: mono, fontSize: 30, color: C.accent },
+  statL: { fontFamily: mono, fontSize: 10, color: C.dim, letterSpacing: 1, marginTop: 3 },
+
+  tableHead: { marginTop: 22, marginBottom: 8 },
+  tableTitle: { fontSize: 22, fontWeight: '800', color: C.ink, letterSpacing: 0.5 },
+  tableSub: { fontFamily: mono, fontSize: 11, color: C.dim, marginTop: 2 },
+
+  tableWrap: {
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
+    backgroundColor: C.bg2,
+  },
+  tr: { flexDirection: 'row', alignItems: 'center' },
+  headRow: { borderBottomWidth: 1, borderBottomColor: C.line, paddingVertical: 10 },
+  th: {
+    fontFamily: mono,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    color: C.dim2,
+    textTransform: 'uppercase',
+    paddingHorizontal: 10,
+  },
+  td: { fontFamily: mono, fontSize: 13, color: C.dim, paddingHorizontal: 10, paddingVertical: 11 },
+  left: { textAlign: 'left' },
+  right: { textAlign: 'right' },
+  clubCell: { color: C.ink, fontWeight: '700', fontFamily: 'System', fontSize: 15 },
+  accentCell: { color: C.accent, fontSize: 15, fontWeight: '600' },
+  redCell: { color: C.bad },
+  gapRow: { paddingBottom: 6, marginTop: -4 },
+  gapText: { fontFamily: mono, fontSize: 10, color: C.dim2, textAlign: 'right', letterSpacing: 0.5 },
+
+  note: { fontFamily: mono, fontSize: 11, color: C.dim2, marginTop: 16, lineHeight: 18 },
+});
