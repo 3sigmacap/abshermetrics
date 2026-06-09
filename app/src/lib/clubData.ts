@@ -21,8 +21,26 @@ export const CLUB_COLORS: Record<string, string> = {
 };
 // Standard TaylorMade-ish defaults (degrees); users override per club in Settings.
 export const DEFAULT_LOFTS: Record<string, number> = {
-  '3 Wood': 15, '3 Iron': 20, '4 Iron': 23, '5 Iron': 26, '6 Iron': 30, '7 Iron': 34,
-  '8 Iron': 39, '9 Iron': 42.5, 'Pitching Wedge': 47, 'Gap Wedge': 52, 'Sand Wedge': 56,
+  Driver: 10.5, '5 Wood': 18, '3 Wood': 15, Hybrid: 19,
+  '3 Iron': 20, '4 Iron': 23, '5 Iron': 26, '6 Iron': 30, '7 Iron': 34,
+  '8 Iron': 39, '9 Iron': 42.5, 'Pitching Wedge': 47, 'Gap Wedge': 52,
+  'Sand Wedge': 56, 'Lob Wedge': 60,
+};
+
+// Natural bag order, LONGEST first, for sorting an arbitrary set of clubs
+// (including ones not in DEFAULT_LOFTS, e.g. a Driver from an uploaded session).
+// Unknown clubs sort to the end. Used so the bag/settings reflect real data.
+const NATURAL_ORDER: string[] = [
+  'Driver',
+  '2 Wood', '3 Wood', '4 Wood', '5 Wood', '7 Wood', '9 Wood',
+  '1 Hybrid', '2 Hybrid', '3 Hybrid', '4 Hybrid', '5 Hybrid', '6 Hybrid', '7 Hybrid', 'Hybrid',
+  '1 Iron', '2 Iron', '3 Iron', '4 Iron', '5 Iron', '6 Iron', '7 Iron', '8 Iron', '9 Iron',
+  'Pitching Wedge', 'Approach Wedge', 'Gap Wedge', 'Sand Wedge', 'Lob Wedge',
+];
+/** Sort rank (longest club first). Unknown clubs go to the end. */
+export const clubSortIdx = (club: string): number => {
+  const i = NATURAL_ORDER.indexOf(club);
+  return i < 0 ? NATURAL_ORDER.length : i;
 };
 
 const FALLBACK_COLORS = ['#d4ff4f', '#7fd4ff', '#ff9d9d', '#b6f24f', '#4fd6a8', '#f2b24f', '#c98fff'];

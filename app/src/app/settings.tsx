@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,12 +14,25 @@ import {
 } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
-import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
+import { CLUB_ORDER, DEFAULT_LOFTS, clubSortIdx } from '@/lib/clubData';
+import { useClubs } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
 import { supabase } from '@/lib/supabase';
 import { C } from '@/theme';
 
 const mono = 'monospace';
+
+// Limit loft to at most 2 integer digits + one decimal (e.g. 10.5, 56, 42.5),
+// so a loft can only be 2 digits and never something like 100 or 12.345.
+function sanitizeLoft(t: string): string {
+  let s = t.replace(/[^0-9.]/g, '');
+  const dot = s.indexOf('.');
+  if (dot !== -1) s = s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, '');
+  const [intPart = '', decPart = ''] = s.split('.');
+  let out = intPart.slice(0, 2);
+  if (s.includes('.')) out += '.' + decPart.slice(0, 1);
+  return out;
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -40,17 +53,41 @@ export default function Settings() {
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // editable club table (longest first), seeded from saved specs + defaults
-  const clubsOrdered = useMemo(() => [...CLUB_ORDER].reverse(), []);
+  // Club list is DATA-DRIVEN: the standard bag PLUS any club found in the user's
+  // own shots (e.g. a Driver from an uploaded session), longest first.
+  const { clubs: dataClubs } = useClubs();
+  const clubsOrdered = useMemo(() => {
+    const set = new Set<string>(CLUB_ORDER);
+    dataClubs.forEach((c) => set.add(c.club));
+    return [...set].sort((a, b) => clubSortIdx(a) - clubSortIdx(b));
+  }, [dataClubs]);
+
+  const seed = (c: string) => {
+    const spec = profile.clubSpecs[c];
+    const loft = spec?.loft ?? DEFAULT_LOFTS[c];
+    return { loft: loft != null ? String(loft) : '', inBag: spec?.inBag ?? true };
+  };
   const [clubEdits, setClubEdits] = useState<Record<string, { loft: string; inBag: boolean }>>(() => {
     const o: Record<string, { loft: string; inBag: boolean }> = {};
-    for (const c of CLUB_ORDER) {
-      const spec = profile.clubSpecs[c];
-      const loft = spec?.loft ?? DEFAULT_LOFTS[c];
-      o[c] = { loft: loft != null ? String(loft) : '', inBag: spec?.inBag ?? true };
-    }
+    for (const c of CLUB_ORDER) o[c] = seed(c);
     return o;
   });
+
+  // Add rows for any newly-seen clubs (data loads async after mount).
+  useEffect(() => {
+    setClubEdits((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const c of clubsOrdered) {
+        if (!(c in next)) {
+          next[c] = seed(c);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubsOrdered]);
 
   const flash = (text: string, bad = false) => {
     setMsg({ text, bad });
@@ -103,11 +140,11 @@ export default function Settings() {
 
   const saveClubs = async () => {
     const specs: Record<string, { loft?: number; inBag?: boolean }> = {};
-    for (const c of CLUB_ORDER) {
-      const e = clubEdits[c];
+    for (const c of clubsOrdered) {
+      const e = clubEdits[c] ?? { loft: '', inBag: true };
       const loft = parseFloat(e.loft);
       specs[c] = { inBag: e.inBag };
-      if (!Number.isNaN(loft)) specs[c].loft = loft;
+      if (Number.isFinite(loft)) specs[c].loft = loft;
     }
     setBusy(true);
     const { error } = await profile.saveClubSpecs(specs);
@@ -186,27 +223,35 @@ export default function Settings() {
           <Text style={[styles.cLoft, styles.headTxt]}>Loft°</Text>
           <Text style={[styles.cBag, styles.headTxt]}>In bag</Text>
         </View>
-        {clubsOrdered.map((c) => (
-          <View key={c} style={styles.clubRow}>
-            <Text style={styles.cClubName}>{c}</Text>
-            <TextInput
-              style={styles.loftInput}
-              value={clubEdits[c].loft}
-              onChangeText={(t) => setClubEdits((p) => ({ ...p, [c]: { ...p[c], loft: t } }))}
-              keyboardType="decimal-pad"
-              placeholder="—"
-              placeholderTextColor={C.dim2}
-            />
-            <View style={styles.cBag}>
-              <Switch
-                value={clubEdits[c].inBag}
-                onValueChange={(v) => setClubEdits((p) => ({ ...p, [c]: { ...p[c], inBag: v } }))}
-                trackColor={{ true: C.accent, false: C.line2 }}
-                thumbColor="#0a120d"
+        {clubsOrdered.map((c) => {
+          const e = clubEdits[c] ?? { loft: '', inBag: true };
+          return (
+            <View key={c} style={styles.clubRow}>
+              <Text style={styles.cClubName}>{c}</Text>
+              <TextInput
+                style={styles.loftInput}
+                value={e.loft}
+                onChangeText={(t) =>
+                  setClubEdits((p) => ({ ...p, [c]: { ...(p[c] ?? e), loft: sanitizeLoft(t) } }))
+                }
+                keyboardType="decimal-pad"
+                maxLength={4}
+                placeholder="—"
+                placeholderTextColor={C.dim2}
               />
+              <View style={styles.cBag}>
+                <Switch
+                  value={e.inBag}
+                  onValueChange={(v) =>
+                    setClubEdits((p) => ({ ...p, [c]: { ...(p[c] ?? e), inBag: v } }))
+                  }
+                  trackColor={{ true: C.accent, false: C.line2 }}
+                  thumbColor="#0a120d"
+                />
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
         <Pressable onPress={saveClubs} style={styles.saveBtn} disabled={busy}>
           {busy ? <ActivityIndicator color="#0a120d" /> : <Text style={styles.saveBtnTxt}>Save clubs</Text>}
         </Pressable>

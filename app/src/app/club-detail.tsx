@@ -533,11 +533,11 @@ function HCard({ v, unit, label, sub }: { v: string; unit?: string; label: strin
 function MetricTable({ shots }: { shots: Shot[] }) {
   const COLS = [
     { key: 'metric', label: 'Metric', w: 130, left: true },
-    { key: 'mean', label: 'Mean', w: 66 },
-    { key: 'sd', label: 'SD', w: 60 },
-    { key: 'min', label: 'Min', w: 60 },
-    { key: 'max', label: 'Max', w: 60 },
-    { key: 'range', label: 'Range', w: 60 },
+    { key: 'mean', label: 'Mean', w: 90 },
+    { key: 'sd', label: 'SD', w: 78 },
+    { key: 'min', label: 'Min', w: 82 },
+    { key: 'max', label: 'Max', w: 82 },
+    { key: 'range', label: 'Range', w: 82 },
   ];
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator style={styles.tscroll}>
