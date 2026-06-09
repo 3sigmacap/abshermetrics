@@ -1,12 +1,13 @@
 import { useFocusEffect, useNavigation } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { Circle, G, Line, Path, Polygon, Svg } from 'react-native-svg';
 
-import CLUBS, { type ClubData } from '@/data';
+import { type ClubData } from '@/data';
+import { useClubs } from '@/lib/dataStore';
 import { C } from '@/theme';
 
 /* ------------------------------------------------------------------ *
@@ -19,7 +20,6 @@ import { C } from '@/theme';
  * with a live decelerating-mph HUD). Drawn true-to-scale like the web.
  * ------------------------------------------------------------------ */
 
-const data = CLUBS as ClubData[];
 const FT_PER_YD = 3;
 const VEXAG = 1.0; // true-to-scale height (orbit to see the arc)
 const Hs = VEXAG / FT_PER_YD; // engine height ft -> scene yd
@@ -79,7 +79,9 @@ const CAMS = [
 ];
 
 export default function Flight3D() {
-  const clubs = useMemo(() => [...data].sort((a, b) => b.carry - a.carry), []);
+  const { clubs: rawClubs, loading } = useClubs();
+  const data: ClubData[] = rawClubs;
+  const clubs = useMemo(() => [...data].sort((a, b) => b.carry - a.carry), [data]);
   const { width: winW, height: winH } = useWindowDimensions();
   const landscape = winW > winH;
 
@@ -103,6 +105,21 @@ export default function Flight3D() {
   const [visible, setVisible] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(clubs.map((c) => [c.club, true])),
   );
+  // Clubs arrive asynchronously from the data hook; default any newly seen club
+  // to visible (matching the original "all on" behavior) without clobbering toggles.
+  useEffect(() => {
+    setVisible((v) => {
+      let changed = false;
+      const next = { ...v };
+      for (const c of clubs) {
+        if (!(c.club in next)) {
+          next[c.club] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : v;
+    });
+  }, [clubs]);
   const [showShots, setShowShots] = useState(true);
   const [showMean, setShowMean] = useState(true);
   const showRoll = true; // always on, no toggle (per request)
@@ -476,6 +493,25 @@ export default function Flight3D() {
     </>
   );
 
+  // Loading: full-screen spinner on the app background.
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={C.accent} size="large" />
+      </View>
+    );
+  }
+
+  // Empty: no shots for this user yet.
+  if (clubs.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>No shots yet</Text>
+        <Text style={styles.emptyHint}>Upload a session on the Raw tab to get started.</Text>
+      </View>
+    );
+  }
+
   // Landscape: scene fills the screen, controls in a scrollable side panel.
   if (landscape) {
     return (
@@ -507,6 +543,9 @@ export default function Flight3D() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
+  center: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: C.ink, marginBottom: 6 },
+  emptyHint: { fontFamily: MONO, fontSize: 12.5, color: C.dim, textAlign: 'center' },
   header: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6 },
   title: { fontSize: 28, fontWeight: '800', color: C.ink, letterSpacing: 0.5 },
   hint: { fontFamily: MONO, fontSize: 10.5, color: C.dim2, marginTop: 2, letterSpacing: 0.5 },

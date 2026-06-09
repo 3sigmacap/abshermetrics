@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Circle, Line, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
 import AverageShot, { type LaunchMeans } from '@/components/AverageShot';
-import CLUBS, { type ClubData } from '@/data';
+import { type ClubData } from '@/data';
+import { useClubs } from '@/lib/dataStore';
 import { fmt, mean, sd } from '@/lib/format';
 import { C } from '@/theme';
 
@@ -281,13 +282,16 @@ function ConsistencyBars({ shots }: { shots: Shot[] }) {
 }
 
 export default function ClubDetail() {
-  const clubs = CLUBS as ClubData[];
+  const { clubs, loading } = useClubs();
   // Web default = DATA[0] (shots.json is ascending by club length → first item).
-  const [current, setCurrent] = useState<string>(clubs[0]?.club ?? '');
+  const [current, setCurrent] = useState<string>('');
   const [sortKey, setSortKey] = useState<ShotKey | '_n'>('carry');
   const [sortDir, setSortDir] = useState<number>(-1);
 
-  const d = useMemo(() => clubs.find((c) => c.club === current), [clubs, current]);
+  // Once clubs load, default the selected club to the first one (web default = DATA[0]).
+  const selected = current || clubs[0]?.club || '';
+
+  const d = useMemo(() => clubs.find((c) => c.club === selected), [clubs, selected]);
 
   // mean launch for the engine-computed Average Shot views
   const launch = useMemo<LaunchMeans | null>(() => {
@@ -308,9 +312,9 @@ export default function ClubDetail() {
     const cSd = sd(carries);
     // bag context: rank by engine carry, longest = #1
     const sortedByCarry = [...clubs].sort((a, b) => b.carry - a.carry);
-    const rank = sortedByCarry.findIndex((c) => c.club === current) + 1;
+    const rank = sortedByCarry.findIndex((c) => c.club === selected) + 1;
     return { S, carries, totals, devs, apexes, spins, cMean, cSd, rank };
-  }, [d, clubs, current]);
+  }, [d, clubs, selected]);
 
   const sortedShots = useMemo(() => {
     if (!view) return [];
@@ -330,6 +334,23 @@ export default function ClubDetail() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={C.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (clubs.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>No shots yet</Text>
+        <Text style={styles.emptySub}>Upload a session on the Raw tab to get started.</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
       <Text style={styles.kicker}>DEEP DIVE</Text>
@@ -340,7 +361,7 @@ export default function ClubDetail() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.picker}>
         {clubs.map((c) => {
-          const on = c.club === current;
+          const on = c.club === selected;
           return (
             <Pressable
               key={c.club}
@@ -574,6 +595,15 @@ const mono = 'monospace';
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
   pageContent: { padding: 16, paddingBottom: 48 },
+  center: {
+    flex: 1,
+    backgroundColor: C.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: C.ink },
+  emptySub: { fontFamily: mono, fontSize: 13, color: C.dim, marginTop: 8, textAlign: 'center' },
   kicker: { fontFamily: mono, fontSize: 11, letterSpacing: 3, color: C.accent },
 
   // picker

@@ -7,6 +7,7 @@ import { ActivityIndicator, StyleSheet, View, type ColorValue } from 'react-nati
 
 import SignInScreen from '@/components/SignInScreen';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { DataProvider } from '@/lib/dataStore';
 import { C } from '@/theme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -45,9 +46,10 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <View style={styles.root}>
-        <Tabs
+      <DataProvider>
+        <StatusBar style="light" />
+        <View style={styles.root}>
+          <Tabs
           screenOptions={{
             headerStyle: { backgroundColor: C.bg },
             headerShadowVisible: false,
@@ -66,9 +68,10 @@ export default function RootLayout() {
           <Tabs.Screen name="raw-data" options={{ title: 'Raw', tabBarIcon: tabIcon('clipboard-text-outline') }} />
           {/* Linked from the Bag screen, not shown as a tab (mirrors the web). */}
           <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
-        </Tabs>
-        <AuthOverlay />
-      </View>
+          </Tabs>
+          <AuthOverlay />
+        </View>
+      </DataProvider>
     </AuthProvider>
   );
 }

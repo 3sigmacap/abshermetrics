@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   LayoutChangeEvent,
   Pressable,
   ScrollView,
@@ -19,7 +20,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
-import CLUBS, { type ClubData } from '@/data';
+import { type ClubData } from '@/data';
+import { useClubs } from '@/lib/dataStore';
 import { C } from '@/theme';
 
 /* ------------------------------------------------------------------ *
@@ -62,15 +64,15 @@ const SW = 1000;
 const SH = 300;
 const SM = { l: 46, r: 16, t: 14, b: 28 };
 
-const data = CLUBS as ClubData[];
-
 // ------------------------------------------------------------------
 // TOP-DOWN renderer
 // ------------------------------------------------------------------
 function TopDown({
+  data,
   visible,
   showShots,
 }: {
+  data: ClubData[];
   visible: Record<string, boolean>;
   showShots: boolean;
 }) {
@@ -292,7 +294,7 @@ function TopDown({
     });
 
     return nodes;
-  }, [visible, showShots]);
+  }, [data, visible, showShots]);
 
   return (
     <ZoomFrame height={300} viewBox={`0 0 ${TW} ${TH}`}>
@@ -316,9 +318,11 @@ function TopDown({
 // SIDE renderer (height ft vs carry yds, independent auto-fit axes)
 // ------------------------------------------------------------------
 function Side({
+  data,
   visible,
   showShots,
 }: {
+  data: ClubData[];
   visible: Record<string, boolean>;
   showShots: boolean;
 }) {
@@ -446,7 +450,7 @@ function Side({
     });
 
     return nodes;
-  }, [visible, showShots]);
+  }, [data, visible, showShots]);
 
   return (
     <Svg width="100%" height={210} viewBox={`0 0 ${SW} ${SH}`}>
@@ -555,21 +559,47 @@ function ZoomFrame({
 // Screen
 // ------------------------------------------------------------------
 export default function Dispersion() {
-  const [visible, setVisible] = useState<Record<string, boolean>>(() => {
+  const { clubs: data, loading } = useClubs();
+
+  // Default every club to visible; a club absent from the map is treated as on,
+  // so new clubs that arrive from the async hook start visible (matching the
+  // old eager-initialized behavior) until the user toggles them off.
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const visible = useMemo(() => {
     const v: Record<string, boolean> = {};
-    data.forEach((d) => (v[d.club] = true));
+    data.forEach((d) => (v[d.club] = overrides[d.club] ?? true));
     return v;
-  });
+  }, [data, overrides]);
+
   const [showShots, setShowShots] = useState(true);
 
   const toggle = (club: string) =>
-    setVisible((p) => ({ ...p, [club]: !p[club] }));
+    setOverrides((p) => ({ ...p, [club]: !(p[club] ?? true) }));
   const setAll = (on: boolean) =>
-    setVisible(() => {
+    setOverrides(() => {
       const v: Record<string, boolean> = {};
       data.forEach((d) => (v[d.club] = on));
       return v;
     });
+
+  if (loading) {
+    return (
+      <View style={styles.fill}>
+        <ActivityIndicator color={C.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <View style={styles.fill}>
+        <Text style={styles.emptyTitle}>No shots yet</Text>
+        <Text style={styles.emptyHint}>
+          Upload a session on the Raw tab to get started.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
@@ -629,12 +659,12 @@ export default function Dispersion() {
 
       {/* TOP-DOWN */}
       <Text style={styles.h2}>TOP-DOWN — VIEW FROM DIRECTLY ABOVE (FIT TO DATA)</Text>
-      <TopDown visible={visible} showShots={showShots} />
+      <TopDown data={data} visible={visible} showShots={showShots} />
 
       {/* SIDE */}
       <Text style={styles.h2}>SIDE VIEW — HEIGHT VS CARRY (HEIGHT EXAGGERATED)</Text>
       <View style={styles.stage}>
-        <Side visible={visible} showShots={showShots} />
+        <Side data={data} visible={visible} showShots={showShots} />
       </View>
 
       <Text style={styles.note}>
@@ -652,6 +682,22 @@ export default function Dispersion() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
   content: { padding: 18, paddingBottom: 48 },
+
+  fill: {
+    flex: 1,
+    backgroundColor: C.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: C.ink },
+  emptyHint: {
+    fontFamily: MONO,
+    fontSize: 13,
+    color: C.dim,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 
   kicker: { fontFamily: MONO, fontSize: 11, letterSpacing: 2, color: C.accent },
   title: { fontSize: 38, fontWeight: '800', color: C.ink, marginTop: 8, letterSpacing: 0.5 },

@@ -1,9 +1,10 @@
 import { Link, type Href } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import CLUBS, { type ClubData } from '@/data';
+import { type ClubData } from '@/data';
 import { useAuth } from '@/lib/auth';
+import { useClubs } from '@/lib/dataStore';
 import { ABBR, C, LOFT, RED } from '@/theme';
 
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length;
@@ -35,9 +36,9 @@ interface Row {
   red: boolean;
 }
 
-function buildRows() {
-  // shots.json is ascending by length; the table shows longest first.
-  const disp = [...(CLUBS as ClubData[])].reverse();
+function buildRows(clubs: ClubData[]) {
+  // clubs is ascending by length; the table shows longest first.
+  const disp = [...clubs].reverse();
   const rows: Row[] = disp.map((c) => {
     const col = (k: 'bs' | 'la' | 'spin') =>
       c.stats.map((s) => s[k]).filter((v): v is number => v != null);
@@ -64,8 +65,8 @@ function buildRows() {
     shortest,
     longClub: rows.find((r) => r.carry === longest)!.club,
     shortClub: rows.find((r) => r.carry === shortest)!.club,
-    nClubs: CLUBS.length,
-    totalShots: CLUBS.reduce((s, c) => s + c.stats.length, 0),
+    nClubs: clubs.length,
+    totalShots: clubs.reduce((s, c) => s + c.stats.length, 0),
   };
 }
 
@@ -97,9 +98,28 @@ function cellText(row: Row, key: string): string {
 }
 
 export default function Overview() {
-  const d = useMemo(buildRows, []);
+  const { clubs, loading } = useClubs();
   const { session, signOut } = useAuth();
   const ab = (c: string) => ABBR[c] ?? c;
+
+  const d = useMemo(() => (clubs.length ? buildRows(clubs) : null), [clubs]);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={C.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (!d) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>No shots yet</Text>
+        <Text style={styles.emptyDim}>Upload a session on the Raw tab to get started.</Text>
+      </View>
+    );
+  }
 
   const stats = [
     { v: d.longest, l: `Longest carry (${ab(d.longClub)})` },
@@ -210,6 +230,15 @@ const mono = 'monospace';
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
   pageContent: { padding: 18, paddingBottom: 40 },
+  center: {
+    flex: 1,
+    backgroundColor: C.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: C.ink },
+  emptyDim: { fontFamily: mono, fontSize: 13, color: C.dim, marginTop: 8, textAlign: 'center' },
   kicker: { fontFamily: mono, fontSize: 11, letterSpacing: 2, color: C.accent },
   title: { fontSize: 38, fontWeight: '800', color: C.ink, marginTop: 8, letterSpacing: 0.5 },
   titleAccent: { color: C.accent },

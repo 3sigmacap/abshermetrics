@@ -10,8 +10,9 @@ import {
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
 import { attributeCarryChange } from '@/engine';
+import { useRawData } from '@/lib/dataStore';
 import { fmt, mean, sd } from '@/lib/format';
-import { getRawData, type RawShot, type Session } from '@/rawData';
+import { type RawShot, type Session } from '@/rawData';
 import { C } from '@/theme';
 
 // ---------------------------------------------------------------------------
@@ -347,37 +348,25 @@ function AttributionPanel({
 // MAIN SCREEN
 // ===========================================================================
 export default function Trends() {
-  const [loaded, setLoaded] = useState(false);
-  const [shots, setShots] = useState<RawShot[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [colors, setColors] = useState<Record<string, string>>({});
-  const [clubOrder, setClubOrder] = useState<string[]>([]);
+  const { shots, sessions, colors, clubOrder, loading } = useRawData();
 
   // GLOBAL session state — persists across club switches; false = excluded.
   const [sessState, setSessState] = useState<SessState>({});
   const [current, setCurrent] = useState<string | null>(null);
   const [activeMetric, setActiveMetric] = useState('carry');
   const inited = useRef(false);
+  const sessInited = useRef(false);
 
+  // default every session to shown once sessions arrive from the hook.
   useEffect(() => {
-    let alive = true;
-    getRawData().then((d) => {
-      if (!alive) return;
-      setShots(d.shots);
-      setSessions(d.sessions);
-      setColors(d.colors);
-      setClubOrder(d.clubOrder);
-      const st: SessState = {};
-      d.sessions.forEach((s) => {
-        st[s.id] = true;
-      });
-      setSessState(st);
-      setLoaded(true);
+    if (sessInited.current || !sessions.length) return;
+    sessInited.current = true;
+    const st: SessState = {};
+    sessions.forEach((s) => {
+      st[s.id] = true;
     });
-    return () => {
-      alive = false;
-    };
-  }, []);
+    setSessState(st);
+  }, [sessions]);
 
   const orderIdx = (c: string) => {
     const i = clubOrder.indexOf(c);
@@ -412,10 +401,19 @@ export default function Trends() {
       return st;
     });
 
-  if (!loaded) {
+  if (loading) {
     return (
       <View style={[styles.page, styles.center]}>
-        <ActivityIndicator color={C.accent} />
+        <ActivityIndicator color={C.accent} size="large" />
+      </View>
+    );
+  }
+
+  if (shots.length === 0) {
+    return (
+      <View style={[styles.page, styles.center]}>
+        <Text style={styles.emptyTitle}>No shots yet</Text>
+        <Text style={styles.emptyDim}>Upload a session on the Raw tab to get started.</Text>
       </View>
     );
   }
@@ -795,6 +793,8 @@ const styles = StyleSheet.create({
   tdLeft: { textAlign: 'left' },
 
   empty: { padding: 24, textAlign: 'center', color: C.dim, fontFamily: mono, fontSize: 13 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: C.ink, textAlign: 'center' },
+  emptyDim: { fontSize: 13, color: C.dim, fontFamily: mono, textAlign: 'center', marginTop: 8 },
   note: { fontFamily: mono, fontSize: 12, color: C.dim, marginTop: 12, lineHeight: 18 },
 
   foot: {

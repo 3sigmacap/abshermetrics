@@ -11,16 +11,11 @@ import {
   View,
 } from 'react-native';
 
+import { useAuth } from '@/lib/auth';
+import { useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
-import {
-  getRawData,
-  loadUploaded,
-  orderIdx,
-  saveUploaded,
-  type RawData,
-  type RawShot,
-  type Session,
-} from '@/rawData';
+import { supabase } from '@/lib/supabase';
+import { orderIdx, type RawShot } from '@/rawData';
 import { C } from '@/theme';
 
 const mono = 'monospace';
@@ -160,9 +155,10 @@ function numText(v: unknown, c: Col): string {
 }
 
 export default function RawData() {
-  const [data, setData] = useState<RawData | null>(null);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const { shots, sessions, colors, loading, refresh } = useRawData();
+  const { session: authSession } = useAuth();
+  const userId = authSession?.user?.id;
+
   const [clubState, setClubState] = useState<Record<string, boolean>>({});
   const [sessState, setSessState] = useState<Record<string, boolean>>({});
   const [sortKey, setSortKey] = useState<string>('_idx');
@@ -171,40 +167,45 @@ export default function RawData() {
   const [uploadMsg, setUploadMsg] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const ingest = useCallback((d: RawData) => {
-    setData(d);
-    const nextRows: Row[] = d.shots.map((s, i) => ({
-      ...s,
-      _idx: i + 1,
-      _color: d.colors[s.club] || C.dim,
-    }));
-    setRows(nextRows);
-    setSessions(d.sessions);
+  // Table rows = each RawShot tagged with display index + resolved color.
+  const rows = useMemo<Row[]>(
+    () =>
+      shots.map((s, i) => ({
+        ...s,
+        _idx: i + 1,
+        _color: colors[s.club] || C.dim,
+      })),
+    [shots, colors],
+  );
+
+  // Keep new clubs/sessions visible by default as data arrives.
+  useEffect(() => {
     setClubState((prev) => {
       const cs = { ...prev };
-      nextRows.forEach((r) => {
-        if (!(r.club in cs)) cs[r.club] = true;
+      let changed = false;
+      rows.forEach((r) => {
+        if (!(r.club in cs)) {
+          cs[r.club] = true;
+          changed = true;
+        }
       });
-      return cs;
+      return changed ? cs : prev;
     });
-    setSessState((prev) => {
-      const ss = { ...prev };
-      d.sessions.forEach((s) => {
-        if (!(s.id in ss)) ss[s.id] = true;
-      });
-      return ss;
-    });
-  }, []);
+  }, [rows]);
 
   useEffect(() => {
-    let alive = true;
-    getRawData().then((d) => {
-      if (alive) ingest(d);
+    setSessState((prev) => {
+      const ss = { ...prev };
+      let changed = false;
+      sessions.forEach((s) => {
+        if (!(s.id in ss)) {
+          ss[s.id] = true;
+          changed = true;
+        }
+      });
+      return changed ? ss : prev;
     });
-    return () => {
-      alive = false;
-    };
-  }, [ingest]);
+  }, [sessions]);
 
   const setSort = (key: string) => {
     if (sortKey === key) setSortDir((d) => (d * -1) as 1 | -1);
@@ -271,6 +272,11 @@ export default function RawData() {
   const onUpload = useCallback(async () => {
     try {
       setBusy(true);
+      if (!userId) {
+        setUploadMsg('You must be signed in to upload.');
+        setBusy(false);
+        return;
+      }
       const res = await DocumentPicker.getDocumentAsync({
         type: ['text/csv', 'text/comma-separated-values', 'application/csv', '*/*'],
         multiple: true,
@@ -281,40 +287,77 @@ export default function RawData() {
         return;
       }
       setUploadMsg('Parsing ' + res.assets.length + ' file(s)…');
-      const all: RawShot[] = [];
+      // Each file = one session's worth of shots.
+      const files: RawShot[][] = [];
       for (const asset of res.assets) {
         const txt = asset.base64
           ? decodeBase64Utf8(asset.base64)
           : await new File(asset.uri).text();
-        all.push(...sessionFromFile(parseCSV(txt)));
+        const parsedShots = sessionFromFile(parseCSV(txt));
+        if (parsedShots.length) files.push(parsedShots);
       }
-      if (!all.length) {
+      if (!files.length) {
         setUploadMsg('No valid shot rows found in those files.');
         setBusy(false);
         return;
       }
-      // merge with existing uploaded, de-dupe by ts+club
-      const existing = await loadUploaded();
-      const seen = new Set(existing.map((s) => s.ts + '|' + s.club));
-      const fresh = all.filter((s) => !seen.has(s.ts + '|' + s.club));
-      const merged = [...existing, ...fresh];
-      await saveUploaded(merged);
-      setUploadMsg('Added ' + fresh.length + ' shots. Refreshing…');
-      const d = await getRawData();
-      ingest(d);
-      setUploadMsg(fresh.length ? 'Added ' + fresh.length + ' shots.' : 'No new shots (all duplicates).');
+      setUploadMsg('Uploading ' + files.length + ' session(s)…');
+      let added = 0;
+      for (const parsedShots of files) {
+        const first = parsedShots[0];
+        const label = first.session_label || first.session;
+        const date = first.date ?? null;
+        // create the session row (RLS requires user_id)
+        const { data: sess, error: se } = await supabase
+          .from('sessions')
+          .insert({ user_id: userId, label, date })
+          .select('id')
+          .single();
+        if (se || !sess) {
+          setUploadMsg('Could not save session (' + (se?.message ?? 'unknown error') + ').');
+          setBusy(false);
+          return;
+        }
+        // insert the shot rows (user_id required on every row for RLS)
+        const insertRows = parsedShots.map((s) => ({
+          user_id: userId,
+          session_id: sess.id,
+          club: s.club,
+          ts: s.ts ?? null,
+          bs: s.bs ?? null,
+          la: s.la ?? null,
+          ld: s.ld ?? null,
+          bspin: s.bspin ?? null,
+          sspin: s.sspin ?? null,
+          spin: s.spin ?? null,
+          axis: s.axis ?? null,
+          apex: s.apex ?? null,
+          carry: s.carry ?? null,
+          total: s.total ?? null,
+          dev: s.dev ?? null,
+        }));
+        const { error: ie } = await supabase.from('shots').insert(insertRows);
+        if (ie) {
+          setUploadMsg('Could not save shots (' + ie.message + ').');
+          setBusy(false);
+          return;
+        }
+        added += insertRows.length;
+      }
+      setUploadMsg('Added ' + added + ' shots. Refreshing…');
+      await refresh(); // reload from the cloud
+      setUploadMsg('Added ' + added + ' shots.');
     } catch (err) {
       setUploadMsg('Could not import (' + (err as Error).message + ').');
     } finally {
       setBusy(false);
     }
-  }, [ingest]);
+  }, [userId, refresh]);
 
-  if (!data) {
+  if (loading) {
     return (
       <View style={[styles.page, styles.center]}>
-        <ActivityIndicator color={C.accent} />
-        <Text style={styles.loading}>Loading raw shots…</Text>
+        <ActivityIndicator color={C.accent} size="large" />
       </View>
     );
   }
@@ -354,7 +397,7 @@ export default function RawData() {
       <View style={styles.chipWrap}>
         {clubKeys.map((club) => {
           const on = clubState[club];
-          const col = data.colors[club] || C.dim;
+          const col = colors[club] || C.dim;
           return (
             <Pressable
               key={club}
@@ -438,7 +481,12 @@ export default function RawData() {
             </View>
 
             {/* body */}
-            {shown.length === 0 ? (
+            {shots.length === 0 ? (
+              <View style={styles.emptyRow}>
+                <Text style={styles.emptyTitle}>No shots yet</Text>
+                <Text style={styles.emptyHint}>Upload a session on the Raw tab to get started.</Text>
+              </View>
+            ) : shown.length === 0 ? (
               <View style={styles.emptyRow}>
                 <Text style={styles.empty}>No shots match.</Text>
               </View>
@@ -551,7 +599,6 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
   content: { padding: 16, paddingBottom: 48 },
   center: { alignItems: 'center', justifyContent: 'center' },
-  loading: { fontFamily: mono, fontSize: 12, color: C.dim, marginTop: 10 },
 
   kicker: { fontFamily: mono, fontSize: 11, letterSpacing: 3, color: C.accent },
   title: { fontSize: 38, fontWeight: '800', color: C.ink, marginTop: 6, letterSpacing: 0.5 },
@@ -665,6 +712,8 @@ const styles = StyleSheet.create({
 
   emptyRow: { paddingVertical: 40, paddingHorizontal: 20, alignItems: 'center', minWidth: 760 },
   empty: { fontFamily: mono, fontSize: 13, color: C.dim },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: C.ink },
+  emptyHint: { fontFamily: mono, fontSize: 12, color: C.dim, marginTop: 8 },
 
   foot: {
     fontFamily: mono,
