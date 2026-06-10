@@ -1,9 +1,26 @@
 # Connections & Compare — build spec
 
-Lets users link with other players ("connections") and compare bags. **Approved
-design; build NOT started.** This doc is the single source of truth — build from it.
-Apply to **web AND mobile** (parity rule, see CLAUDE.md). Develop on a `connections`
-feature branch off `main` (main auto-deploys to Render; merge per stable phase).
+Lets users link with other players ("connections") and compare bags. This doc is the
+single source of truth — build from it. Apply to **web AND mobile** (parity rule, see
+CLAUDE.md). Develop on the `connections` feature branch off `main` (main auto-deploys
+to Render; merge per stable phase).
+
+## ✅ STATUS (2026-06-10)
+- **Phase A — link by email: DONE, merged to `main`.** connections module + Settings →
+  Connections UI (add/accept/decline/remove) + pending badge, web + mobile.
+- **Phase B — publish/view bag summary: DONE, merged to `main`.** publishBagSummary +
+  loadBagSummary + "view a connection's bag" (web `connection-bag.html`, mobile
+  `connection-bag.tsx`), reached from the Connections list.
+- **Backend is LIVE on Supabase (`uzqtotiilluwktewdlmr`) + verified.** Schema applied
+  (connections, bag_summaries, are_connected, user_id_by_email + RLS); `request-connection`
+  Edge Function deployed. Tested with real users: RLS isolation (connected can read the
+  aggregate bag_summary, NOBODY can read raw shots) + upsert idempotency — all pass.
+  The Supabase CLI is linked locally; the access token is in the macOS keychain
+  (service "Supabase CLI", account "supabase") — read it with
+  `security find-generic-password -s 'Supabase CLI' -a supabase -w` for future CLI ops,
+  and set `SSL_CERT_FILE=/etc/ssl/cert.pem` for python; the Management API blocks the
+  default python User-Agent (use curl or a browser UA).
+- **NEXT: Phase C — Compare** (see below). Then D (email invites) + E (mobile push).
 
 ## Locked decisions (from the design conversation)
 1. **Share scope:** a player's **Bag/Overview summary only** — per-club aggregates,
@@ -127,11 +144,20 @@ shots**. Instead each user **publishes an aggregated `bag_summary`** (the Overvi
   `AbsherDemo2026!` (keep pristine).
 
 ## Where to resume after compaction
-1. Read this file + `CLAUDE.md` (auto-loaded) + `RELEASE.md`.
-2. Confirm the locked decisions above with the user (one line) — then `git checkout -b
-   connections` off `main`.
-3. Start **Phase A**: write the schema SQL (hand it to the user to run) + the
-   `request-connection` Edge Function + `connections` module + the Settings → Connections
-   UI + in-app badge, **on web AND mobile**.
-4. Verify in-browser (web) and reason through mobile; commit per phase; merge to `main`
-   only when a phase is stable.
+1. Read this file + `CLAUDE.md` (auto-loaded) + `RELEASE.md`. Phases A+B are DONE and on
+   `main`; the backend is live + verified (see STATUS above).
+2. `git checkout connections` (branch already exists, off `main`). Pull `main` first.
+3. Build **Phase C — Compare**, web + mobile:
+   - A **"⚖ Compare with a connection →"** button on the Bag (`index.html` /
+     `app/src/app/index.tsx`) — NOT a nav tab.
+   - Compare view: web `compare.html` (auth-gated, link-only) + mobile `compare.tsx`
+     (register `href:null` in `_layout.tsx`, like `connection-bag`). Pick a connection
+     (list from `connections.js`/`lib/connections.ts`), load both bags via
+     `loadBagSummary()`, then render: **gapping-ladder overlay** (both carry ladders on
+     one chart) + **per-club delta table** (your carry vs theirs, ±) + **average-shot
+     trajectory overlay** (your `mean` path vs theirs — reuse the side/top-down render).
+   - Reuse the published summary's `mean` array for trajectories; both bags are already
+     aggregate-only, so no new data access is needed.
+4. Verify (web modules `node --check`; mobile `tsc`; optional live test reusing the
+   ephemeral-user harness pattern from Phases A/B). Commit per phase; merge to `main`
+   when stable. Then **Phase D** (email invites — needs SMTP) + **Phase E** (mobile push).
