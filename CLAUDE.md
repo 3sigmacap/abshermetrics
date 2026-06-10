@@ -2,6 +2,12 @@
 
 A golf launch-monitor analysis app shipped on three platforms that share one backend.
 
+## ▶ ACTIVE PROJECT: Connections & Compare (NOT started)
+Next big feature — full approved spec in **`CONNECTIONS_PLAN.md`**. Read it first.
+Players link by email ("connections", mutual), share **Bag summary + avg trajectory
+only** (never raw shots), and **Compare** (overlay + deltas via a button on the Bag).
+Build on a `connections` branch off `main`, web + mobile in lockstep, Phases A–E.
+
 ## ⭐ STANDING RULE: keep web + mobile in lockstep
 **Apply EVERY user-facing change (UI, feature, layout, copy) to BOTH the web app AND
 the mobile app by default** — unless the user explicitly scopes it to one platform.
