@@ -99,16 +99,19 @@ svg:active{cursor:grabbing;}
 <div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
 </div>
 </div>
-<script type="module">let DATA;
+<script type="module">
+import { loadClubData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
+let DATA;
+const __main = document.querySelector('.page2');
 try{
-  const _r = await fetch('shots.json');
-  if(!_r.ok) throw new Error('HTTP '+_r.status);
-  DATA = await _r.json();
-}catch(_e){
-  document.body.insertAdjacentHTML('afterbegin',
-    '<div style="padding:20px;font-family:monospace;color:#ff9d9d;background:#1a0f0f;border:1px solid #5a2a2a;margin:14px;border-radius:8px">Could not load shots.json ('+_e.message+'). Serve this site over http (e.g. <b>python3 -m http.server</b>) rather than opening the file directly.</div>');
-  throw _e;
+  DATA = await loadClubData();
+}catch(e){
+  console.error(e);
+  renderError(__main, e && e.message);
+  throw e;
 }
+if(DATA.length>0){
 
 /* ---- Engine-driven coordinates (no rescaling) ----
    Carry, lateral landing, apex and the dispersion ellipse are all computed by
@@ -431,5 +434,8 @@ window.addEventListener('resize',()=>{
 });
 
 drawAll();
+}else{
+  renderEmpty(__main, { bag:false });
+}
 </script>
 </body></html>

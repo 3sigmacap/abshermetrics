@@ -107,11 +107,17 @@ table.s tr:hover td{background:#10201733;}
 </div>
 
 <script type="module">
-let DATA=[];
-try{ DATA=await (await fetch('shots.json')).json(); }
-catch(e){
-  document.getElementById('content').innerHTML='<div class="panel">Could not load shots.json ('+e.message+'). Serve over http (e.g. <b>python3 -m http.server</b>), not file://.</div>';
+import { loadClubData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
+
+const __content=document.getElementById('content');
+let DATA=[], __ok=false;
+try{
+  DATA=await loadClubData();
+  if(DATA.length===0) renderEmpty(__content,{bag:false});   // signed-in, 0 shots = normal -> skip init
+  else __ok=true;
 }
+catch(e){ console.error(e); renderError(__content, e && e.message); }
 
 // ---- stat helpers ----
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
@@ -357,7 +363,7 @@ function renderClub(){
   });
 }
 
-// init
-if(DATA.length){current=DATA[0].club;paintPicker();renderClub();}
+// init — only when we have data and no load error (empty/error already handled above)
+if(__ok && DATA.length){current=DATA[0].club;paintPicker();renderClub();}
 </script>
 </body></html>

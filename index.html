@@ -116,7 +116,10 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <div class="foot"><span>BAGMETRICS &middot; launch-monitor analysis &middot; <span id="fShots">–</span> shots</span><span>physics model: drag + Magnus, Re &amp; spin-rate dependent</span></div>
 </div>
 
-<script>
+<script type="module">
+import { loadClubData, loadSampleData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
+
 // ---- Static config (NOT derivable from shot data) ----
 // Loft = club spec (degrees). Red = editorial two-way-miss flag.
 const LOFT = {"3 Wood":"15\u00b0","3 Iron":"20\u00b0","4 Iron":"23\u00b0","5 Iron":"26\u00b0","6 Iron":"30\u00b0","7 Iron":"34\u00b0","8 Iron":"39\u00b0","9 Iron":"42.5\u00b0","Pitching Wedge":"47\u00b0","Gap Wedge":"52\u00b0","Sand Wedge":"56\u00b0"};
@@ -130,8 +133,8 @@ const r1 = x => Math.round(x*10)/10;           // 1 decimal
 const comma = x => x.toLocaleString('en-US');  // 1,234
 const f1 = x => r1(x).toFixed(1);              // always 1 decimal in text
 
-fetch('shots.json').then(r=>r.json()).then(data=>{
-  // shots.json is canonical ASCENDING by length; display table is LONGEST first.
+function render(data){
+  // ClubData[] is canonical ASCENDING by length; display table is LONGEST first.
   const asc = data.slice();
   const disp = data.slice().reverse();
 
@@ -203,9 +206,17 @@ fetch('shots.json').then(r=>r.json()).then(data=>{
     }
   });
   document.getElementById('tbody').innerHTML=html;
-}).catch(e=>{
-  document.getElementById('tbody').innerHTML='<tr><td class="cl">Failed to load shots.json</td></tr>';
+}
+
+// ---- bootstrap: load THIS signed-in user's data (auth-gate guarantees a session) ----
+const __main = document.querySelector('.page');
+try{
+  const data = await loadClubData();
+  if(!data.length) renderEmpty(__main, { bag:true, onSample: loadSampleData });
+  else render(data);
+}catch(e){
   console.error(e);
-});
+  renderError(__main, e && e.message);
+}
 </script>
 </body></html>

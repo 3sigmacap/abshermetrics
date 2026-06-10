@@ -126,25 +126,24 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 
 <script type="module">
 import { attributeCarryChange, simulateFlight } from './flight-engine.js';
+import { loadRawData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
 const sessState={};   // session id -> shown bool. Global: persists across club switches.
 const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
 
-async function loadUploaded(){try{const r=await window.storage.get('uploaded_shots');return r&&r.value?JSON.parse(r.value):[];}catch(e){return [];}}
-
 try{
-  const base=await (await fetch('raw-shots.json')).json();
+  const base=await loadRawData();
   COLORS={...(base.colors||{})};
   window.__CLUB_ORDER=base.club_order||[];
-  const up=await loadUploaded();
-  SHOTS=[...base.shots,...up];
+  SHOTS=[...base.shots];
   const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
-  up.forEach(s=>{if(!sm[s.session])sm[s.session]={id:s.session,label:s.session_label||s.session,date:s.date||'',_uploaded:true};});
   SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
   SESSIONS.forEach(s=>sessState[s.id]=true);
   let ci=0; SHOTS.forEach(s=>{if(!COLORS[s.club]){COLORS[s.club]=FALLBACK[ci%FALLBACK.length];ci++;}});
 }catch(e){
-  document.getElementById('content').innerHTML='<div class="panel empty">Could not load raw-shots.json ('+e.message+'). Serve over http, not file://.</div>';
+  console.error(e);
+  renderError(document.getElementById('content'), e && e.message);
 }
 document.getElementById('sessFoot').textContent=SESSIONS.length+' sessions';
 
@@ -578,9 +577,13 @@ function setAllSessions(on){SESSIONS.forEach(s=>sessState[s.id]=on);buildSession
 const sessAllBtn=document.getElementById('sessAll'), sessNoneBtn=document.getElementById('sessNone');
 if(sessAllBtn)sessAllBtn.onclick=()=>setAllSessions(true);
 if(sessNoneBtn)sessNoneBtn.onclick=()=>setAllSessions(false);
-buildSessionChips();
 
-if(clubsWithData.length){current=clubsWithData[0];paintPicker();paintHealthDots();render();}
-else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
+if(SHOTS.length===0){
+  renderEmpty(document.getElementById('content'), {bag:false});
+}else{
+  buildSessionChips();
+  if(clubsWithData.length){current=clubsWithData[0];paintPicker();paintHealthDots();render();}
+  else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
+}
 </script>
 </body></html>

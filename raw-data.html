@@ -115,6 +115,8 @@ tr.exrow:hover td{background:#1a121233;}
 </div>
 
 <script type="module">
+import { loadRawData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
 const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
   {key:'date',  label:'Date',     unit:'',     type:'date'},
@@ -142,36 +144,18 @@ const COLORS={};
 let CLUB_ORDER=[];
 const FALLBACK_COLORS=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff','#8aa596','#ff7f50','#5ed2ff','#e8d44f'];
 
-// Pull any sessions the user uploaded in-browser (persisted via storage)
-async function loadUploaded(){
-  try{
-    const r=await window.storage.get('uploaded_shots');
-    return r&&r.value?JSON.parse(r.value):[];
-  }catch(e){return [];}
-}
-
 async function loadAll(){
-  let base={sessions:[],colors:{},shots:[]};
-  try{
-    base=await (await fetch('raw-shots.json')).json();
-  }catch(e){
-    document.querySelector('.tablewrap').innerHTML='<div class="empty">Could not load raw-shots.json ('+e.message+'). Serve over http (e.g. <b>python3 -m http.server</b>), not file://.</div>';
-    return;
-  }
+  const base=await loadRawData();
   Object.assign(COLORS, base.colors||{});
   CLUB_ORDER=base.club_order||[];
-  const uploaded=await loadUploaded();
-  const allShots=[...base.shots, ...uploaded];
+  const allShots=base.shots||[];
   // assign colors to any clubs not in the palette map
   let ci=0;
   allShots.forEach(s=>{ if(!COLORS[s.club]){COLORS[s.club]=FALLBACK_COLORS[ci%FALLBACK_COLORS.length];ci++;} });
 
-  // build sessions list (base + any uploaded), preserve date order
+  // build sessions list, preserve date order
   const sessMap={};
   (base.sessions||[]).forEach(s=>sessMap[s.id]=({...s}));
-  uploaded.forEach(s=>{
-    if(!sessMap[s.session])sessMap[s.session]={id:s.session,label:s.session_label||s.session,date:s.date||'',n:0,_uploaded:true};
-  });
   SESSIONS=Object.values(sessMap).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
   SESSIONS.forEach(s=>sessState[s.id]=true);
 
@@ -181,8 +165,20 @@ async function loadAll(){
     ROWS.push({...s, _color:COLORS[s.club], _idx:ROWS.length+1});
   });
 }
-await loadAll();
 
+const __main=document.querySelector('.page');
+let __loaded=false;
+try{
+  await loadAll();
+  __loaded=true;
+}catch(e){
+  console.error(e);
+  renderError(__main, e && e.message);
+}
+if(__loaded && !ROWS.length){
+  renderEmpty(__main, {bag:false});
+}
+if(__loaded && ROWS.length){
 document.getElementById('totalCount').textContent=ROWS.length;
 const exclCount=ROWS.filter(r=>r.excluded).length;
 if(exclCount)document.getElementById('exclNote').textContent='· '+exclCount+' excluded';
@@ -279,21 +275,10 @@ function sessionFromFile(shots){
 }
 const msg=document.getElementById('uploadMsg');
 document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
-document.getElementById('fileInput').onchange=async(e)=>{
-  const files=[...e.target.files]; if(!files.length)return;
-  msg.textContent='Parsing '+files.length+' file(s)…';
-  let all=[];
-  for(const f of files){ const txt=await f.text(); all.push(...sessionFromFile(parseCSV(txt))); }
-  if(!all.length){msg.textContent='No valid shot rows found in those files.';return;}
-  // merge with existing uploaded, de-dupe by ts+club
-  const existing=await loadUploaded();
-  const seen=new Set(existing.map(s=>s.ts+'|'+s.club));
-  const fresh=all.filter(s=>!seen.has(s.ts+'|'+s.club));
-  const merged=[...existing,...fresh];
-  try{ await window.storage.set('uploaded_shots', JSON.stringify(merged)); }
-  catch(err){ msg.textContent='Could not save ('+err.message+').'; return; }
-  msg.innerHTML='Added <b style="color:var(--accent)">'+fresh.length+'</b> shots. Reloading…';
-  setTimeout(()=>location.reload(),700);
+// CSV upload is being rewired to Supabase in a later step. For now this is a no-op.
+document.getElementById('fileInput').onchange=(e)=>{
+  msg.textContent='CSV upload is being upgraded — coming shortly';
+  e.target.value='';
 };
 
 const fmt=(v,c,row)=>{
@@ -359,5 +344,6 @@ function render(){
 
 document.getElementById('search').addEventListener('input',render);
 render();
+}
 </script>
 </body></html>

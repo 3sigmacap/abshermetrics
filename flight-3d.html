@@ -136,7 +136,7 @@ canvas{display:block;}
 <div id="scene">
 <div id="rdg"></div>
 <div id="hud"></div>
-<div class="tag">PHYSICS SIM (Re+spin aero) &middot; 237 SHOTS</div>
+<div class="tag" id="shotCountTag">PHYSICS SIM (Re+spin aero)</div>
 <div id="hint"><b>drag</b> orbit &middot; <b>pinch</b> zoom &middot; <b>Launch</b> to fire</div>
 <div class="cambar">
 <span class="camlbl">View</span>
@@ -161,14 +161,16 @@ canvas{display:block;}
 <div class="foot">Solid bright line = mean shot. Faint lines = individual shots. Click a club name to isolate it; click its dot to toggle. <b>Launch</b> animates the ball flight; <b>Landing zones</b> shows 1&sigma; dispersion discs + carry rings. Drawn true-to-scale (height and distance use the same yard scale, like a real ball flight).</div>
 </div></div>
 <script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"}}</script>
-<script type="module">let DATA;
+<script type="module">
+import { loadClubData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
+let DATA;
+const __main = document.getElementById('app');
 try{
-  const _r = await fetch('shots.json');
-  if(!_r.ok) throw new Error('HTTP '+_r.status);
-  DATA = await _r.json();
+  DATA = await loadClubData();
 }catch(_e){
-  document.body.insertAdjacentHTML('afterbegin',
-    '<div style="padding:20px;font-family:monospace;color:#ff9d9d;background:#1a0f0f;border:1px solid #5a2a2a;margin:14px;border-radius:8px">Could not load shots.json ('+_e.message+'). Serve this site over http (e.g. <b>python3 -m http.server</b>) rather than opening the file directly.</div>');
+  console.error(_e);
+  renderError(__main, _e && _e.message);
   throw _e;
 }
 
@@ -181,6 +183,11 @@ try{
    toggle. */
 
 import * as THREE from 'three';
+
+if(DATA.length){
+
+// ---- per-user shot count in the header tag (replaces the old hardcoded "237 SHOTS") ----
+(function(){const __t=document.getElementById('shotCountTag');if(__t){const __n=DATA.reduce((s,d)=>s+(d.n||0),0);__t.innerHTML='PHYSICS SIM (Re+spin aero) &middot; '+__n+' SHOTS';}})();
 
 // ---- scene ----
 const scene=new THREE.Scene();
@@ -571,6 +578,10 @@ addEventListener('resize',resize);resize();updCam();apply();
   stepFlights(now);
   rnd.render(scene,cam);
 })();
+
+} else {
+  renderEmpty(__main, { bag:false });
+}
 
 </script>
 </body></html>
