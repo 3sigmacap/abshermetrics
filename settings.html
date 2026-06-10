@@ -79,6 +79,8 @@ input::placeholder{color:var(--dim2);}
 .conn-accept:hover{filter:brightness(1.07);}
 .conn-decline,.conn-remove{background:transparent;border:1px solid var(--line2);color:var(--dim);}
 .conn-decline:hover,.conn-remove:hover{color:var(--bad);border-color:#5e2b2b;}
+.conn-view{background:#10201780;border:1px solid var(--line2);color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;}
+.conn-view:hover{border-color:var(--accent);}
 .conn-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
 .conn-empty{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim2);padding:6px 0;}
 @media(max-width:760px){
@@ -312,7 +314,8 @@ function connRow(c, kind) {
     right = `<span class="conn-tag">Pending</span>
       <button class="conn-btn conn-remove" data-act="cancel" data-id="${c.id}">Cancel</button>`;
   } else {
-    right = `<button class="conn-btn conn-remove" data-act="remove" data-id="${c.id}">Remove</button>`;
+    right = `<a class="conn-btn conn-view" href="connection-bag.html?u=${encodeURIComponent(c.other.id)}">View bag</a>
+      <button class="conn-btn conn-remove" data-act="remove" data-id="${c.id}">Remove</button>`;
   }
   return `<div class="conn-row">
     <div class="conn-who"><div class="nm">${name}</div><div class="em">${email}</div></div>

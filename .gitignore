@@ -1,1 +1,6 @@
 .DS_Store
+
+# Supabase CLI local state (keep the two link files that are already tracked)
+supabase/.temp/*
+!supabase/.temp/cli-latest
+!supabase/.temp/linked-project.json

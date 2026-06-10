@@ -119,6 +119,7 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <script type="module">
 import { loadClubData, loadSampleData } from './user-data.js';
 import { loadProfile, loftOf } from './profile.js';
+import { publishBagSummary } from './bag-summary.js';
 import { renderEmpty, renderError } from './empty-state.js';
 
 // ---- Static config (NOT derivable from shot data) ----
@@ -217,7 +218,12 @@ try{
   const [data, profile] = await Promise.all([loadClubData(), loadProfile()]);
   CLUB_SPECS = profile.clubSpecs || {};
   if(!data.length) renderEmpty(__main, { bag:true, onSample: loadSampleData });
-  else render(data);
+  else {
+    render(data);
+    // Keep this user's shareable bag summary fresh for their connections
+    // (also publishes for users whose data predates the Connections feature).
+    publishBagSummary(data, profile); // fire-and-forget; never blocks the page
+  }
 }catch(e){
   console.error(e);
   renderError(__main, e && e.message);

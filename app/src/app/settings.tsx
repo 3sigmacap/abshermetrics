@@ -360,6 +360,15 @@ export default function Settings() {
                 </Text>
               </View>
               <Pressable
+                onPress={() =>
+                  router.push(
+                    `/connection-bag?u=${encodeURIComponent(c.other.id)}&name=${encodeURIComponent(connPerson(c))}` as Href,
+                  )
+                }
+                style={[styles.connBtn, styles.connView]}>
+                <Text style={styles.connViewTxt}>View bag</Text>
+              </Pressable>
+              <Pressable
                 onPress={() => removeConn(c.id, true)}
                 style={[styles.connBtn, styles.connGhost]}
                 disabled={busy}>
@@ -488,6 +497,8 @@ const styles = StyleSheet.create({
   connAcceptTxt: { color: '#0a120d', fontWeight: '700', fontSize: 12, fontFamily: mono },
   connGhost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.line2 },
   connGhostTxt: { color: C.dim, fontWeight: '600', fontSize: 12, fontFamily: mono },
+  connView: { backgroundColor: '#10201780', borderWidth: 1, borderColor: C.line2 },
+  connViewTxt: { color: C.accent, fontWeight: '600', fontSize: 12, fontFamily: mono },
   connTag: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, textTransform: 'uppercase' },
   connEmpty: { fontFamily: mono, fontSize: 12, color: C.dim2, paddingVertical: 6 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },

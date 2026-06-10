@@ -1,0 +1,170 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Connection's Bag</title>
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:30px 26px 80px;}
+.back{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;transition:.18s;}
+.back:hover{color:var(--accent);}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent2);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,84px);line-height:.92;letter-spacing:1px;margin:8px 0;}
+h1.big span{color:var(--accent);}
+.lead{font-size:16px;color:var(--dim);max-width:680px;font-weight:300;line-height:1.5;}
+.stats-strip{display:flex;gap:30px;flex-wrap:wrap;margin-top:22px;}
+.stat{font-family:'IBM Plex Mono',monospace;}
+.stat .v{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--accent);line-height:1;}
+.stat .l{font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+.tablewrap{margin-top:22px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1410cc;}
+.thead{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;}
+.thead h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;font-weight:400;}
+.thead .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);}
+.swipehint{display:none;margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--accent);text-transform:uppercase;opacity:.7;}
+table{width:100%;border-collapse:collapse;font-size:15px;}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+thead th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:500;}
+thead th:first-child,thead th:nth-child(2){text-align:left;}
+tbody td{padding:11px 14px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#10201766;}
+td.cl{text-align:left;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;color:var(--ink);}
+td.num{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--dim);}
+tr.gaprow td{padding:2px 14px;border-bottom:none;}
+tr.gaprow:hover{background:transparent;}
+.gapcell{text-align:right;white-space:nowrap;}
+.gapval{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.5px;color:var(--dim2);text-transform:uppercase;}
+.gapval b{color:var(--dim);font-weight:500;}
+td.big2{color:var(--accent);font-size:17px;font-weight:500;}
+.msg{margin-top:30px;font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--dim);line-height:1.7;}
+.note{margin-top:14px;font-size:13px;color:var(--dim2);font-family:'IBM Plex Mono',monospace;line-height:1.6;}
+@media(max-width:760px){
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
+  .page{padding:22px 14px 56px;}
+  table{font-size:12px;min-width:680px;}
+  .swipehint{display:inline;}
+  thead th,tbody td{padding:8px 8px;}
+  td.cl{font-size:17px;}
+}
+</style>
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="club-detail.html" class="tab ">Club Detail</a>
+<a href="trends.html" class="tab ">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+<a href="settings.html" class="tab ">Settings</a>
+</div>
+<div class="page">
+<a class="back" href="settings.html">&lsaquo; Connections</a>
+<div class="kicker" id="kicker">Connection</div>
+<h1 class="big" id="title">BAG</h1>
+<p class="lead">Their shared bag summary &amp; average trajectories — the same aggregate numbers they see on their Overview. Raw shots are never shared.</p>
+<div class="stats-strip" id="statStrip"></div>
+<div id="content"></div>
+</div>
+
+<script type="module">
+import { loadBagSummary } from './bag-summary.js';
+import { escapeHtml } from './user-data.js';
+
+const RED = new Set(['3 Wood', 'Gap Wedge']);
+const f1 = (x) => (Math.round(Number(x) * 10) / 10).toFixed(1);
+const comma = (x) => Math.round(Number(x) || 0).toLocaleString('en-US');
+const loftStr = (loft) => (loft != null ? loft + '°' : '–');
+
+const params = new URLSearchParams(location.search);
+const uid = params.get('u');
+
+const content = document.getElementById('content');
+function showMsg(text) { content.innerHTML = `<div class="msg">${escapeHtml(text)}</div>`; }
+
+function renderTable(summary) {
+  // summary is ASCENDING by length; show longest first (matches the Bag).
+  const disp = summary.slice().reverse();
+  let rows = '';
+  disp.forEach((c, idx) => {
+    const latStyle = RED.has(c.club) ? ' style="color:#ff9d9d"' : '';
+    rows +=
+      '<tr>' +
+      `<td class="cl">${escapeHtml(c.club)}</td>` +
+      `<td class="num">${loftStr(c.loft)}</td>` +
+      `<td class="num big2">${c.carry}</td>` +
+      `<td class="num">${c.total}</td>` +
+      `<td class="num">&plusmn;${f1(c.carrySD)}</td>` +
+      `<td class="num">${c.ballSpeed}</td>` +
+      `<td class="num">${f1(c.launchAngle)}°</td>` +
+      `<td class="num">${comma(c.spin)}</td>` +
+      `<td class="num">${c.apex}</td>` +
+      `<td class="num"${latStyle}>&plusmn;${f1(c.lateralSD)}</td>` +
+      '</tr>';
+    if (idx < disp.length - 1) {
+      const gap = c.carry - disp[idx + 1].carry;
+      rows +=
+        '<tr class="gaprow"><td></td><td></td>' +
+        `<td class="gapcell"><span class="gapval"><b>${gap}</b> yd gap</span></td>` +
+        '<td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+    }
+  });
+  content.innerHTML =
+    '<div class="tablewrap"><div class="thead"><h2>CLUB SUMMARY</h2>' +
+    '<span class="sub">carry &amp; gapping &middot; averages per club</span>' +
+    '<span class="swipehint">swipe &rarr;</span></div><div class="tscroll"><table><thead><tr>' +
+    '<th>Club</th><th>Loft</th><th>Carry</th><th>Total</th><th>&plusmn;SD</th>' +
+    '<th>Ball</th><th>Launch</th><th>Spin</th><th>Apex</th><th>Lateral SD</th>' +
+    `</tr></thead><tbody>${rows}</tbody></table></div></div>` +
+    '<div class="note">Carry &amp; apex in yards/feet &middot; ball speed mph &middot; spin rpm &middot; lateral SD = sideways spread (1&sigma;). Modeled through the same physics engine as your own bag.</div>';
+
+  // hero stats
+  const carries = disp.map((c) => c.carry);
+  const longest = Math.max(...carries);
+  const shortest = Math.min(...carries);
+  const totalShots = summary.reduce((s, c) => s + (c.n || 0), 0);
+  document.getElementById('statStrip').innerHTML =
+    `<div class="stat"><div class="v">${longest}</div><div class="l">Longest carry</div></div>` +
+    `<div class="stat"><div class="v">${shortest}</div><div class="l">Shortest carry</div></div>` +
+    `<div class="stat"><div class="v">${summary.length}</div><div class="l">Clubs</div></div>` +
+    `<div class="stat"><div class="v">${totalShots}</div><div class="l">Shots</div></div>`;
+}
+
+if (!uid) {
+  showMsg('No connection specified.');
+} else {
+  try {
+    const res = await loadBagSummary(uid);
+    if (res.error) {
+      showMsg('Could not load this bag: ' + res.error);
+    } else {
+      const name = res.displayName || 'Your connection';
+      document.getElementById('title').innerHTML = escapeHtml(name) + "<span>'S BAG</span>";
+      document.title = 'AbsherMetrics — ' + name + "'s Bag";
+      if (!res.summary || !res.summary.length) {
+        showMsg("This connection hasn't shared any club data yet. Once they upload a session, their bag summary will appear here.");
+      } else {
+        renderTable(res.summary);
+      }
+    }
+  } catch (e) {
+    showMsg('Could not load this bag: ' + (e && e.message ? e.message : 'unknown error'));
+  }
+}
+</script>
+</body></html>

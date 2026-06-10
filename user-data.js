@@ -9,8 +9,22 @@ import { supabase, getSession } from './auth.js';
 import {
   computeClubs, CLUB_ORDER, CLUB_COLORS, clubColor, clubSortIdx,
 } from './club-compute.js';
+import { publishBagSummary } from './bag-summary.js';
+import { loadProfile } from './profile.js';
 
 export { CLUB_ORDER, clubSortIdx };
+
+/** Recompute + republish this user's aggregate bag summary so connections see
+ *  current numbers. Best-effort (never fails a mutation). Called after any data
+ *  change; also runs on Bag load for users whose data predates this feature. */
+export async function republishSummary() {
+  try {
+    const [cd, profile] = await Promise.all([loadClubData(), loadProfile()]);
+    await publishBagSummary(cd, profile);
+  } catch (_) {
+    /* non-fatal: summary refresh is best-effort */
+  }
+}
 
 const CHUNK = 500; // rows per insert — mirrors the mobile app
 
@@ -168,6 +182,7 @@ export async function loadSampleData() {
       const { error } = await supabase.from('shots').insert(rows.slice(i, i + CHUNK));
       if (error) throw error;
     }
+    await republishSummary();
     return {};
   } catch (e) {
     return { error: e?.message ?? 'Failed to load sample data' };
@@ -185,6 +200,7 @@ export async function deleteAllData() {
     if (e1) throw e1;
     const { error: e2 } = await supabase.from('sessions').delete().eq('user_id', uid);
     if (e2) throw e2;
+    await republishSummary();
     return {};
   } catch (e) {
     return { error: e?.message ?? 'Failed to delete data' };
@@ -339,5 +355,6 @@ export async function uploadCsvFiles(files, onProgress = () => {}) {
     added += insertRows.length;
     sessionsAdded += 1;
   }
+  await republishSummary();
   return { added, sessions: sessionsAdded };
 }

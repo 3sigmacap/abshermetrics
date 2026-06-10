@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SignInScreen from '@/components/SignInScreen';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { BagPublisher } from '@/lib/bagSummary';
 import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
 import { ProfileProvider } from '@/lib/profile';
@@ -91,6 +92,7 @@ function AppTabs() {
       {/* Hidden routes (not tabs): pushed from in-app, each with a BackBar. */}
       <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
       <Tabs.Screen name="raw-data" options={{ href: null, title: 'Raw Data' }} />
+      <Tabs.Screen name="connection-bag" options={{ href: null, title: 'Connection' }} />
     </Tabs>
   );
 }
@@ -113,6 +115,7 @@ export default function RootLayout() {
               </SafeAreaView>
               <AuthOverlay />
               <ScreenshotNav />
+              <BagPublisher />
             </View>
           </DataProvider>
         </ConnectionsProvider>
