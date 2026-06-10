@@ -35,7 +35,12 @@ export async function updateName(name) {
   const { error } = await supabase
     .from('profiles')
     .upsert({ id: uid, display_name: name }, { onConflict: 'id' });
-  return error ? { error: error.message } : {};
+  if (error) return { error: error.message };
+  // Keep auth user_metadata in sync so the nav account chip — which reads
+  // session.user.user_metadata.display_name (see auth.js displayNameOf) —
+  // reflects the rename on the next page load instead of showing a stale name.
+  await supabase.auth.updateUser({ data: { display_name: name } });
+  return {};
 }
 
 export async function saveClubSpecs(specs) {

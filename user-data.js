@@ -14,6 +14,15 @@ export { CLUB_ORDER, clubSortIdx };
 
 const CHUNK = 500; // rows per insert — mirrors the mobile app
 
+/** HTML-escape a value before it is placed into innerHTML. Defense against stored
+ *  XSS from attacker-controlled fields (e.g. a club name from an uploaded CSV).
+ *  React Native auto-escapes; the vanilla web pages must do it explicitly. */
+export function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 /** Raw fetch: the user's sessions + shots, normalized to the RawShot/Session shapes. */
 export async function fetchUserData() {
   const { data: srows, error: se } = await supabase
@@ -220,7 +229,8 @@ function parseCSV(text) {
     const row = {};
     head.forEach((h, j) => (row[h] = (cells[j] || '').trim()));
     if (!row['Date']) continue;
-    const o = { session: '', club: (row['Club Type'] || '').trim() };
+    // strip < > and cap length so a club name can never inject markup downstream
+    const o = { session: '', club: (row['Club Type'] || '').trim().replace(/[<>]/g, '').slice(0, 40) };
     for (const [csvName, key] of Object.entries(FIELD_MAP)) {
       if (row[csvName] !== undefined && row[csvName] !== '') {
         const n = parseFloat(row[csvName]);

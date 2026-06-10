@@ -116,7 +116,7 @@ tr.exrow:hover td{background:#1a121233;}
 </div>
 
 <script type="module">
-import { loadRawData, uploadCsvFiles, deleteAllData } from './user-data.js';
+import { loadRawData, uploadCsvFiles, deleteAllData, escapeHtml as esc } from './user-data.js';
 import { renderError } from './empty-state.js';
 const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
@@ -232,48 +232,7 @@ function buildSessionChips(){
 }
 buildSessionChips();
 
-// ---- CSV upload (client-side, persisted in browser storage) ----
-const FIELD_MAP={'Ball Speed':'bs','Launch Angle':'la','Launch Direction':'ld','Backspin':'bspin','Sidespin':'sspin','Spin Rate':'spin','Spin Axis':'axis','Apex Height':'apex','Carry Distance':'carry','Total Distance':'total','Carry Deviation Distance':'dev','Club Speed':'cs','Smash Factor':'smash'};
-function parseCSV(text){
-  // split lines, handle the header + units row like the R50 export
-  const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(l=>l.trim().length);
-  if(lines.length<2)return [];
-  const head=lines[0].split(',').map(h=>h.trim());
-  // detect & skip a units row (second row where Date cell is empty)
-  let start=1;
-  const secondCells=lines[1].split(',');
-  if(!secondCells[0].trim())start=2;
-  const out=[];
-  for(let i=start;i<lines.length;i++){
-    const cells=lines[i].split(',');
-    const row={}; head.forEach((h,j)=>row[h]=(cells[j]||'').trim());
-    if(!row['Date'])continue;
-    const o={club:(row['Club Type']||'').trim()};
-    for(const [csvName,key] of Object.entries(FIELD_MAP)){
-      if(row[csvName]!==undefined&&row[csvName]!==''){const n=parseFloat(row[csvName]);if(!Number.isNaN(n))o[key]=Math.round(n*100)/100;}
-    }
-    // parse date: "06/05/26 15:24:33 PM"
-    const ds=(row['Date']||'').replace(/\s*(AM|PM)\s*$/i,'').trim();
-    const m=ds.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
-    if(m){const yr=2000+(+m[3]);o._ts=new Date(yr,+m[1]-1,+m[2],+m[4],+m[5],+m[6]);}
-    else o._ts=new Date();
-    out.push(o);
-  }
-  return out;
-}
-function sessionFromFile(shots){
-  // each uploaded file = one session, labeled by date + start time (matches built-in format)
-  const valid=shots.filter(s=>s._ts);
-  if(!valid.length)return [];
-  valid.sort((a,b)=>a._ts-b._ts);
-  const start=valid[0]._ts;
-  const pad=n=>String(n).padStart(2,'0');
-  const sid=start.getFullYear()+'-'+pad(start.getMonth()+1)+'-'+pad(start.getDate())+'_'+pad(start.getHours())+pad(start.getMinutes())+'_u';
-  const label=start.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' · '+start.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  const dateISO=start.getFullYear()+'-'+pad(start.getMonth()+1)+'-'+pad(start.getDate());
-  valid.forEach(s=>{s.session=sid;s.session_label=label;s.date=dateISO;s.ts=s._ts.toISOString();delete s._ts;});
-  return valid;
-}
+// ---- CSV upload (each file = one session) — parsing + Supabase write live in user-data.js ----
 const msg=document.getElementById('uploadMsg');
 const uploadBtn=document.getElementById('uploadBtn');
 uploadBtn.onclick=()=>document.getElementById('fileInput').click();
@@ -308,7 +267,7 @@ if(delBtn && ROWS.length){
 }
 
 const fmt=(v,c,row)=>{
-  if(c.type==='date'){return '<span style="color:var(--dim)">'+(row.session_label||row.date||'—')+'</span>';}
+  if(c.type==='date'){return '<span style="color:var(--dim)">'+esc(row.session_label||row.date||'—')+'</span>';}
   if(c.type==='excl'){
     return row.excluded
       ? '<span class="exbadge" title="Dropped during cleaning — not used in the charts, averages, or 3D flight">Excluded</span>'
@@ -316,7 +275,7 @@ const fmt=(v,c,row)=>{
   }
   if(v===undefined||v===null||v==='')return '—';
   if(c.type==='idx')return v;
-  if(c.type==='club')return '<span class="sw" style="background:'+row._color+'"></span>'+v;
+  if(c.type==='club')return '<span class="sw" style="background:'+row._color+'"></span>'+esc(v);
   let n=Number(v);
   if(Number.isNaN(n))return v;
   let s=n.toFixed(c.dp);

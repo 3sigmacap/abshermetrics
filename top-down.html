@@ -100,7 +100,7 @@ svg:active{cursor:grabbing;}
 </div>
 </div>
 <script type="module">
-import { loadClubData } from './user-data.js';
+import { loadClubData, escapeHtml as esc } from './user-data.js';
 import { renderEmpty, renderError } from './empty-state.js';
 let DATA;
 const __main = document.querySelector('.page2');
@@ -130,7 +130,7 @@ function showTip(ev,d,s){
   const side = s.dev==null ? '' : (s.dev<0 ? Math.abs(Math.round(s.dev))+' yds LEFT' : (s.dev>0 ? Math.round(s.dev)+' yds RIGHT' : 'on target'));
   const shape = s.axis==null ? '' : (s.axis<0 ? 'curve right' : (s.axis>0 ? 'curve left' : 'straight'));
   tip.innerHTML =
-    '<div style="color:'+d.color+';font-weight:600;margin-bottom:3px;">'+d.club+'</div>'+
+    '<div style="color:'+d.color+';font-weight:600;margin-bottom:3px;">'+esc(d.club)+'</div>'+
     'Carry <b>'+fmt(s.carry,' yd')+'</b> &middot; Total '+fmt(s.total,' yd')+'<br>'+
     'Offline <b>'+(side||'\u2014')+'</b><br>'+
     'Ball speed '+fmt(s.bs,' mph')+'<br>'+
@@ -278,7 +278,7 @@ function drawAll(){topDraw();sideDraw();}
 const chips=document.getElementById('chips');
 const chipRefresh=[];   // collect each chip's visual-refresh fn for bulk toggles
 DATA.forEach(d=>{const c=document.createElement('button');c.className='chip';c.dataset.club=d.club;
-  c.innerHTML='<span class="sw" style="background:'+d.color+'"></span>'+d.club+' <span style="opacity:.6;font-family:monospace;font-size:11px">'+d.ell.rz+'y</span>';
+  c.innerHTML='<span class="sw" style="background:'+d.color+'"></span>'+esc(d.club)+' <span style="opacity:.6;font-family:monospace;font-size:11px">'+d.ell.rz+'y</span>';
   chips.appendChild(c);
   function st(){if(state[d.club]){c.style.background=d.color;c.style.borderColor=d.color;c.style.color='#0a120d';c.querySelector('.sw').style.background='#0a120d';}else{c.style.background='var(--panel)';c.style.borderColor='var(--line)';c.style.color='var(--dim)';c.querySelector('.sw').style.background=d.color;}}
   chipRefresh.push(st);

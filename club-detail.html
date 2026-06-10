@@ -107,7 +107,7 @@ table.s tr:hover td{background:#10201733;}
 </div>
 
 <script type="module">
-import { loadClubData } from './user-data.js';
+import { loadClubData, escapeHtml as esc } from './user-data.js';
 import { renderEmpty, renderError } from './empty-state.js';
 
 const __content=document.getElementById('content');
@@ -317,7 +317,7 @@ function renderClub(){
 
   document.getElementById('content').innerHTML=`
     <div class="clubhead">
-      <h1 class="big" style="color:${col}">${d.club}</h1>
+      <h1 class="big" style="color:${col}">${esc(d.club)}</h1>
       <span class="subline">${d.n} shots · ${fmt(cMean,0)} yd carry · loft-ordered #${rank} of ${DATA.length}</span>
     </div>
     <div class="hstrip">${cards}</div>

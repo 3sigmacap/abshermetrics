@@ -162,7 +162,7 @@ canvas{display:block;}
 </div></div>
 <script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"}}</script>
 <script type="module">
-import { loadClubData } from './user-data.js';
+import { loadClubData, escapeHtml as esc } from './user-data.js';
 import { renderEmpty, renderError } from './empty-state.js';
 let DATA;
 const __main = document.getElementById('app');
@@ -400,7 +400,7 @@ const list=document.getElementById('list');
 let showShots=true,showMean=true,soloClub=null,showOverlay=false,showRoll=false;
 DATA.forEach(d=>{
   const row=document.createElement('div');row.className='row';row.dataset.club=d.club;
-  row.innerHTML='<div class="dot" style="background:'+d.color+';color:'+d.color+'"></div><div class="nm">'+d.club+'</div><div class="meta">'+d.carry+'y</div>';
+  row.innerHTML='<div class="dot" style="background:'+d.color+';color:'+d.color+'"></div><div class="nm">'+esc(d.club)+'</div><div class="meta">'+d.carry+'y</div>';
   list.appendChild(row);
   row.querySelector('.dot').onclick=ev=>{ev.stopPropagation();clubObjs[d.club].visible=!clubObjs[d.club].visible;apply();};
   row.querySelector('.nm').onclick=()=>{soloClub=(soloClub===d.club)?null:d.club;apply();};
@@ -540,7 +540,7 @@ function stepFlights(now){
     const sub = liveStats.rolling
       ? liveStats.cur+' yd &middot; rolling out &middot; total '+liveStats.total+' yd'
       : liveStats.cur+' yd carried &middot; height '+liveStats.ht+' ft &middot; '+liveStats.tRemain+'s to land';
-    hud.innerHTML='<b style="color:'+liveStats.col+'">'+liveStats.club+'</b>'+
+    hud.innerHTML='<b style="color:'+liveStats.col+'">'+esc(liveStats.club)+'</b>'+
       '<div class="big">'+liveStats.speed+'<span>mph</span></div>'+
       '<div class="sub">'+sub+'</div>';
   }

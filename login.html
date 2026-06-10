@@ -129,12 +129,19 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-// Only allow redirecting to a same-site page (no open redirect).
+// Only allow redirecting to a SAME-ORIGIN page (no open redirect). Resolve the
+// candidate against our origin and reject anything that lands off-site — this
+// also defeats whitespace/control-char and protocol-relative tricks the browser
+// would otherwise normalize (e.g. " //evil.com", "\\t//evil.com", "javascript:").
 function sanitizeNext(v){
   if (!v) return 'index.html';
   try { v = decodeURIComponent(v); } catch (_) {}
-  if (/^https?:|^\/\/|^\\|:/.test(v) || v.startsWith('/')) return 'index.html';
-  return v;
+  try {
+    const u = new URL(v, location.href);
+    if (u.origin !== location.origin) return 'index.html';
+    const rel = u.pathname.replace(/^\//, '') + u.search + u.hash;
+    return rel || 'index.html';
+  } catch (_) { return 'index.html'; }
 }
 </script>
 </body></html>

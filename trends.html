@@ -131,6 +131,7 @@ import { loadProfile } from './profile.js';
 import { renderEmpty, renderError } from './empty-state.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
 let __reduceMotion=false;   // Settings -> App -> Reduce motion
+let __loadOk=false;         // true only when loadRawData() succeeded (distinguish empty vs error)
 const sessState={};   // session id -> shown bool. Global: persists across club switches.
 const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
 
@@ -144,6 +145,7 @@ try{
   SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
   SESSIONS.forEach(s=>sessState[s.id]=true);
   let ci=0; SHOTS.forEach(s=>{if(!COLORS[s.club]){COLORS[s.club]=FALLBACK[ci%FALLBACK.length];ci++;}});
+  __loadOk=true;
 }catch(e){
   console.error(e);
   renderError(document.getElementById('content'), e && e.message);
@@ -586,7 +588,9 @@ const sessAllBtn=document.getElementById('sessAll'), sessNoneBtn=document.getEle
 if(sessAllBtn)sessAllBtn.onclick=()=>setAllSessions(true);
 if(sessNoneBtn)sessNoneBtn.onclick=()=>setAllSessions(false);
 
-if(SHOTS.length===0){
+if(!__loadOk){
+  // a real load error already rendered via renderError() in the catch — don't clobber it
+}else if(SHOTS.length===0){
   renderEmpty(document.getElementById('content'), {bag:false});
 }else{
   buildSessionChips();
