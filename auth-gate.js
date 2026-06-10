@@ -8,12 +8,41 @@
 // This module: (1) redirects to login.html if signed out, (2) reveals the page,
 // (3) mounts a small account chip (name + Sign out) into the existing .nav.
 import { guard, signOut, displayNameOf } from './auth.js';
+import { pendingIncomingCount } from './connections.js';
 
 const session = await guard(); // redirects + returns null when signed out
 
 if (session) {
   mountAccountChip(session);
   document.documentElement.classList.remove('auth-pending');
+  // Pending-connection badge on the Settings tab (non-blocking).
+  mountPendingBadge();
+}
+
+/** Decorate the Settings nav tab with a small badge when connection requests are
+ *  waiting. Lives here so every page gets it (mirrors mobile's Settings-tab badge). */
+async function mountPendingBadge() {
+  try {
+    const n = await pendingIncomingCount();
+    if (!n) return;
+    const link = document.querySelector('.nav a.tab[href="settings.html"]');
+    if (!link || link.querySelector('.am-badge')) return;
+    if (!document.getElementById('amBadgeStyle')) {
+      const st = document.createElement('style');
+      st.id = 'amBadgeStyle';
+      st.textContent = `
+        .nav a.tab{position:relative;}
+        .am-badge{display:inline-flex;align-items:center;justify-content:center;
+          min-width:16px;height:16px;padding:0 4px;margin-left:6px;border-radius:9px;
+          background:var(--accent,#d4ff4f);color:#0a120d;font-family:'IBM Plex Mono',monospace;
+          font-size:10px;font-weight:600;line-height:1;vertical-align:middle;}`;
+      document.head.appendChild(st);
+    }
+    const badge = document.createElement('span');
+    badge.className = 'am-badge';
+    badge.textContent = String(n);
+    link.appendChild(badge);
+  } catch (_) { /* badge is best-effort; never block the page */ }
 }
 
 function mountAccountChip(session) {

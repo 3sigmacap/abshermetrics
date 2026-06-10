@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SignInScreen from '@/components/SignInScreen';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
 import { ProfileProvider } from '@/lib/profile';
 import { C } from '@/theme';
@@ -61,6 +62,39 @@ function AuthOverlay() {
 // Tabs: Bag · Clubs · Trends · 2D · 3D · Settings. No nav header — a top
 // safe-area inset keeps content clear of the status bar. Raw Data and The Model
 // are pushed routes (reached from Settings / Bag) with an in-screen back button.
+// The Settings tab carries a badge when connection requests are pending.
+function AppTabs() {
+  const { pendingCount } = useConnections();
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { backgroundColor: C.bg2, borderTopColor: C.line },
+        tabBarActiveTintColor: C.accent,
+        tabBarInactiveTintColor: C.dim,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+      }}>
+      <Tabs.Screen name="index" options={{ title: 'Bag', tabBarIcon: tabIcon('golf') }} />
+      <Tabs.Screen name="club-detail" options={{ title: 'Clubs', tabBarIcon: tabIcon('golf-tee') }} />
+      <Tabs.Screen name="trends" options={{ title: 'Trends', tabBarIcon: tabIcon('chart-line') }} />
+      <Tabs.Screen name="dispersion" options={{ title: '2D', tabBarIcon: tabIcon('target') }} />
+      <Tabs.Screen name="flight-3d" options={{ title: '3D', tabBarIcon: tabIcon('airplane-takeoff') }} />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: tabIcon('cog-outline'),
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: C.accent, color: '#0a120d', fontSize: 10 },
+        }}
+      />
+      {/* Hidden routes (not tabs): pushed from in-app, each with a BackBar. */}
+      <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
+      <Tabs.Screen name="raw-data" options={{ href: null, title: 'Raw Data' }} />
+    </Tabs>
+  );
+}
+
 export default function RootLayout() {
   // Portrait everywhere; the 3D screen unlocks landscape on focus (see flight-3d.tsx).
   useEffect(() => {
@@ -70,33 +104,18 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <DataProvider>
-          <StatusBar style="light" />
-          <View style={styles.root}>
-            <SafeAreaView style={styles.root} edges={['top']}>
-              <Tabs
-                screenOptions={{
-                  headerShown: false,
-                  tabBarStyle: { backgroundColor: C.bg2, borderTopColor: C.line },
-                  tabBarActiveTintColor: C.accent,
-                  tabBarInactiveTintColor: C.dim,
-                  tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-                }}>
-                <Tabs.Screen name="index" options={{ title: 'Bag', tabBarIcon: tabIcon('golf') }} />
-                <Tabs.Screen name="club-detail" options={{ title: 'Clubs', tabBarIcon: tabIcon('golf-tee') }} />
-                <Tabs.Screen name="trends" options={{ title: 'Trends', tabBarIcon: tabIcon('chart-line') }} />
-                <Tabs.Screen name="dispersion" options={{ title: '2D', tabBarIcon: tabIcon('target') }} />
-                <Tabs.Screen name="flight-3d" options={{ title: '3D', tabBarIcon: tabIcon('airplane-takeoff') }} />
-                <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: tabIcon('cog-outline') }} />
-                {/* Hidden routes (not tabs): pushed from in-app, each with a BackBar. */}
-                <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
-                <Tabs.Screen name="raw-data" options={{ href: null, title: 'Raw Data' }} />
-              </Tabs>
-            </SafeAreaView>
-            <AuthOverlay />
-            <ScreenshotNav />
-          </View>
-        </DataProvider>
+        <ConnectionsProvider>
+          <DataProvider>
+            <StatusBar style="light" />
+            <View style={styles.root}>
+              <SafeAreaView style={styles.root} edges={['top']}>
+                <AppTabs />
+              </SafeAreaView>
+              <AuthOverlay />
+              <ScreenshotNav />
+            </View>
+          </DataProvider>
+        </ConnectionsProvider>
       </ProfileProvider>
     </AuthProvider>
   );

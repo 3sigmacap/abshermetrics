@@ -66,6 +66,21 @@ input::placeholder{color:var(--dim2);}
 .toggle-row .t{flex:1;}
 .toggle-row .t .l{font-size:15px;font-weight:600;color:var(--ink);}
 .foot{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);text-align:center;margin-top:24px;}
+/* connections */
+.conn-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;margin:16px 0 4px;}
+.conn-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #142219;}
+.conn-row:last-child{border-bottom:none;}
+.conn-who{flex:1;min-width:0;}
+.conn-who .nm{font-size:15px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.conn-who .em{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.conn-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;border:none;border-radius:7px;padding:8px 12px;cursor:pointer;transition:.18s;white-space:nowrap;}
+.conn-btn:disabled{opacity:.5;cursor:default;}
+.conn-accept{background:var(--accent);color:#0a120d;}
+.conn-accept:hover{filter:brightness(1.07);}
+.conn-decline,.conn-remove{background:transparent;border:1px solid var(--line2);color:var(--dim);}
+.conn-decline:hover,.conn-remove:hover{color:var(--bad);border-color:#5e2b2b;}
+.conn-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
+.conn-empty{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim2);padding:6px 0;}
 @media(max-width:760px){
   .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
   .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
@@ -127,6 +142,22 @@ input::placeholder{color:var(--dim2);}
   </div>
 </div>
 
+<!-- CONNECTIONS -->
+<div class="section">
+  <div class="section-title">Connections</div>
+  <div class="panel" id="connPanel">
+    <div class="help">Link with other players by email. Once you both accept, you can compare bags. They only ever see your bag summary &amp; average trajectories — never your raw shots.</div>
+    <label class="label" for="connEmail">Add by email</label>
+    <div class="row">
+      <input type="email" id="connEmail" placeholder="player@email.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="small-btn" id="connAdd" type="button">Add</button>
+    </div>
+    <div id="connPendingIn"></div>
+    <div id="connPendingOut"></div>
+    <div id="connAccepted"></div>
+  </div>
+</div>
+
 <!-- MY CLUBS -->
 <div class="section">
   <div class="section-title">My Clubs</div>
@@ -164,9 +195,12 @@ import {
   loadProfile, updateName, saveClubSpecs, updatePrefs, changePassword, deleteAccount,
   sanitizeLoft, loftOf, inBagOf, DEFAULT_LOFTS,
 } from './profile.js';
-import { loadClubData } from './user-data.js';
+import { loadClubData, escapeHtml } from './user-data.js';
 import { CLUB_ORDER, clubSortIdx } from './club-compute.js';
 import { signOut } from './auth.js';
+import {
+  requestConnection, listConnections, acceptConnection, declineConnection, removeConnection,
+} from './connections.js';
 
 const $ = (id) => document.getElementById(id);
 let busy = false;
@@ -262,5 +296,84 @@ $('reduceMotion').addEventListener('change', async (e) => {
   if (error) { e.target.checked = !e.target.checked; flash('Could not save preference: ' + error, true); }
   else { profile.prefs = next; flash('Preference saved'); }
 });
+
+// ---- connections ----
+const connEmail = $('connEmail');
+const connAdd = $('connAdd');
+
+function connRow(c, kind) {
+  const name = escapeHtml(c.other.name || (c.other.email || '').split('@')[0] || 'Player');
+  const email = escapeHtml(c.other.email || '');
+  let right;
+  if (kind === 'in') {
+    right = `<button class="conn-btn conn-accept" data-act="accept" data-id="${c.id}">Accept</button>
+      <button class="conn-btn conn-decline" data-act="decline" data-id="${c.id}">Decline</button>`;
+  } else if (kind === 'out') {
+    right = `<span class="conn-tag">Pending</span>
+      <button class="conn-btn conn-remove" data-act="cancel" data-id="${c.id}">Cancel</button>`;
+  } else {
+    right = `<button class="conn-btn conn-remove" data-act="remove" data-id="${c.id}">Remove</button>`;
+  }
+  return `<div class="conn-row">
+    <div class="conn-who"><div class="nm">${name}</div><div class="em">${email}</div></div>
+    ${right}
+  </div>`;
+}
+
+async function renderConnections() {
+  const { accepted, pendingIn, pendingOut, error } = await listConnections();
+  if (error) {
+    $('connPendingIn').innerHTML = `<div class="conn-empty">Could not load connections: ${escapeHtml(error)} (run the schema update?)</div>`;
+    $('connPendingOut').innerHTML = '';
+    $('connAccepted').innerHTML = '';
+    return;
+  }
+  $('connPendingIn').innerHTML = pendingIn.length
+    ? '<div class="conn-sub">Requests</div>' + pendingIn.map((c) => connRow(c, 'in')).join('')
+    : '';
+  $('connPendingOut').innerHTML = pendingOut.length
+    ? '<div class="conn-sub">Sent</div>' + pendingOut.map((c) => connRow(c, 'out')).join('')
+    : '';
+  $('connAccepted').innerHTML = '<div class="conn-sub">Connected</div>' + (accepted.length
+    ? accepted.map((c) => connRow(c, 'acc')).join('')
+    : '<div class="conn-empty">No connections yet.</div>');
+}
+
+connAdd.addEventListener('click', async () => {
+  const email = connEmail.value.trim();
+  if (!email) { flash('Enter an email address.', true); return; }
+  if (busy) return; busy = true; connAdd.disabled = true;
+  const { status, error } = await requestConnection(email);
+  busy = false; connAdd.disabled = false;
+  if (error) { flash(error, true); return; }
+  const messages = {
+    requested: 'Request sent.',
+    accepted: "You're now connected!",
+    already: 'You already have a request or connection with that player.',
+    self: "That's your own email.",
+    not_found: 'No AbsherMetrics account uses that email yet. (Email invites are coming soon.)',
+  };
+  flash(messages[status] || 'Done.', status === 'self' || status === 'not_found');
+  if (status === 'requested' || status === 'accepted') connEmail.value = '';
+  renderConnections();
+});
+
+connEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); connAdd.click(); } });
+
+// delegated accept / decline / cancel / remove
+$('connPanel').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const { act, id } = btn.dataset;
+  if (act === 'remove' && !window.confirm('Remove this connection?\n\nYou will no longer see each other’s bags.')) return;
+  if (busy) return; busy = true; btn.disabled = true;
+  const res = act === 'accept' ? await acceptConnection(id) : await removeConnection(id);
+  busy = false;
+  if (res?.error) { flash(res.error, true); btn.disabled = false; return; }
+  if (act === 'accept') flash('Connected!');
+  renderConnections();
+});
+
+renderConnections();
 </script>
 </body></html>

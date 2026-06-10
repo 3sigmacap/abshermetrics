@@ -15,6 +15,7 @@ import {
 
 import { useAuth } from '@/lib/auth';
 import { CLUB_ORDER, DEFAULT_LOFTS, clubSortIdx } from '@/lib/clubData';
+import { useConnections } from '@/lib/connections';
 import { useClubs } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
 import { supabase } from '@/lib/supabase';
@@ -152,6 +153,61 @@ export default function Settings() {
     flash(error ? `Could not save (run the schema update?): ${error}` : 'Clubs saved', !!error);
   };
 
+  // ---- connections ----
+  const conn = useConnections();
+  const [connEmail, setConnEmail] = useState('');
+
+  const addConnection = async () => {
+    const email = connEmail.trim();
+    if (!email) {
+      flash('Enter an email address.', true);
+      return;
+    }
+    setBusy(true);
+    const { status, error } = await conn.request(email);
+    setBusy(false);
+    if (error) {
+      flash(error, true);
+      return;
+    }
+    const messages: Record<string, string> = {
+      requested: 'Request sent.',
+      accepted: "You're now connected!",
+      already: 'You already have a request or connection with that player.',
+      self: "That's your own email.",
+      not_found: 'No AbsherMetrics account uses that email yet. (Email invites are coming soon.)',
+    };
+    flash(messages[status ?? ''] ?? 'Done.', status === 'self' || status === 'not_found');
+    if (status === 'requested' || status === 'accepted') setConnEmail('');
+  };
+
+  const acceptConn = async (id: string) => {
+    setBusy(true);
+    const { error } = await conn.accept(id);
+    setBusy(false);
+    flash(error ?? 'Connected!', !!error);
+  };
+
+  const removeConn = (id: string, isAccepted: boolean) => {
+    const doIt = async () => {
+      setBusy(true);
+      const { error } = await conn.remove(id);
+      setBusy(false);
+      if (error) flash(error, true);
+    };
+    if (isAccepted) {
+      Alert.alert('Remove connection', 'You will no longer see each other’s bags.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: doIt },
+      ]);
+    } else {
+      void doIt();
+    }
+  };
+
+  const connPerson = (c: { other: { name: string | null; email: string | null } }) =>
+    c.other.name || c.other.email?.split('@')[0] || 'Player';
+
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       {msg ? (
@@ -211,6 +267,109 @@ export default function Settings() {
           </View>
           <MaterialCommunityIcons name="chevron-right" size={22} color={C.dim2} />
         </Pressable>
+      </Section>
+
+      {/* CONNECTIONS */}
+      <Section title="CONNECTIONS">
+        <Text style={styles.help}>
+          Link with other players by email. Once you both accept, you can compare bags. They only
+          ever see your bag summary &amp; average trajectories — never your raw shots.
+        </Text>
+        <Text style={styles.label}>ADD BY EMAIL</Text>
+        <View style={styles.row}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={connEmail}
+            onChangeText={setConnEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            placeholder="player@email.com"
+            placeholderTextColor={C.dim2}
+          />
+          <Pressable onPress={addConnection} style={styles.smallBtn} disabled={busy}>
+            <Text style={styles.smallBtnTxt}>Add</Text>
+          </Pressable>
+        </View>
+
+        {conn.pendingIn.length > 0 && (
+          <>
+            <Text style={styles.connSub}>REQUESTS</Text>
+            {conn.pendingIn.map((c) => (
+              <View key={c.id} style={styles.connRow}>
+                <View style={styles.connWho}>
+                  <Text style={styles.connName} numberOfLines={1}>
+                    {connPerson(c)}
+                  </Text>
+                  <Text style={styles.connEmail} numberOfLines={1}>
+                    {c.other.email}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => acceptConn(c.id)}
+                  style={[styles.connBtn, styles.connAccept]}
+                  disabled={busy}>
+                  <Text style={styles.connAcceptTxt}>Accept</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => removeConn(c.id, false)}
+                  style={[styles.connBtn, styles.connGhost]}
+                  disabled={busy}>
+                  <Text style={styles.connGhostTxt}>Decline</Text>
+                </Pressable>
+              </View>
+            ))}
+          </>
+        )}
+
+        {conn.pendingOut.length > 0 && (
+          <>
+            <Text style={styles.connSub}>SENT</Text>
+            {conn.pendingOut.map((c) => (
+              <View key={c.id} style={styles.connRow}>
+                <View style={styles.connWho}>
+                  <Text style={styles.connName} numberOfLines={1}>
+                    {connPerson(c)}
+                  </Text>
+                  <Text style={styles.connEmail} numberOfLines={1}>
+                    {c.other.email}
+                  </Text>
+                </View>
+                <Text style={styles.connTag}>Pending</Text>
+                <Pressable
+                  onPress={() => removeConn(c.id, false)}
+                  style={[styles.connBtn, styles.connGhost]}
+                  disabled={busy}>
+                  <Text style={styles.connGhostTxt}>Cancel</Text>
+                </Pressable>
+              </View>
+            ))}
+          </>
+        )}
+
+        <Text style={styles.connSub}>CONNECTED</Text>
+        {conn.accepted.length > 0 ? (
+          conn.accepted.map((c) => (
+            <View key={c.id} style={styles.connRow}>
+              <View style={styles.connWho}>
+                <Text style={styles.connName} numberOfLines={1}>
+                  {connPerson(c)}
+                </Text>
+                <Text style={styles.connEmail} numberOfLines={1}>
+                  {c.other.email}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => removeConn(c.id, true)}
+                style={[styles.connBtn, styles.connGhost]}
+                disabled={busy}>
+                <Text style={styles.connGhostTxt}>Remove</Text>
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.connEmpty}>No connections yet.</Text>
+        )}
       </Section>
 
       {/* MY CLUBS */}
@@ -319,6 +478,18 @@ const styles = StyleSheet.create({
   navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   navText: { flex: 1 },
   navLabel: { color: C.ink, fontSize: 15, fontWeight: '600', marginBottom: 2 },
+  connSub: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, marginTop: 14, marginBottom: 4 },
+  connRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: '#142219' },
+  connWho: { flex: 1, minWidth: 0 },
+  connName: { color: C.ink, fontSize: 15, fontWeight: '600' },
+  connEmail: { fontFamily: mono, fontSize: 11, color: C.dim2 },
+  connBtn: { borderRadius: 7, paddingHorizontal: 12, paddingVertical: 8 },
+  connAccept: { backgroundColor: C.accent },
+  connAcceptTxt: { color: '#0a120d', fontWeight: '700', fontSize: 12, fontFamily: mono },
+  connGhost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.line2 },
+  connGhostTxt: { color: C.dim, fontWeight: '600', fontSize: 12, fontFamily: mono },
+  connTag: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, textTransform: 'uppercase' },
+  connEmpty: { fontFamily: mono, fontSize: 12, color: C.dim2, paddingVertical: 6 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   toggleLabel: { color: C.ink, fontSize: 15, fontWeight: '600', marginBottom: 2 },
   foot: { fontFamily: mono, fontSize: 11, color: C.dim2, textAlign: 'center', marginTop: 8 },
