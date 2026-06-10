@@ -118,7 +118,11 @@ canvas{display:block;}
     opacity:0;pointer-events:none;transition:opacity .18s;}
 }
 
-</style></head><body>
+</style><!-- auth gate: require login, hide content until confirmed -->
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab ">Overview</a>

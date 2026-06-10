@@ -37,10 +37,21 @@ Mobile already did all of this; **reuse its logic** (don't reinvent):
   mobile + backend live in one repo. Web app files are UNCHANGED by the merge.
 - **Web work goes on a feature branch** `web-multiuser` off `main`, merged back to
   `main` per stable phase (main auto-deploys to Render — never push half-built auth to main).
-- **Phase 1 — Auth:** add `@supabase/supabase-js` to the web (CDN/ESM, e.g.
-  `https://esm.sh/@supabase/supabase-js@2`), a login/sign-up screen, a shared
-  `web/auth.js`-style module, and a gate so the site requires login. Browser auth
-  uses localStorage by default.
+- **Phase 1 — Auth (DONE — branch `web-multiuser`):** `@supabase/supabase-js@2`
+  loaded from `https://esm.sh`. Files added at repo root:
+  - `auth.js` — ESM module: supabase client (publishable key embedded; safe, RLS),
+    `guard()` (redirect-if-signed-out, returns session), `signIn/signUp/signOut`,
+    `displayNameOf`. localStorage session, storageKey `am-auth`.
+  - `auth-gate.js` — side-effecting module each page imports: runs `guard()`, reveals
+    the page, mounts a "Signed in <name> · Sign out" chip into the existing `.nav`.
+  - `login.html` — on-brand sign-in / create-account screen. Honors `?next=` with an
+    open-redirect guard (unit-tested); bounces already-signed-in users to `next`.
+  - Gate block injected in `<head>` of the 7 app pages (index, club-detail, trends,
+    top-down, flight-3d, raw-data, model). `login.html` + `privacy.html` stay public.
+  - Verified in-browser: logged-out→login redirect, sign-in→chip, login bounce, sign-out.
+  - NOTE: pages still load the bundled `shots.json` (Spencer's data) until Phase 2.
+    **Do not merge to `main` yet** — gating the live site while it still shows one
+    person's data is incoherent. Merge after Phase 2 (login → your own data).
 - **Phase 2 — Per-user data:** replace bundled `shots.json`/`raw-shots.json` loading
   with the signed-in user's shots from Supabase, computed on the fly via the shared
   `flight-engine.js` + a JS port/reuse of `computeClubs` (clubData.ts logic). Each
@@ -63,9 +74,30 @@ Mobile already did all of this; **reuse its logic** (don't reinvent):
 
 ## Where to resume after compaction
 1. Read this file + `HANDOFF_MOBILE.md` + `RELEASE.md`.
-2. Confirm the merge landed on `main` (web + app/ + supabase/ together).
-3. `git checkout -b web-multiuser` off `main` and start **Phase 1 (Auth)**.
+2. `git checkout web-multiuser` (Phase 1 lives here; NOT yet merged to `main`).
+3. Start **Phase 2 (Per-user data)** — see below.
 4. Reference the mobile `app/src/lib/*` files for the exact auth/data/profile logic.
+
+## Phase 2 plan (per-user data) — NEXT
+Replace bundled `shots.json` / `raw-shots.json` loading with the signed-in user's
+shots from Supabase, computed on the fly. Concretely:
+- Build a shared web module `user-data.js` (root) that, given the session:
+  - fetches the user's `sessions` + `shots` from Supabase (same queries as mobile
+    `dataStore.tsx`), then
+  - computes the per-club `ClubData[]` (the shape `shots.json` provides) via a JS port
+    of `app/src/lib/clubData.ts` `computeClubs()` — which calls the shared root
+    `flight-engine.js` (`simulateFlight`). Port `mean`/`sd` too (mobile `@/lib/format`).
+  - also exposes the raw shots + sessions (the shape `raw-shots.json` provides) for
+    `raw-data.html` / `top-down.html`.
+- Each page currently does `fetch('shots.json')` or `fetch('raw-shots.json')`. Swap
+  those for the shared loader (auth-gate already guarantees a session exists). Pages
+  using shots.json: index, club-detail, trends, top-down, flight-3d, raw-data
+  (grep `fetch(` confirmed). model.html has no data fetch.
+- Empty state: a new user has 0 shots → show a "no data yet / upload or load sample"
+  message instead of a broken page. (Mobile's index empty state is the reference.)
+- Keep the web's richer 3D/2D visuals intact — only the DATA SOURCE changes.
+- After Phase 2 is stable + verified in-browser, MERGE `web-multiuser` → `main`
+  (now coherent: login → your own data). Phase 3 (settings/upload) can follow.
 
 ## Release pipeline (already set up — see RELEASE.md)
 - Mobile: `npm run ota` (JS OTA, instant) / `npm run release` (build+submit both stores).

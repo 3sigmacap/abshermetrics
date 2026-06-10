@@ -66,7 +66,11 @@ tr.exrow:hover td{background:#1a121233;}
   thead th,tbody td{padding:8px 9px;}
   .countpill{flex:1 0 100%;margin-left:0;margin-top:4px;}
 }
-</style></head><body>
+</style><!-- auth gate: require login, hide content until confirmed -->
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab ">Overview</a>
