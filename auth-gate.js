@@ -28,11 +28,11 @@ function mountAccountChip(session) {
       text-transform:uppercase;max-width:140px;overflow:hidden;text-overflow:ellipsis;
       white-space:nowrap;}
     .am-acct .who b{color:var(--accent,#d4ff4f);font-weight:500;}
-    .am-acct button{font-family:'IBM Plex Mono',monospace;font-size:11px;
+    .am-acct button,.am-acct .am-acct-link{font-family:'IBM Plex Mono',monospace;font-size:11px;
       letter-spacing:1px;text-transform:uppercase;color:var(--dim,#8aa596);
       background:transparent;border:1px solid var(--line2,#26432f);border-radius:20px;
-      padding:7px 13px;cursor:pointer;transition:.18s;}
-    .am-acct button:hover{color:var(--accent,#d4ff4f);border-color:var(--accent,#d4ff4f);}
+      padding:7px 13px;cursor:pointer;transition:.18s;text-decoration:none;display:inline-block;}
+    .am-acct button:hover,.am-acct .am-acct-link:hover{color:var(--accent,#d4ff4f);border-color:var(--accent,#d4ff4f);}
     @media(max-width:760px){
       .am-acct{margin-left:auto;}
       .am-acct .who{display:none;}
@@ -48,11 +48,22 @@ function mountAccountChip(session) {
   who.className = 'who';
   who.innerHTML = 'Signed in <b></b>';
   who.querySelector('b').textContent = name;
+  wrap.appendChild(who);
+
+  // Settings link — shown on every page except settings.html itself.
+  const onSettings = /(^|\/)settings\.html(\?|#|$)/.test(location.pathname + location.href);
+  if (!onSettings) {
+    const cog = document.createElement('a');
+    cog.href = 'settings.html';
+    cog.textContent = 'Settings';
+    cog.className = 'am-acct-link';
+    wrap.appendChild(cog);
+  }
+
   const out = document.createElement('button');
   out.type = 'button';
   out.textContent = 'Sign out';
   out.addEventListener('click', () => signOut());
-  wrap.appendChild(who);
   wrap.appendChild(out);
   nav.appendChild(wrap);
 }

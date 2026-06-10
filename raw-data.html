@@ -101,6 +101,7 @@ tr.exrow:hover td{background:#1a121233;}
   <input type="file" id="fileInput" accept=".csv" multiple style="display:none">
 </div>
 <div id="uploadMsg" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin:-4px 0 10px;min-height:14px"></div>
+<button class="cchip" id="deleteAllBtn" type="button" style="display:none;border:1px solid #5e2b2b;color:var(--bad);background:transparent;margin:0 0 12px;font-weight:600">Delete all data</button>
 
 <div class="tablewrap">
   <div class="tscroll">
@@ -115,8 +116,8 @@ tr.exrow:hover td{background:#1a121233;}
 </div>
 
 <script type="module">
-import { loadRawData } from './user-data.js';
-import { renderEmpty, renderError } from './empty-state.js';
+import { loadRawData, uploadCsvFiles, deleteAllData } from './user-data.js';
+import { renderError } from './empty-state.js';
 const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
   {key:'date',  label:'Date',     unit:'',     type:'date'},
@@ -175,10 +176,10 @@ try{
   console.error(e);
   renderError(__main, e && e.message);
 }
-if(__loaded && !ROWS.length){
-  renderEmpty(__main, {bag:false});
-}
-if(__loaded && ROWS.length){
+// NOTE: unlike the other pages, raw-data KEEPS its UI when empty (this is the
+// upload hub) — a 0-shot user still needs the Upload button + a "No shots yet"
+// table message. Real empty handling is in render() below.
+if(__loaded){
 document.getElementById('totalCount').textContent=ROWS.length;
 const exclCount=ROWS.filter(r=>r.excluded).length;
 if(exclCount)document.getElementById('exclNote').textContent='· '+exclCount+' excluded';
@@ -274,12 +275,37 @@ function sessionFromFile(shots){
   return valid;
 }
 const msg=document.getElementById('uploadMsg');
-document.getElementById('uploadBtn').onclick=()=>document.getElementById('fileInput').click();
-// CSV upload is being rewired to Supabase in a later step. For now this is a no-op.
-document.getElementById('fileInput').onchange=(e)=>{
-  msg.textContent='CSV upload is being upgraded — coming shortly';
+const uploadBtn=document.getElementById('uploadBtn');
+uploadBtn.onclick=()=>document.getElementById('fileInput').click();
+// Real CSV -> Supabase upload (each file = one session). Caps + parsing live in user-data.js.
+document.getElementById('fileInput').onchange=async(e)=>{
+  const files=[...(e.target.files||[])];
   e.target.value='';
+  if(!files.length)return;
+  uploadBtn.disabled=true; uploadBtn.style.opacity='.6';
+  msg.textContent='Parsing '+files.length+' file(s)…';
+  let res;
+  try{ res=await uploadCsvFiles(files,m=>{msg.textContent=m;}); }
+  catch(err){ res={added:0,error:(err&&err.message)||'Upload failed.'}; }
+  uploadBtn.disabled=false; uploadBtn.style.opacity='';
+  if(res.error){ msg.textContent=res.error; if(!res.added)return; }
+  msg.textContent='Added '+res.added+' shots. Refreshing…';
+  setTimeout(()=>location.reload(),350);
 };
+
+// Delete all data (keeps the account) — shown only when there is data.
+const delBtn=document.getElementById('deleteAllBtn');
+if(delBtn && ROWS.length){
+  delBtn.style.display='';
+  delBtn.onclick=async()=>{
+    const ok=window.confirm('Delete all data\n\nThis permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.');
+    if(!ok)return;
+    delBtn.disabled=true; delBtn.textContent='… deleting';
+    const {error}=await deleteAllData();
+    if(error){ delBtn.disabled=false; delBtn.textContent='Delete all data'; alert('Could not delete: '+error); return; }
+    location.reload();
+  };
+}
 
 const fmt=(v,c,row)=>{
   if(c.type==='date'){return '<span style="color:var(--dim)">'+(row.session_label||row.date||'—')+'</span>';}
@@ -316,7 +342,12 @@ function render(){
   });
 
   const body=document.getElementById('body');
-  if(!rows.length){body.innerHTML='<tr><td colspan="'+COLS.length+'" class="empty">No shots match.</td></tr>';}
+  if(!rows.length){
+    const emptyMsg = ROWS.length===0
+      ? 'No shots yet. Upload a session CSV above, or load sample data from the Overview tab.'
+      : 'No shots match.';
+    body.innerHTML='<tr><td colspan="'+COLS.length+'" class="empty">'+emptyMsg+'</td></tr>';
+  }
   else{
     body.innerHTML=rows.map(r=>{
       return '<tr'+(r.excluded?' class="exrow"':'')+'>'+COLS.map(c=>{

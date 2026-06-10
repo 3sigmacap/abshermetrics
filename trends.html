@@ -127,13 +127,16 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 <script type="module">
 import { attributeCarryChange, simulateFlight } from './flight-engine.js';
 import { loadRawData } from './user-data.js';
+import { loadProfile } from './profile.js';
 import { renderEmpty, renderError } from './empty-state.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
+let __reduceMotion=false;   // Settings -> App -> Reduce motion
 const sessState={};   // session id -> shown bool. Global: persists across club switches.
 const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
 
 try{
   const base=await loadRawData();
+  try{ __reduceMotion = !!(await loadProfile()).prefs?.reduceMotion; }catch(_){}
   COLORS={...(base.colors||{})};
   window.__CLUB_ORDER=base.club_order||[];
   SHOTS=[...base.shots];
@@ -357,6 +360,11 @@ function animateFlightViews(){
     return {ball:svg.querySelector('.fvball'),pts};
   }).filter(r=>r.ball&&r.pts&&r.pts.length>1);
   if(!runs.length) return;
+  // Reduce motion: park each ball at the end of its flight, skip the loop.
+  if(__reduceMotion){
+    runs.forEach(r=>{ const p=r.pts[r.pts.length-1]; r.ball.setAttribute('cx',(+p[0]).toFixed(1)); r.ball.setAttribute('cy',(+p[1]).toFixed(1)); r.ball.setAttribute('opacity','0.6'); });
+    return;
+  }
   const ft=parseFloat(svgs[0].getAttribute('data-ft'))||3.2;
   const FLIGHT_MS=ft*1000;          // TRUE real-life flight duration
   const HOLD_MS=900;                // pause on the ground before looping
@@ -582,7 +590,14 @@ if(SHOTS.length===0){
   renderEmpty(document.getElementById('content'), {bag:false});
 }else{
   buildSessionChips();
-  if(clubsWithData.length){current=clubsWithData[0];paintPicker();paintHealthDots();render();}
+  if(clubsWithData.length){
+    // Default to the club tracked across the MOST sessions, so the trend +
+    // attribution panel are populated (a club with 1 session can't show a trend).
+    const sessCount={};
+    clubsWithData.forEach(c=>{sessCount[c]=new Set(SHOTS.filter(s=>s.club===c).map(s=>s.session)).size;});
+    current=clubsWithData.reduce((best,c)=>sessCount[c]>sessCount[best]?c:best, clubsWithData[0]);
+    paintPicker();paintHealthDots();render();
+  }
   else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
 }
 </script>

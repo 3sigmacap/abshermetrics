@@ -118,12 +118,15 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 
 <script type="module">
 import { loadClubData, loadSampleData } from './user-data.js';
+import { loadProfile, loftOf } from './profile.js';
 import { renderEmpty, renderError } from './empty-state.js';
 
 // ---- Static config (NOT derivable from shot data) ----
-// Loft = club spec (degrees). Red = editorial two-way-miss flag.
-const LOFT = {"3 Wood":"15\u00b0","3 Iron":"20\u00b0","4 Iron":"23\u00b0","5 Iron":"26\u00b0","6 Iron":"30\u00b0","7 Iron":"34\u00b0","8 Iron":"39\u00b0","9 Iron":"42.5\u00b0","Pitching Wedge":"47\u00b0","Gap Wedge":"52\u00b0","Sand Wedge":"56\u00b0"};
+// Loft now comes from the user's profile (Settings -> My Clubs), falling back to
+// standard defaults. Red = editorial two-way-miss flag.
 const RED = new Set(["3 Wood","Gap Wedge"]);
+let CLUB_SPECS = {};
+const loftStr = (club) => { const v = loftOf(CLUB_SPECS, club); return v != null ? v + '\u00b0' : '\u2013'; };
 
 // ---- helpers (match Python: mean, sample stdev, round-half-up like JS Math.round) ----
 const mean = a => a.reduce((s,x)=>s+x,0)/a.length;
@@ -186,7 +189,7 @@ function render(data){
     html +=
       '<tr>'+
       `<td class="cl">${c.club}</td>`+
-      `<td class="num">${LOFT[c.club]||'\u2013'}</td>`+
+      `<td class="num">${loftStr(c.club)}</td>`+
       `<td class="num big2">${m.carry}</td>`+
       `<td class="num">${m.total}</td>`+
       `<td class="num">&plusmn;${f1(m.sd)}</td>`+
@@ -211,7 +214,8 @@ function render(data){
 // ---- bootstrap: load THIS signed-in user's data (auth-gate guarantees a session) ----
 const __main = document.querySelector('.page');
 try{
-  const data = await loadClubData();
+  const [data, profile] = await Promise.all([loadClubData(), loadProfile()]);
+  CLUB_SPECS = profile.clubSpecs || {};
   if(!data.length) renderEmpty(__main, { bag:true, onSample: loadSampleData });
   else render(data);
 }catch(e){
