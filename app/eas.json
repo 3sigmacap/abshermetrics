@@ -1,0 +1,52 @@
+{
+  "cli": {
+    "version": ">= 20.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production"
+    },
+    "simulator": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SCREENSHOT_MODE": "1"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "channel": "simulator"
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "ascApiKeyPath": "./appstore-api-key.p8",
+        "ascApiKeyId": "B9DKR3PSS8",
+        "ascApiKeyIssuerId": "9fbb029e-05c2-4769-8630-67d6624232c5",
+        "ascAppId": "6778607525"
+      }
+    }
+  }
+}

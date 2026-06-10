@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "AbsherMetrics",
+    "slug": "abshermetrics",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/images/icon.png",
+    "scheme": "abshermetrics",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.abshermetrics.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.abshermetrics.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#d4ff4f",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#070d0a",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 150,
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9cc29243-958f-4474-9ff5-50222a2679bf"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9cc29243-958f-4474-9ff5-50222a2679bf"
+    }
+  }
+}
