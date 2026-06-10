@@ -50,3 +50,6 @@ example
 # generated native folders
 /ios
 /android
+
+# temporary screenshot helpers
+*.tmp.mjs
