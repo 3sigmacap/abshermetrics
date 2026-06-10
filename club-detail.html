@@ -42,6 +42,14 @@ h1.big span{color:var(--accent);}
 .panel{background:#0b1410cc;border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
 .panel h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;font-weight:400;margin-bottom:4px;}
 .panel .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;}
+#flightviewbox{margin-bottom:18px;}
+.flightviews{display:grid;grid-template-columns:1fr minmax(120px,160px);gap:14px;margin-top:6px;align-items:stretch;}
+.fv{background:#0b1410;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;display:flex;flex-direction:column;}
+.fv .lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2);margin-bottom:4px;}
+.fv svg{display:block;width:100%;height:auto;}
+.fv-top{align-items:center;}
+.fv-top svg{width:auto;height:100%;max-height:360px;flex:1;min-height:0;}
+@media(max-width:760px){.flightviews{grid-template-columns:1fr;}}
 .full{grid-column:1/-1;}
 
 /* metric table */
@@ -94,7 +102,7 @@ table.s tr:hover td{background:#10201733;}
 <a href="trends.html" class="tab ">Trends</a>
 <a href="top-down.html" class="tab ">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="settings.html" class="tab ">Settings</a>
 </div>
 
 <div class="page">
@@ -108,12 +116,16 @@ table.s tr:hover td{background:#10201733;}
 
 <script type="module">
 import { loadClubData, escapeHtml as esc } from './user-data.js';
+import { loadProfile } from './profile.js';
+import { simulateFlight } from './flight-engine.js';
 import { renderEmpty, renderError } from './empty-state.js';
 
+let __reduceMotion=false;   // Settings -> App -> Reduce motion
 const __content=document.getElementById('content');
 let DATA=[], __ok=false;
 try{
   DATA=await loadClubData();
+  try{ __reduceMotion = !!(await loadProfile()).prefs?.reduceMotion; }catch(_){}
   if(DATA.length===0) renderEmpty(__content,{bag:false});   // signed-in, 0 shots = normal -> skip init
   else __ok=true;
 }
@@ -241,6 +253,108 @@ function consistencyBars(S){
   }).join('');
 }
 
+// ---- Average Shot: engine-computed MEAN trajectory (side profile + top-down),
+//      animated at real-life speed. Moved here from Trends to match the mobile app.
+//      Points are [downrange_yd, height_ft, lateral_yd]. '' if no data. ----
+function flightViews(club,color,stats){
+  const v=(stats||[]).filter(x=>x.bs!=null && x.la!=null && x.spin!=null);
+  if(v.length<1) return '';
+  const m=k=>mean(v.map(x=>x[k]).filter(x=>x!=null));
+  let r;
+  try{ r=simulateFlight({ballSpeedMph:m('bs'),launchDeg:m('la'),spinRpm:m('spin'),axisDeg:(m('axis')||0),directionDeg:(m('ld')||0)},{rollout:false}); }
+  catch(e){ return ''; }
+  const P=r.points;
+  if(!P||P.length<2) return '';
+  const ft=(r.flightTime||3.2);
+  const maxX=Math.max(...P.map(p=>p[0]));
+  const maxY=Math.max(...P.map(p=>p[1]));
+  // --- SIDE VIEW: downrange (x) horizontal, height (y, ft) vertical ---
+  const SW=560,SH=210,sm={l:34,r:14,t:14,b:24};
+  const sIW=SW-sm.l-sm.r, sIH=SH-sm.t-sm.b;
+  const sx=x=>sm.l+(x/(maxX*1.02))*sIW;
+  const sy=y=>sm.t+sIH-(y/(maxY*1.15))*sIH;
+  let sGrid='';
+  for(let yd=50;yd<=maxX;yd+=50){const gx=sx(yd);sGrid+=`<line x1="${gx}" y1="${sm.t}" x2="${gx}" y2="${sm.t+sIH}" stroke="#142219"/><text x="${gx}" y="${SH-8}" fill="var(--dim2)" font-size="8.5" font-family="monospace" text-anchor="middle">${yd}</text>`;}
+  sGrid+=`<line x1="${sm.l}" y1="${sm.t+sIH}" x2="${SW-sm.r}" y2="${sm.t+sIH}" stroke="#23402f"/>`;
+  const sPath=P.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+' '+sy(p[1]).toFixed(1)).join('');
+  const sSide=`<svg viewBox="0 0 ${SW} ${SH}" data-fv="side" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+sx(p[0]).toFixed(1),+sy(p[1]).toFixed(1)]))}'>${sGrid}<path d="${sPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${sx(0)}" cy="${sy(0)}"/></svg>`;
+  // --- TOP-DOWN: bird's-eye, shot travels BOTTOM -> TOP. carry -> vertical,
+  //     lateral -> horizontal. TRUE 1:1 (same px/yd both axes). ---
+  const TW=130,TH=360,tm={l:18,r:14,t:14,b:22};
+  const tPW=TW-tm.l-tm.r, tPH=TH-tm.t-tm.b;
+  const xMax=maxX*1.04;
+  let zLo=Math.min(0,...P.map(p=>p[2])), zHi=Math.max(0,...P.map(p=>p[2]));
+  const zPad=Math.max((zHi-zLo)*0.10,2); zLo-=zPad; zHi+=zPad;
+  if(zHi-zLo<8){const c=(zHi+zLo)/2;zLo=c-4;zHi=c+4;}
+  const ppy=Math.min(tPH/xMax, tPW/(zHi-zLo));
+  const zMid=(zLo+zHi)/2;
+  const ty=x=>tm.t + tPH - x*ppy;
+  const tx=z=>tm.l + tPW/2 + (z - zMid)*ppy;
+  const niceStep=(range,target)=>{const raw=range/target,p=Math.pow(10,Math.floor(Math.log10(raw)));for(const mm of [1,2,2.5,5,10]){if(p*mm>=raw)return p*mm;}return p*10;};
+  let tGrid=`<rect x="${tm.l}" y="${tm.t}" width="${tPW}" height="${tPH}" fill="#16271d"/>`;
+  const xs=niceStep(xMax,5);
+  for(let x=0;x<=xMax+0.5;x+=xs){const gy=ty(x);tGrid+=`<line x1="${tm.l}" y1="${gy.toFixed(1)}" x2="${TW-tm.r}" y2="${gy.toFixed(1)}" stroke="#23402f"/><text x="${TW-tm.r+3}" y="${(gy+3).toFixed(1)}" fill="#7a9486" font-size="8" font-family="monospace" text-anchor="start">${Math.round(x)}</text>`;}
+  const visZLo=zMid-(tPW/2)/ppy, visZHi=zMid+(tPW/2)/ppy, zStart=Math.ceil(visZLo/xs)*xs;
+  for(let z=zStart;z<=visZHi+0.001;z+=xs){const gx=tx(z);if(gx<tm.l-0.5||gx>tm.l+tPW+0.5)continue;
+    const zero=Math.abs(z)<1e-6;
+    tGrid+=`<line x1="${gx.toFixed(1)}" y1="${tm.t}" x2="${gx.toFixed(1)}" y2="${tm.t+tPH}" stroke="${zero?'#39604a':'#1c3325'}" ${zero?'':'stroke-dasharray="2 5"'}/>`;
+    const lab=zero?'0':(z<0?Math.abs(Math.round(z))+'L':Math.round(z)+'R');
+    tGrid+=`<text x="${gx.toFixed(1)}" y="${TH-8}" fill="#7a9486" font-size="8" font-family="monospace" text-anchor="middle">${lab}</text>`;}
+  const tPath=P.map((p,i)=>(i?'L':'M')+tx(p[2]).toFixed(1)+' '+ty(p[0]).toFixed(1)).join('');
+  tGrid+=`<circle cx="${tx(0).toFixed(1)}" cy="${ty(0).toFixed(1)}" r="2.6" fill="#d4ff4f"/>`;
+  const tTop=`<svg viewBox="0 0 ${TW} ${TH}" data-fv="top" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+tx(p[2]).toFixed(1),+ty(p[0]).toFixed(1)]))}'>${tGrid}<path d="${tPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${tx(0).toFixed(1)}" cy="${ty(0).toFixed(1)}"/></svg>`;
+  return `<div class="panel full" id="flightviewbox">
+    <h2 style="color:${color}">${esc(club)} — Average Shot</h2>
+    <div class="hint">engine-computed mean trajectory · side profile + top-down (true 1:1) · real-time (${ft.toFixed(1)}s flight)</div>
+    <div class="flightviews">
+      <div class="fv"><div class="lbl">Side view — height vs carry</div>${sSide}</div>
+      <div class="fv fv-top"><div class="lbl">Top down — true 1:1 · &larr;L / R&rarr;</div>${tTop}</div>
+    </div>
+  </div>`;
+}
+// Animate the ball along each SVG path at REAL-LIFE speed (data-ft = flight seconds);
+// hold briefly, then loop. Only runs while the box is on screen. Honors reduce-motion.
+let _fvRAF=null, _fvIO=null;
+function animateFlightViews(){
+  if(_fvRAF){cancelAnimationFrame(_fvRAF);_fvRAF=null;}
+  if(_fvIO){_fvIO.disconnect();_fvIO=null;}
+  const box=document.getElementById('flightviewbox'); if(!box) return;
+  const svgs=[...box.querySelectorAll('svg[data-fv]')];
+  const runs=svgs.map(svg=>{
+    let pts; try{ pts=JSON.parse(svg.getAttribute('data-pts')); }catch(e){ pts=null; }
+    return {ball:svg.querySelector('.fvball'),pts};
+  }).filter(r=>r.ball&&r.pts&&r.pts.length>1);
+  if(!runs.length) return;
+  if(__reduceMotion){
+    runs.forEach(r=>{ const p=r.pts[r.pts.length-1]; r.ball.setAttribute('cx',(+p[0]).toFixed(1)); r.ball.setAttribute('cy',(+p[1]).toFixed(1)); r.ball.setAttribute('opacity','0.6'); });
+    return;
+  }
+  const ft=parseFloat(svgs[0].getAttribute('data-ft'))||3.2;
+  const FLIGHT_MS=ft*1000, HOLD_MS=900, LOOP_MS=FLIGHT_MS+HOLD_MS;
+  let start=null, running=false;
+  function frame(now){
+    if(!running)return;
+    if(start===null)start=now;
+    const t=(now-start)%LOOP_MS;
+    const u=Math.min(1,t/FLIGHT_MS);
+    runs.forEach(r=>{
+      const idx=u*(r.pts.length-1);const i0=Math.floor(idx);const f=idx-i0;
+      const a=r.pts[i0], b=r.pts[Math.min(i0+1,r.pts.length-1)];
+      r.ball.setAttribute('cx',(a[0]+(b[0]-a[0])*f).toFixed(1));
+      r.ball.setAttribute('cy',(a[1]+(b[1]-a[1])*f).toFixed(1));
+      r.ball.setAttribute('opacity', t<FLIGHT_MS?1:0.3);
+    });
+    _fvRAF=requestAnimationFrame(frame);
+  }
+  _fvIO=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting && !running){ running=true; start=null; _fvRAF=requestAnimationFrame(frame); }
+      else if(!e.isIntersecting && running){ running=false; if(_fvRAF){cancelAnimationFrame(_fvRAF);_fvRAF=null;} }
+    });
+  },{threshold:0.25});
+  _fvIO.observe(box);
+}
+
 function renderClub(){
   const d=DATA.find(c=>c.club===current);
   if(!d)return;
@@ -322,6 +436,8 @@ function renderClub(){
     </div>
     <div class="hstrip">${cards}</div>
 
+    ${flightViews(d.club, col, S)}
+
     <div class="grid">
       <div class="panel">
         <h2>Carry Distribution</h2>
@@ -361,6 +477,9 @@ function renderClub(){
       renderClub();
     };
   });
+
+  // animate the Average Shot ball flight (real-time, honors reduce-motion)
+  animateFlightViews();
 }
 
 // init — only when we have data and no load error (empty/error already handled above)

@@ -50,16 +50,9 @@ function mountAccountChip(session) {
   who.querySelector('b').textContent = name;
   wrap.appendChild(who);
 
-  // Settings link — shown on every page except settings.html itself.
-  const onSettings = /(^|\/)settings\.html(\?|#|$)/.test(location.pathname + location.href);
-  if (!onSettings) {
-    const cog = document.createElement('a');
-    cog.href = 'settings.html';
-    cog.textContent = 'Settings';
-    cog.className = 'am-acct-link';
-    wrap.appendChild(cog);
-  }
-
+  // (Settings is a first-class nav tab now — see each page's .nav — so the chip
+  // only carries the signed-in name + Sign out, matching mobile where Sign out
+  // lives in the Settings screen.)
   const out = document.createElement('button');
   out.type = 'button';
   out.textContent = 'Sign out';

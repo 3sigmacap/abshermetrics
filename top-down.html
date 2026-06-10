@@ -83,7 +83,7 @@ svg:active{cursor:grabbing;}
 <a href="trends.html" class="tab ">Trends</a>
 <a href="top-down.html" class="tab on">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="settings.html" class="tab ">Settings</a>
 </div>
 <div class="page2">
 
@@ -96,7 +96,7 @@ svg:active{cursor:grabbing;}
 <div class="stage s-top"><svg id="top" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet"></svg></div>
 <h2>Side view &mdash; height vs carry (height exaggerated 3&times; for readability) <button class="zreset" data-target="side">reset zoom</button></h2>
 <div class="stage s-side"><svg id="side" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet"></svg></div>
-<div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
+<div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point; dashed ellipse = 1&sigma; dispersion. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
 </div>
 </div>
 <script type="module">
@@ -216,6 +216,14 @@ function topDraw(){
   el(topSvg,'circle',{cx:sx(0),cy:sz(0),r:3,fill:'#d4ff4f'});
   DATA.forEach(d=>{
     if(!state[d.club])return;
+    // 1σ dispersion ellipse from d.ell (rx along carry, rz along lateral) — true 1:1,
+    // drawn first so it sits under the paths/dots. Matches the mobile 2D screen.
+    if(d.ell){
+      const {cx,cz,rx,rz}=d.ell, seg=48; let ep='';
+      for(let i=0;i<=seg;i++){const a=(i/seg)*Math.PI*2;const ex=cx+Math.cos(a)*rx;const ez=cz+Math.sin(a)*rz;ep+=(i?'L':'M')+sx(ex).toFixed(1)+','+sz(ez).toFixed(1);}
+      ep+='Z';
+      el(topSvg,'path',{d:ep,fill:d.color,'fill-opacity':0.1,stroke:d.color,'stroke-width':1.2,'stroke-opacity':0.8,'stroke-dasharray':'4 4'});
+    }
     if(showShots){
       d.shots.forEach((f,i)=>{const p=dec(f);
         el(topSvg,'path',{d:'M'+p.map(q=>sx(q[0]).toFixed(1)+','+sz(q[2]).toFixed(1)).join('L'),fill:'none',stroke:d.color,'stroke-width':1,opacity:0.16});
