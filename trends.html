@@ -47,14 +47,7 @@ h1.big span{color:var(--accent);}
 .panel h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;font-weight:400;margin-bottom:2px;}
 .panel .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;}
 .metricsel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-.flightviews{display:grid;grid-template-columns:1fr minmax(120px,160px);gap:14px;margin-top:6px;align-items:stretch;}
-.fv{background:#0b1410;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;display:flex;flex-direction:column;}
-.fv .lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2);margin-bottom:4px;}
-.fv svg{display:block;width:100%;height:auto;}
-/* top-down is a tall column: fill the cell HEIGHT, let width follow its aspect */
-.fv-top{align-items:center;}
-.fv-top svg{width:auto;height:100%;max-height:100%;flex:1;min-height:0;}
-@media(max-width:760px){.flightviews{grid-template-columns:1fr;}}
+
 .msel{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.12s;}
 .msel.on{background:var(--accent);border-color:var(--accent);color:#0a120d;font-weight:500;}
 svg{display:block;width:100%;height:auto;}
@@ -87,7 +80,11 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
   .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
   .page{padding:20px 14px 56px;}
 }
-</style></head><body>
+</style><!-- auth gate: require login, hide content until confirmed -->
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab ">Overview</a>
@@ -95,7 +92,7 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 <a href="trends.html" class="tab on">Trends</a>
 <a href="top-down.html" class="tab ">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="settings.html" class="tab ">Settings</a>
 </div>
 
 <div class="page">
@@ -121,26 +118,27 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 </div>
 
 <script type="module">
-import { attributeCarryChange, simulateFlight } from './flight-engine.js';
+import { attributeCarryChange } from './flight-engine.js';
+import { loadRawData } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
+let __loadOk=false;         // true only when loadRawData() succeeded (distinguish empty vs error)
 const sessState={};   // session id -> shown bool. Global: persists across club switches.
 const FALLBACK=['#d4ff4f','#7fd4ff','#ff9d9d','#b6f24f','#4fd6a8','#f2b24f','#c98fff'];
 
-async function loadUploaded(){try{const r=await window.storage.get('uploaded_shots');return r&&r.value?JSON.parse(r.value):[];}catch(e){return [];}}
-
 try{
-  const base=await (await fetch('raw-shots.json')).json();
+  const base=await loadRawData();
   COLORS={...(base.colors||{})};
   window.__CLUB_ORDER=base.club_order||[];
-  const up=await loadUploaded();
-  SHOTS=[...base.shots,...up];
+  SHOTS=[...base.shots];
   const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
-  up.forEach(s=>{if(!sm[s.session])sm[s.session]={id:s.session,label:s.session_label||s.session,date:s.date||'',_uploaded:true};});
   SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
   SESSIONS.forEach(s=>sessState[s.id]=true);
   let ci=0; SHOTS.forEach(s=>{if(!COLORS[s.club]){COLORS[s.club]=FALLBACK[ci%FALLBACK.length];ci++;}});
+  __loadOk=true;
 }catch(e){
-  document.getElementById('content').innerHTML='<div class="panel empty">Could not load raw-shots.json ('+e.message+'). Serve over http, not file://.</div>';
+  console.error(e);
+  renderError(document.getElementById('content'), e && e.message);
 }
 document.getElementById('sessFoot').textContent=SESSIONS.length+' sessions';
 
@@ -274,114 +272,6 @@ function lineChart(serie,m,color,W=720,H=240){
 }
 
 // ---- Average-shot flight views (side profile + top-down), engine-computed ----
-// Runs simulateFlight on the club's MEAN launch and returns two SVGs whose ball
-// elements are animated by animateFlightViews() at REAL-LIFE speed (the engine's
-// flightTime). Points are [downrange_yd, height_ft, lateral_yd]. '' if no data.
-function flightViews(club,color){
-  const v=SHOTS.filter(x=>x.club===club && x.bs!=null && x.la!=null && x.spin!=null);
-  if(v.length<1) return '';
-  const m=k=>mean(v.map(x=>x[k]).filter(x=>x!=null));
-  let r;
-  try{ r=simulateFlight({ballSpeedMph:m('bs'),launchDeg:m('la'),spinRpm:m('spin'),axisDeg:(m('axis')||0),directionDeg:(m('ld')||0)},{rollout:false}); }
-  catch(e){ return ''; }
-  const P=r.points;
-  if(!P||P.length<2) return '';
-  const ft=(r.flightTime||3.2);                       // real hang time, seconds
-  const maxX=Math.max(...P.map(p=>p[0]));
-  const maxY=Math.max(...P.map(p=>p[1]));
-
-  // --- SIDE VIEW: downrange (x) horizontal, height (y, ft) vertical ---
-  const SW=560,SH=210,sm={l:34,r:14,t:14,b:24};
-  const sIW=SW-sm.l-sm.r, sIH=SH-sm.t-sm.b;
-  const sx=x=>sm.l+(x/(maxX*1.02))*sIW;
-  const sy=y=>sm.t+sIH-(y/(maxY*1.15))*sIH;
-  let sGrid='';
-  for(let yd=50;yd<=maxX;yd+=50){const gx=sx(yd);sGrid+=`<line x1="${gx}" y1="${sm.t}" x2="${gx}" y2="${sm.t+sIH}" stroke="#142219"/><text x="${gx}" y="${SH-8}" fill="var(--dim2)" font-size="8.5" font-family="monospace" text-anchor="middle">${yd}</text>`;}
-  sGrid+=`<line x1="${sm.l}" y1="${sm.t+sIH}" x2="${SW-sm.r}" y2="${sm.t+sIH}" stroke="#23402f"/>`;
-  const sPath=P.map((p,i)=>(i?'L':'M')+sx(p[0]).toFixed(1)+' '+sy(p[1]).toFixed(1)).join('');
-  const sSide=`<svg viewBox="0 0 ${SW} ${SH}" data-fv="side" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+sx(p[0]).toFixed(1),+sy(p[1]).toFixed(1)]))}'>${sGrid}<path d="${sPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${sx(0)}" cy="${sy(0)}"/></svg>`;
-  // --- TOP-DOWN: bird's-eye, drawn like the 2D Dispersion page. TRUE 1:1 — one
-  // --- TOP-DOWN: bird's-eye, shot travels BOTTOM -> TOP. carry -> vertical (tee at
-  //     bottom, landing at top), lateral -> horizontal (miss-left = left, miss-right
-  //     = right). TRUE 1:1 (same px/yd both axes). Tall, narrow column. ---
-  const TW=130,TH=360,tm={l:18,r:14,t:14,b:22};
-  const tPW=TW-tm.l-tm.r, tPH=TH-tm.t-tm.b;
-  const xMax=maxX*1.04;
-  let zLo=Math.min(0,...P.map(p=>p[2])), zHi=Math.max(0,...P.map(p=>p[2]));
-  const zPad=Math.max((zHi-zLo)*0.10,2); zLo-=zPad; zHi+=zPad;
-  if(zHi-zLo<8){const c=(zHi+zLo)/2;zLo=c-4;zHi=c+4;}   // floor so a straight shot still has scale
-  const ppy=Math.min(tPH/xMax, tPW/(zHi-zLo));          // single 1:1 scale (carry on tall axis)
-  const zMid=(zLo+zHi)/2;
-  const ty=x=>tm.t + tPH - x*ppy;                       // carry -> px (bottom=tee, up=downrange)
-  const tx=z=>tm.l + tPW/2 + (z - zMid)*ppy;            // lateral -> px (-z=left, +z=right)
-  const niceStep=(range,target)=>{const raw=range/target,p=Math.pow(10,Math.floor(Math.log10(raw)));for(const mm of [1,2,2.5,5,10]){if(p*mm>=raw)return p*mm;}return p*10;};
-  let tGrid=`<rect x="${tm.l}" y="${tm.t}" width="${tPW}" height="${tPH}" fill="#16271d"/>`;
-  // carry gridlines (horizontal, labeled up the right edge)
-  const xs=niceStep(xMax,5);
-  for(let x=0;x<=xMax+0.5;x+=xs){const gy=ty(x);tGrid+=`<line x1="${tm.l}" y1="${gy.toFixed(1)}" x2="${TW-tm.r}" y2="${gy.toFixed(1)}" stroke="#23402f"/><text x="${TW-tm.r+3}" y="${(gy+3).toFixed(1)}" fill="#7a9486" font-size="8" font-family="monospace" text-anchor="start">${Math.round(x)}</text>`;}
-  // lateral gridlines (vertical) incl. the target-line center, L/R labels along the bottom
-  const visZLo=zMid-(tPW/2)/ppy, visZHi=zMid+(tPW/2)/ppy, zStart=Math.ceil(visZLo/xs)*xs;
-  for(let z=zStart;z<=visZHi+0.001;z+=xs){const gx=tx(z);if(gx<tm.l-0.5||gx>tm.l+tPW+0.5)continue;
-    const zero=Math.abs(z)<1e-6;
-    tGrid+=`<line x1="${gx.toFixed(1)}" y1="${tm.t}" x2="${gx.toFixed(1)}" y2="${tm.t+tPH}" stroke="${zero?'#39604a':'#1c3325'}" ${zero?'':'stroke-dasharray="2 5"'}/>`;
-    const lab=zero?'0':(z<0?Math.abs(Math.round(z))+'L':Math.round(z)+'R');
-    tGrid+=`<text x="${gx.toFixed(1)}" y="${TH-8}" fill="#7a9486" font-size="8" font-family="monospace" text-anchor="middle">${lab}</text>`;}
-  const tPath=P.map((p,i)=>(i?'L':'M')+tx(p[2]).toFixed(1)+' '+ty(p[0]).toFixed(1)).join('');
-  // tee dot at origin (bottom)
-  tGrid+=`<circle cx="${tx(0).toFixed(1)}" cy="${ty(0).toFixed(1)}" r="2.6" fill="#d4ff4f"/>`;
-  const tTop=`<svg viewBox="0 0 ${TW} ${TH}" data-fv="top" data-ft="${ft}" data-pts='${JSON.stringify(P.map(p=>[+tx(p[2]).toFixed(1),+ty(p[0]).toFixed(1)]))}'>${tGrid}<path d="${tPath}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" opacity="0.92"/><circle class="fvball" r="3.4" fill="#fff" cx="${tx(0).toFixed(1)}" cy="${ty(0).toFixed(1)}"/></svg>`;
-
-  return `<div class="panel" id="flightviewbox">
-    <h2 style="color:${color}">${club} — Average Shot</h2>
-    <div class="hint">engine-computed mean trajectory · side profile + top-down (true 1:1) · real-time (${ft.toFixed(1)}s flight)</div>
-    <div class="flightviews">
-      <div class="fv"><div class="lbl">Side view — height vs carry</div>${sSide}</div>
-      <div class="fv fv-top"><div class="lbl">Top down — true 1:1 · &larr;L / R&rarr;</div>${tTop}</div>
-    </div>
-  </div>`;
-}
-
-// Animate the ball along each SVG path at REAL-LIFE speed (data-ft = flight seconds);
-// hold briefly at the end, then loop. Only runs while the box is on screen.
-let _fvRAF=null, _fvIO=null;
-function animateFlightViews(){
-  if(_fvRAF){cancelAnimationFrame(_fvRAF);_fvRAF=null;}
-  if(_fvIO){_fvIO.disconnect();_fvIO=null;}
-  const box=document.getElementById('flightviewbox'); if(!box) return;
-  const svgs=[...box.querySelectorAll('svg[data-fv]')];
-  const runs=svgs.map(svg=>{
-    let pts; try{ pts=JSON.parse(svg.getAttribute('data-pts')); }catch(e){ pts=null; }
-    return {ball:svg.querySelector('.fvball'),pts};
-  }).filter(r=>r.ball&&r.pts&&r.pts.length>1);
-  if(!runs.length) return;
-  const ft=parseFloat(svgs[0].getAttribute('data-ft'))||3.2;
-  const FLIGHT_MS=ft*1000;          // TRUE real-life flight duration
-  const HOLD_MS=900;                // pause on the ground before looping
-  const LOOP_MS=FLIGHT_MS+HOLD_MS;
-  let start=null, running=false;
-  function frame(now){
-    if(!running)return;
-    if(start===null)start=now;
-    const t=(now-start)%LOOP_MS;
-    const u=Math.min(1,t/FLIGHT_MS);
-    runs.forEach(r=>{
-      const idx=u*(r.pts.length-1);const i0=Math.floor(idx);const f=idx-i0;
-      const a=r.pts[i0], b=r.pts[Math.min(i0+1,r.pts.length-1)];
-      r.ball.setAttribute('cx',(a[0]+(b[0]-a[0])*f).toFixed(1));
-      r.ball.setAttribute('cy',(a[1]+(b[1]-a[1])*f).toFixed(1));
-      r.ball.setAttribute('opacity', t<FLIGHT_MS?1:0.3);
-    });
-    _fvRAF=requestAnimationFrame(frame);
-  }
-  _fvIO=new IntersectionObserver(es=>{
-    es.forEach(e=>{
-      if(e.isIntersecting && !running){ running=true; start=null; _fvRAF=requestAnimationFrame(frame); }
-      else if(!e.isIntersecting && running){ running=false; if(_fvRAF){cancelAnimationFrame(_fvRAF);_fvRAF=null;} }
-    });
-  },{threshold:0.25});
-  _fvIO.observe(box);
-}
-
 // ---- WHY did carry change? Physics-based attribution (uses flight-engine.js) ----
 // Compares the club's FIRST session vs its LATEST session. Takes each session's
 // mean ball speed / launch / spin, asks the engine how much of the modeled
@@ -542,7 +432,6 @@ function render(){
       <div class="metricsel" id="msel">${msel}</div>
       ${chart}
     </div>
-    ${flightViews(current,color)}
     <div class="panel">
       <h2>All Metrics: First vs Latest <span style="font-size:13px;color:var(--dim2)">(of selected)</span></h2>
       <div class="hint">● = meaningful change · ○ = within normal session noise</div>
@@ -551,7 +440,6 @@ function render(){
     </div>
   `;
 
-  animateFlightViews();
   document.querySelectorAll('#msel .msel').forEach(b=>{b.onclick=()=>{activeMetric=b.dataset.m;render();};});
 }
 
@@ -574,9 +462,22 @@ function setAllSessions(on){SESSIONS.forEach(s=>sessState[s.id]=on);buildSession
 const sessAllBtn=document.getElementById('sessAll'), sessNoneBtn=document.getElementById('sessNone');
 if(sessAllBtn)sessAllBtn.onclick=()=>setAllSessions(true);
 if(sessNoneBtn)sessNoneBtn.onclick=()=>setAllSessions(false);
-buildSessionChips();
 
-if(clubsWithData.length){current=clubsWithData[0];paintPicker();paintHealthDots();render();}
-else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
+if(!__loadOk){
+  // a real load error already rendered via renderError() in the catch — don't clobber it
+}else if(SHOTS.length===0){
+  renderEmpty(document.getElementById('content'), {bag:false});
+}else{
+  buildSessionChips();
+  if(clubsWithData.length){
+    // Default to the club tracked across the MOST sessions, so the trend +
+    // attribution panel are populated (a club with 1 session can't show a trend).
+    const sessCount={};
+    clubsWithData.forEach(c=>{sessCount[c]=new Set(SHOTS.filter(s=>s.club===c).map(s=>s.session)).size;});
+    current=clubsWithData.reduce((best,c)=>sessCount[c]>sessCount[best]?c:best, clubsWithData[0]);
+    paintPicker();paintHealthDots();render();
+  }
+  else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
+}
 </script>
 </body></html>

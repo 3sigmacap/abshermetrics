@@ -54,6 +54,10 @@ mjx-container{color:var(--ink);}
 window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'},chtml:{scale:1.0}};
 </script>
 <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+<!-- auth gate: require login, hide content until confirmed -->
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
 </head><body>
 
 <div class="nav">
@@ -63,7 +67,7 @@ window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg
 <a href="trends.html" class="tab ">Trends</a>
 <a href="top-down.html" class="tab ">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="settings.html" class="tab ">Settings</a>
 </div>
 
 <div class="page">

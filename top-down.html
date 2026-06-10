@@ -71,7 +71,11 @@ svg:active{cursor:grabbing;}
   #tip{font-size:12px;max-width:200px;padding:9px 11px;}
   .note{font-size:11px;}
 }
-</style></head><body>
+</style><!-- auth gate: require login, hide content until confirmed -->
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab ">Overview</a>
@@ -79,7 +83,7 @@ svg:active{cursor:grabbing;}
 <a href="trends.html" class="tab ">Trends</a>
 <a href="top-down.html" class="tab on">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="settings.html" class="tab ">Settings</a>
 </div>
 <div class="page2">
 
@@ -90,21 +94,24 @@ svg:active{cursor:grabbing;}
 <div class="opts"><button class="gb on" id="shotBtn">Individual shots</button><button class="gb" id="allOnBtn">All clubs on</button><button class="gb" id="allOffBtn">All clubs off</button></div>
 <h2>Top-down &mdash; view from directly above (fit to data) <button class="zreset" data-target="top">reset zoom</button></h2>
 <div class="stage s-top"><svg id="top" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet"></svg></div>
-<h2>Side view &mdash; height vs carry (height exaggerated 3&times; for readability) <button class="zreset" data-target="side">reset zoom</button></h2>
+<h2>Side view &mdash; height vs carry (height exaggerated) <button class="zreset" data-target="side">reset zoom</button></h2>
 <div class="stage s-side"><svg id="side" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet"></svg></div>
-<div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
+<div class="note">The top-down view is <b>true 1:1</b> &mdash; one yard sideways equals one yard downrange, matching the 3D viewer, so the spread you see is the real spread. (The side view exaggerates height for readability.) Solid line = mean flight path; faint lines = individual shots; solid dot = landing point; dashed ellipse = 1&sigma; dispersion. <b>Pinch to zoom</b> (or scroll on desktop) and <b>drag to pan</b>; double-tap or <b>reset zoom</b> to fit. <b>Tap a landing dot</b> for that shot's full ball data.</div>
 </div>
 </div>
-<script type="module">let DATA;
+<script type="module">
+import { loadClubData, escapeHtml as esc } from './user-data.js';
+import { renderEmpty, renderError } from './empty-state.js';
+let DATA;
+const __main = document.querySelector('.page2');
 try{
-  const _r = await fetch('shots.json');
-  if(!_r.ok) throw new Error('HTTP '+_r.status);
-  DATA = await _r.json();
-}catch(_e){
-  document.body.insertAdjacentHTML('afterbegin',
-    '<div style="padding:20px;font-family:monospace;color:#ff9d9d;background:#1a0f0f;border:1px solid #5a2a2a;margin:14px;border-radius:8px">Could not load shots.json ('+_e.message+'). Serve this site over http (e.g. <b>python3 -m http.server</b>) rather than opening the file directly.</div>');
-  throw _e;
+  DATA = await loadClubData();
+}catch(e){
+  console.error(e);
+  renderError(__main, e && e.message);
+  throw e;
 }
+if(DATA.length>0){
 
 /* ---- Engine-driven coordinates (no rescaling) ----
    Carry, lateral landing, apex and the dispersion ellipse are all computed by
@@ -123,7 +130,7 @@ function showTip(ev,d,s){
   const side = s.dev==null ? '' : (s.dev<0 ? Math.abs(Math.round(s.dev))+' yds LEFT' : (s.dev>0 ? Math.round(s.dev)+' yds RIGHT' : 'on target'));
   const shape = s.axis==null ? '' : (s.axis<0 ? 'curve right' : (s.axis>0 ? 'curve left' : 'straight'));
   tip.innerHTML =
-    '<div style="color:'+d.color+';font-weight:600;margin-bottom:3px;">'+d.club+'</div>'+
+    '<div style="color:'+d.color+';font-weight:600;margin-bottom:3px;">'+esc(d.club)+'</div>'+
     'Carry <b>'+fmt(s.carry,' yd')+'</b> &middot; Total '+fmt(s.total,' yd')+'<br>'+
     'Offline <b>'+(side||'\u2014')+'</b><br>'+
     'Ball speed '+fmt(s.bs,' mph')+'<br>'+
@@ -209,6 +216,14 @@ function topDraw(){
   el(topSvg,'circle',{cx:sx(0),cy:sz(0),r:3,fill:'#d4ff4f'});
   DATA.forEach(d=>{
     if(!state[d.club])return;
+    // 1σ dispersion ellipse from d.ell (rx along carry, rz along lateral) — true 1:1,
+    // drawn first so it sits under the paths/dots. Matches the mobile 2D screen.
+    if(d.ell){
+      const {cx,cz,rx,rz}=d.ell, seg=48; let ep='';
+      for(let i=0;i<=seg;i++){const a=(i/seg)*Math.PI*2;const ex=cx+Math.cos(a)*rx;const ez=cz+Math.sin(a)*rz;ep+=(i?'L':'M')+sx(ex).toFixed(1)+','+sz(ez).toFixed(1);}
+      ep+='Z';
+      el(topSvg,'path',{d:ep,fill:d.color,'fill-opacity':0.1,stroke:d.color,'stroke-width':1.2,'stroke-opacity':0.8,'stroke-dasharray':'4 4'});
+    }
     if(showShots){
       d.shots.forEach((f,i)=>{const p=dec(f);
         el(topSvg,'path',{d:'M'+p.map(q=>sx(q[0]).toFixed(1)+','+sz(q[2]).toFixed(1)).join('L'),fill:'none',stroke:d.color,'stroke-width':1,opacity:0.16});
@@ -271,7 +286,7 @@ function drawAll(){topDraw();sideDraw();}
 const chips=document.getElementById('chips');
 const chipRefresh=[];   // collect each chip's visual-refresh fn for bulk toggles
 DATA.forEach(d=>{const c=document.createElement('button');c.className='chip';c.dataset.club=d.club;
-  c.innerHTML='<span class="sw" style="background:'+d.color+'"></span>'+d.club+' <span style="opacity:.6;font-family:monospace;font-size:11px">'+d.ell.rz+'y</span>';
+  c.innerHTML='<span class="sw" style="background:'+d.color+'"></span>'+esc(d.club)+' <span style="opacity:.6;font-family:monospace;font-size:11px">'+d.ell.rz+'y</span>';
   chips.appendChild(c);
   function st(){if(state[d.club]){c.style.background=d.color;c.style.borderColor=d.color;c.style.color='#0a120d';c.querySelector('.sw').style.background='#0a120d';}else{c.style.background='var(--panel)';c.style.borderColor='var(--line)';c.style.color='var(--dim)';c.querySelector('.sw').style.background=d.color;}}
   chipRefresh.push(st);
@@ -427,5 +442,8 @@ window.addEventListener('resize',()=>{
 });
 
 drawAll();
+}else{
+  renderEmpty(__main, { bag:false });
+}
 </script>
 </body></html>

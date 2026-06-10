@@ -71,7 +71,11 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
   .cards{gap:12px;}
 }
 
-</style></head><body>
+</style><!-- auth gate: require login, hide content until confirmed -->
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
 <div class="nav">
 <a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
 <a href="index.html" class="tab on">Overview</a>
@@ -79,7 +83,7 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <a href="trends.html" class="tab ">Trends</a>
 <a href="top-down.html" class="tab ">2D Dispersion</a>
 <a href="flight-3d.html" class="tab ">3D Flight</a>
-<a href="raw-data.html" class="tab ">Raw Data</a>
+<a href="settings.html" class="tab ">Settings</a>
 </div>
 <div class="page">
 <div class="hero">
@@ -112,11 +116,17 @@ td.big2{color:var(--accent);font-size:17px;font-weight:500;}
 <div class="foot"><span>BAGMETRICS &middot; launch-monitor analysis &middot; <span id="fShots">–</span> shots</span><span>physics model: drag + Magnus, Re &amp; spin-rate dependent</span></div>
 </div>
 
-<script>
+<script type="module">
+import { loadClubData, loadSampleData } from './user-data.js';
+import { loadProfile, loftOf } from './profile.js';
+import { renderEmpty, renderError } from './empty-state.js';
+
 // ---- Static config (NOT derivable from shot data) ----
-// Loft = club spec (degrees). Red = editorial two-way-miss flag.
-const LOFT = {"3 Wood":"15\u00b0","3 Iron":"20\u00b0","4 Iron":"23\u00b0","5 Iron":"26\u00b0","6 Iron":"30\u00b0","7 Iron":"34\u00b0","8 Iron":"39\u00b0","9 Iron":"42.5\u00b0","Pitching Wedge":"47\u00b0","Gap Wedge":"52\u00b0","Sand Wedge":"56\u00b0"};
+// Loft now comes from the user's profile (Settings -> My Clubs), falling back to
+// standard defaults. Red = editorial two-way-miss flag.
 const RED = new Set(["3 Wood","Gap Wedge"]);
+let CLUB_SPECS = {};
+const loftStr = (club) => { const v = loftOf(CLUB_SPECS, club); return v != null ? v + '\u00b0' : '\u2013'; };
 
 // ---- helpers (match Python: mean, sample stdev, round-half-up like JS Math.round) ----
 const mean = a => a.reduce((s,x)=>s+x,0)/a.length;
@@ -126,8 +136,8 @@ const r1 = x => Math.round(x*10)/10;           // 1 decimal
 const comma = x => x.toLocaleString('en-US');  // 1,234
 const f1 = x => r1(x).toFixed(1);              // always 1 decimal in text
 
-fetch('shots.json').then(r=>r.json()).then(data=>{
-  // shots.json is canonical ASCENDING by length; display table is LONGEST first.
+function render(data){
+  // ClubData[] is canonical ASCENDING by length; display table is LONGEST first.
   const asc = data.slice();
   const disp = data.slice().reverse();
 
@@ -179,7 +189,7 @@ fetch('shots.json').then(r=>r.json()).then(data=>{
     html +=
       '<tr>'+
       `<td class="cl">${c.club}</td>`+
-      `<td class="num">${LOFT[c.club]||'\u2013'}</td>`+
+      `<td class="num">${loftStr(c.club)}</td>`+
       `<td class="num big2">${m.carry}</td>`+
       `<td class="num">${m.total}</td>`+
       `<td class="num">&plusmn;${f1(m.sd)}</td>`+
@@ -199,9 +209,18 @@ fetch('shots.json').then(r=>r.json()).then(data=>{
     }
   });
   document.getElementById('tbody').innerHTML=html;
-}).catch(e=>{
-  document.getElementById('tbody').innerHTML='<tr><td class="cl">Failed to load shots.json</td></tr>';
+}
+
+// ---- bootstrap: load THIS signed-in user's data (auth-gate guarantees a session) ----
+const __main = document.querySelector('.page');
+try{
+  const [data, profile] = await Promise.all([loadClubData(), loadProfile()]);
+  CLUB_SPECS = profile.clubSpecs || {};
+  if(!data.length) renderEmpty(__main, { bag:true, onSample: loadSampleData });
+  else render(data);
+}catch(e){
   console.error(e);
-});
+  renderError(__main, e && e.message);
+}
 </script>
 </body></html>

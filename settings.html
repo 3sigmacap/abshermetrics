@@ -1,0 +1,266 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Settings</title>
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;--bad:#ff9d9d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:30px 22px 80px;}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,72px);line-height:.95;letter-spacing:1px;margin:8px 0 24px;}
+h1.big span{color:var(--accent);}
+.flash{font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:11px 14px;border-radius:9px;margin-bottom:16px;display:none;}
+.flash.ok{display:block;color:#0a120d;background:var(--accent);}
+.flash.bad{display:block;color:var(--bad);background:#2a1414;border:1px solid #5e2b2b;}
+.section{margin-bottom:24px;}
+.section-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--dim2);margin-bottom:8px;text-transform:uppercase;}
+.panel{background:#0b1410cc;border:1px solid var(--line);border-radius:13px;padding:18px;}
+.label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;margin:12px 0 6px;display:block;}
+.label:first-child{margin-top:0;}
+.row{display:flex;align-items:center;gap:8px;}
+input[type=text],input[type=email],input[type=password]{flex:1;width:100%;background:#081109;border:1px solid var(--line2);border-radius:8px;color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-size:16px;padding:11px 12px;transition:.18s;}
+input:focus{outline:none;border-color:var(--accent);}
+input::placeholder{color:var(--dim2);}
+.readonly{color:var(--dim);font-size:16px;padding:6px 0;}
+.small-btn{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--ink);background:var(--line2);border:none;border-radius:8px;padding:11px 16px;cursor:pointer;transition:.18s;white-space:nowrap;}
+.small-btn:hover{background:#2f5039;}
+.small-btn:disabled{opacity:.5;cursor:default;}
+.sign-out{margin-top:18px;width:100%;border:1px solid #5e2b2b;background:transparent;color:var(--bad);border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Barlow Condensed',sans-serif;transition:.18s;}
+.sign-out:hover{background:#1f1010;}
+.delete-acct{display:block;margin-top:12px;text-align:center;color:var(--dim2);font-size:13px;font-family:'IBM Plex Mono',monospace;text-decoration:underline;cursor:pointer;background:none;border:none;width:100%;}
+.delete-acct:hover{color:var(--bad);}
+.help{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);line-height:1.6;margin-bottom:10px;}
+.nav-row{display:flex;align-items:center;gap:12px;}
+.nav-row .ic{font-family:'Bebas Neue';font-size:22px;color:var(--accent);width:26px;text-align:center;}
+.nav-row .t{flex:1;}
+.nav-row .t .l{font-size:16px;font-weight:600;color:var(--ink);}
+.nav-row .chev{color:var(--dim2);font-size:20px;}
+.club-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #142219;}
+.club-row.head{border-bottom-color:var(--line2);}
+.club-row .c-name{flex:1;font-size:15px;font-weight:600;color:var(--ink);}
+.club-row .c-loft{width:80px;text-align:center;}
+.club-row .c-bag{width:60px;text-align:center;}
+.club-row.head .h{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;color:var(--dim2);text-transform:uppercase;}
+.loft-input{width:64px;background:#081109;border:1px solid var(--line2);border-radius:7px;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:14px;text-align:center;padding:6px 4px;}
+.loft-input:focus{outline:none;border-color:var(--accent);}
+/* toggle */
+.tg{appearance:none;-webkit-appearance:none;width:42px;height:24px;border-radius:14px;background:var(--line2);position:relative;cursor:pointer;transition:.18s;flex:none;}
+.tg:checked{background:var(--accent);}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#0a120d;transition:.18s;}
+.tg:checked::after{transform:translateX(18px);}
+.save-btn{margin-top:14px;width:100%;background:var(--accent);color:#0a120d;border:none;border-radius:9px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1px;cursor:pointer;transition:.18s;}
+.save-btn:hover{filter:brightness(1.07);}
+.save-btn:disabled{opacity:.55;cursor:default;}
+.toggle-row{display:flex;align-items:center;gap:12px;}
+.toggle-row .t{flex:1;}
+.toggle-row .t .l{font-size:15px;font-weight:600;color:var(--ink);}
+.foot{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);text-align:center;margin-top:24px;}
+@media(max-width:760px){
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
+  .page{padding:22px 14px 56px;}
+}
+</style>
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="club-detail.html" class="tab ">Club Detail</a>
+<a href="trends.html" class="tab ">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+<a href="settings.html" class="tab on">Settings</a>
+</div>
+<div class="page">
+<div class="kicker">Account &amp; preferences</div>
+<h1 class="big">SET<span>TINGS</span></h1>
+<div class="flash" id="flash"></div>
+
+<!-- ACCOUNT -->
+<div class="section">
+  <div class="section-title">Account</div>
+  <div class="panel">
+    <label class="label" for="name">Display name</label>
+    <div class="row">
+      <input type="text" id="name" placeholder="Your name" autocomplete="name">
+      <button class="small-btn" id="saveName" type="button">Save</button>
+    </div>
+    <label class="label">Email</label>
+    <div class="readonly" id="email">—</div>
+    <label class="label" for="pw">New password</label>
+    <div class="row">
+      <input type="password" id="pw" placeholder="••••••••" autocomplete="new-password" minlength="6">
+      <button class="small-btn" id="savePw" type="button">Update</button>
+    </div>
+    <button class="sign-out" id="signOut" type="button">Sign out</button>
+    <button class="delete-acct" id="deleteAcct" type="button">Delete account</button>
+  </div>
+</div>
+
+<!-- DATA -->
+<div class="section">
+  <div class="section-title">Data</div>
+  <div class="panel">
+    <a class="nav-row" href="raw-data.html">
+      <div class="ic">≡</div>
+      <div class="t">
+        <div class="l">Raw shot data</div>
+        <div class="help" style="margin:2px 0 0">Every shot exactly as measured, filterable by session.</div>
+      </div>
+      <div class="chev">›</div>
+    </a>
+  </div>
+</div>
+
+<!-- MY CLUBS -->
+<div class="section">
+  <div class="section-title">My Clubs</div>
+  <div class="panel">
+    <div class="help">Lofts feed the rest of the app. Toggle a club off if it isn't in your bag.</div>
+    <div class="club-row head">
+      <div class="c-name h">Club</div>
+      <div class="c-loft h">Loft°</div>
+      <div class="c-bag h">In bag</div>
+    </div>
+    <div id="clubList"></div>
+    <button class="save-btn" id="saveClubs" type="button">Save clubs</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="section">
+  <div class="section-title">App</div>
+  <div class="panel">
+    <div class="toggle-row">
+      <div class="t">
+        <div class="l">Reduce motion</div>
+        <div class="help" style="margin:2px 0 0">Turn off looping chart animations.</div>
+      </div>
+      <input type="checkbox" class="tg" id="reduceMotion">
+    </div>
+  </div>
+</div>
+
+<div class="foot">AbsherMetrics</div>
+</div>
+
+<script type="module">
+import {
+  loadProfile, updateName, saveClubSpecs, updatePrefs, changePassword, deleteAccount,
+  sanitizeLoft, loftOf, inBagOf, DEFAULT_LOFTS,
+} from './profile.js';
+import { loadClubData } from './user-data.js';
+import { CLUB_ORDER, clubSortIdx } from './club-compute.js';
+import { signOut } from './auth.js';
+
+const $ = (id) => document.getElementById(id);
+let busy = false;
+function flash(text, bad = false) {
+  const el = $('flash');
+  el.textContent = text;
+  el.className = 'flash ' + (bad ? 'bad' : 'ok');
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => { el.className = 'flash'; }, 3200);
+}
+
+// ---- load profile + the user's clubs (data-driven bag) ----
+const profile = await loadProfile();
+let clubSpecs = profile.clubSpecs || {};
+
+$('name').value = profile.displayName || '';
+$('email').textContent = profile.email || '—';
+$('reduceMotion').checked = !!profile.prefs?.reduceMotion;
+
+let dataClubs = [];
+try { dataClubs = (await loadClubData()).map((c) => c.club); } catch (_) { /* empty/new user */ }
+const clubSet = new Set(CLUB_ORDER);
+dataClubs.forEach((c) => clubSet.add(c));
+const clubsOrdered = [...clubSet].sort((a, b) => clubSortIdx(a) - clubSortIdx(b));
+
+// ---- render the My Clubs editor ----
+const listEl = $('clubList');
+listEl.innerHTML = clubsOrdered.map((c) => {
+  const loft = loftOf(clubSpecs, c);
+  const inBag = inBagOf(clubSpecs, c);
+  const safe = c.replace(/"/g, '&quot;');
+  return `<div class="club-row">
+    <div class="c-name">${c}</div>
+    <div class="c-loft"><input class="loft-input" data-loft="${safe}" inputmode="decimal" maxlength="4"
+      value="${loft != null ? loft : ''}" placeholder="—"></div>
+    <div class="c-bag"><input type="checkbox" class="tg" data-bag="${safe}" ${inBag ? 'checked' : ''}></div>
+  </div>`;
+}).join('');
+// live loft sanitization
+listEl.querySelectorAll('input[data-loft]').forEach((inp) => {
+  inp.addEventListener('input', () => { inp.value = sanitizeLoft(inp.value); });
+});
+
+// ---- actions ----
+$('saveName').addEventListener('click', async () => {
+  if (busy) return; busy = true; $('saveName').disabled = true;
+  const { error } = await updateName($('name').value.trim());
+  busy = false; $('saveName').disabled = false;
+  flash(error || 'Name saved', !!error);
+});
+
+$('savePw').addEventListener('click', async () => {
+  const pw = $('pw').value;
+  if (pw.length < 6) { flash('Password must be at least 6 characters.', true); return; }
+  if (busy) return; busy = true; $('savePw').disabled = true;
+  const { error } = await changePassword(pw);
+  busy = false; $('savePw').disabled = false; $('pw').value = '';
+  flash(error || 'Password updated', !!error);
+});
+
+$('signOut').addEventListener('click', () => signOut());
+
+$('deleteAcct').addEventListener('click', async () => {
+  const ok = window.confirm(
+    'Delete account\n\nThis permanently deletes your account and all your shots and sessions. This cannot be undone.'
+  );
+  if (!ok) return;
+  if (busy) return; busy = true;
+  const { error } = await deleteAccount();
+  if (error) { busy = false; flash('Could not delete account: ' + error, true); return; }
+  await signOut(); // redirects to login.html
+});
+
+$('saveClubs').addEventListener('click', async () => {
+  const specs = {};
+  for (const c of clubsOrdered) {
+    const loftEl = listEl.querySelector(`input[data-loft="${c.replace(/"/g, '\\"')}"]`);
+    const bagEl = listEl.querySelector(`input[data-bag="${c.replace(/"/g, '\\"')}"]`);
+    const loft = parseFloat(loftEl ? loftEl.value : '');
+    specs[c] = { inBag: bagEl ? bagEl.checked : true };
+    if (Number.isFinite(loft)) specs[c].loft = loft;
+  }
+  if (busy) return; busy = true; $('saveClubs').disabled = true;
+  const { error } = await saveClubSpecs(specs);
+  busy = false; $('saveClubs').disabled = false;
+  if (!error) clubSpecs = specs;
+  flash(error ? 'Could not save (run the schema update?): ' + error : 'Clubs saved', !!error);
+});
+
+$('reduceMotion').addEventListener('change', async (e) => {
+  const next = { ...(profile.prefs || {}), reduceMotion: e.target.checked };
+  const { error } = await updatePrefs(next);
+  if (error) { e.target.checked = !e.target.checked; flash('Could not save preference: ' + error, true); }
+  else { profile.prefs = next; flash('Preference saved'); }
+});
+</script>
+</body></html>
