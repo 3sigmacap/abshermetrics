@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { type ClubData } from '@/data';
-import { useClubs, useDataActions } from '@/lib/dataStore';
+import { useClubs, useData, useDataActions } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
 import { ABBR, C, RED } from '@/theme';
 
@@ -100,6 +100,7 @@ function cellText(row: Row, key: string): string {
 
 export default function Overview() {
   const { clubs, loading } = useClubs();
+  const { error, refresh } = useData();
   const { getLoft } = useProfile();
   const { loadSampleData } = useDataActions();
   const [seeding, setSeeding] = useState(false);
@@ -112,6 +113,20 @@ export default function Overview() {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={C.accent} size="large" />
+      </View>
+    );
+  }
+
+  // A real load attempt finished but failed — show an error + retry, never the
+  // "load sample data" offer (which must only appear for a confirmed-empty account).
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>Couldn’t load your data</Text>
+        <Text style={styles.emptyDim}>{error}</Text>
+        <Pressable onPress={() => void refresh()} style={styles.sampleBtn}>
+          <Text style={styles.sampleBtnTxt}>Retry</Text>
+        </Pressable>
       </View>
     );
   }

@@ -27,6 +27,8 @@ interface DataState {
   colors: Record<string, string>;
   clubOrder: string[];
   loading: boolean;
+  /** True only after the first authenticated fetch for this user has completed. */
+  loaded: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   /** Seed the signed-in account with the bundled sample data (their own copy). */
@@ -43,11 +45,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // True only AFTER a real authenticated fetch has completed for the current user.
+  // Guards the "no data → load sample" empty state so it never shows during the
+  // sign-in → data handshake (when session is briefly null, or before the fetch runs).
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!session) {
       setRawShots([]);
       setSessions([]);
+      setLoaded(false); // signed out / not restored yet — not a confirmed "empty account"
       setLoading(false);
       return;
     }
@@ -99,6 +106,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load data');
     } finally {
+      setLoaded(true); // a fetch attempt for this signed-in user has completed
       setLoading(false);
     }
   }, [session]);
@@ -184,12 +192,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       colors,
       clubOrder: CLUB_ORDER,
       loading,
+      loaded,
       error,
       refresh,
       loadSampleData,
       deleteAllData,
     }),
-    [rawShots, sessions, clubs, colors, loading, error, refresh, loadSampleData, deleteAllData],
+    [rawShots, sessions, clubs, colors, loading, loaded, error, refresh, loadSampleData, deleteAllData],
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
@@ -203,8 +212,10 @@ export function useData(): DataState {
 
 /** Drop-in for the old `@/data` default export (per-user, computed on-device). */
 export function useClubs(): { clubs: ClubData[]; loading: boolean } {
-  const { clubs, loading } = useData();
-  return { clubs, loading };
+  const { clubs, loading, loaded } = useData();
+  // Treat "not yet loaded" as still-loading so consumers never render an empty
+  // state (e.g. the "load sample data" offer) during the sign-in → fetch handshake.
+  return { clubs, loading: loading || !loaded };
 }
 
 /** Drop-in for the old getRawData() result. */
@@ -216,8 +227,8 @@ export function useRawData(): {
   loading: boolean;
   refresh: () => Promise<void>;
 } {
-  const { rawShots, sessions, colors, clubOrder, loading, refresh } = useData();
-  return { shots: rawShots, sessions, colors, clubOrder, loading, refresh };
+  const { rawShots, sessions, colors, clubOrder, loading, loaded, refresh } = useData();
+  return { shots: rawShots, sessions, colors, clubOrder, loading: loading || !loaded, refresh };
 }
 
 /** Mutating data actions: seed sample data / wipe all data. */
