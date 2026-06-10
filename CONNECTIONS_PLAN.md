@@ -33,8 +33,18 @@ to Render; merge per stable phase).
   `security find-generic-password -s 'Supabase CLI' -a supabase -w` for future CLI ops,
   and set `SSL_CERT_FILE=/etc/ssl/cert.pem` for python; the Management API blocks the
   default python User-Agent (use curl or a browser UA).
-- **Only Phase D (email invites) remains** — optional, needs SMTP (see below). Also pending:
-  ship the next **native mobile build** so phones get Connections/Compare/push.
+- **iOS 1.0.1 shipped to Apple (2026-06-10):** EAS build **#6** (version/runtime **1.0.1**,
+  commit `810c9c1`) finished + auto-uploaded to App Store Connect. First `expo-updates` build,
+  so OTA works for 1.0.1+ once live. iOS **push credentials are set up in EAS** (Push
+  Notifications capability enabled on the App ID + provisioning profile regenerated + APNs key
+  created — done via an INTERACTIVE `eas build`). Apple side: v1.0 was "Waiting for Review";
+  recommended path = **Remove 1.0 from review → change version to 1.0.1 → attach build 6 →
+  Submit** (a 1.0.1 build can't attach to a "1.0" App Store version). Owner does that final
+  App Store Connect submit-for-review.
+- **Android NOT built yet:** same 1.0.1 code on `main`; needs `app/google-play-key.json` (store
+  submit) + FCM credentials in Expo (push delivery), then
+  `npx eas-cli build -p android --profile production --auto-submit`.
+- **Only Phase D (email invites) remains** — optional, needs SMTP (see below).
 
 ## Locked decisions (from the design conversation)
 1. **Share scope:** a player's **Bag/Overview summary only** — per-club aggregates,
@@ -160,11 +170,14 @@ shots**. Instead each user **publishes an aggregated `bag_summary`** (the Overvi
 ## Where to resume after compaction
 Phases **A–C + E are DONE and live on web** (`main`); backend live + verified (see STATUS).
 What's left is optional and only if the user asks:
-1. **Ship mobile** — the mobile Connections/Compare/push code is on `main` but NOT on phones
-   (current store builds 1.0.0 predate `expo-updates`, so no OTA; push also needs the native
-   expo-notifications module compiled in). Ships with the next native build:
-   `cd app && npm run release` (store review). That build also carries the earlier tagline +
-   engine-carry fixes.
+1. **Mobile release** — iOS **1.0.1 (EAS build #6)** is built + uploaded to App Store Connect;
+   owner finishes the App Store Connect submit-for-review (remove 1.0 from review → set version
+   1.0.1 → attach build 6). **Android still pending**: add `app/google-play-key.json` + FCM
+   creds, then `npx eas-cli build -p android --profile production --auto-submit`. Gotchas seen:
+   bare `eas` isn't on PATH here — use `npx eas-cli ...`; the FIRST build after adding push must
+   run **interactive** (no `--non-interactive`) so EAS prompts to enable the Push Notifications
+   capability + regenerate the profile (a non-interactive build reuses the stale profile and
+   fails on `aps-environment`).
 2. **Phase D — email invites** (web + mobile): extend `request-connection` so a non-user
    email creates an `invite` row + `auth.admin.inviteUserByEmail(...)`; auto-connect on
    signup; request/accept emails. **Needs custom SMTP configured in Supabase Auth** (owner).

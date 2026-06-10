@@ -11,9 +11,11 @@ Built on the `connections` branch off `main`, web + mobile in lockstep, Phases A
   Backend (connections + bag_summaries + push_tokens tables, RLS, are_connected/
   user_id_by_email, request-connection + notify-accept Edge Functions) is **live on Supabase
   + verified** (RLS isolation, upsert, and notify-accept auth gate all tested with real users;
-  Compare reviewed via adversarial workflow). Web is live; **mobile — incl. push — ships with
-  the next native build** (`cd app && npm run release`); current store builds predate
-  expo-updates so they can't OTA.
+  Compare reviewed via adversarial workflow). Web is live. **iOS 1.0.1 (EAS build #6) is built
+  + uploaded to App Store Connect** (first expo-updates build; push creds set up in EAS) —
+  owner finishes the App Store submit-for-review (remove 1.0 from review → version 1.0.1 →
+  attach build 6). **Android pending** `app/google-play-key.json` + FCM, then
+  `npx eas-cli build -p android --profile production --auto-submit`. See CONNECTIONS_PLAN.md.
 - **Remaining (optional): Phase D** — email invites for non-users (extend request-connection;
   **needs custom SMTP configured in Supabase Auth**).
 
