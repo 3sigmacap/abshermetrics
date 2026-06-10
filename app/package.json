@@ -25,6 +25,7 @@
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.6",
     "expo-system-ui": "~56.0.5",
+    "expo-updates": "~56.0.18",
     "expo-web-browser": "~56.0.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -57,7 +58,12 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "export": "expo export",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "preota": "node ./scripts/sync-shared.js",
+    "ota": "eas update --branch production --non-interactive",
+    "release": "eas build --platform all --profile production --auto-submit --non-interactive",
+    "release:ios": "eas build --platform ios --profile production --auto-submit --non-interactive",
+    "release:android": "eas build --platform android --profile production --auto-submit --non-interactive"
   },
   "private": true
 }
