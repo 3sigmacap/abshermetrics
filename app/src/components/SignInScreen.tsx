@@ -56,6 +56,7 @@ export default function SignInScreen() {
         <Text style={styles.brand}>
           ABSHER<Text style={{ color: C.accent }}>METRICS</Text>
         </Text>
+        <Text style={styles.tagline}>The physics behind every yard.</Text>
         <Text style={styles.sub}>{mode === 'in' ? 'Sign in to your bag' : 'Create your account'}</Text>
 
         <Text style={styles.label}>EMAIL</Text>
@@ -120,6 +121,7 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: C.bg },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 28, gap: 4 },
   brand: { fontSize: 34, fontWeight: '800', color: C.ink, letterSpacing: 1, textAlign: 'center' },
+  tagline: { fontFamily: mono, fontSize: 11, letterSpacing: 1.5, color: C.dim, textTransform: 'uppercase', textAlign: 'center', marginTop: 6 },
   sub: { fontFamily: mono, fontSize: 13, color: C.dim, textAlign: 'center', marginBottom: 22 },
   label: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, marginTop: 12, marginBottom: 5 },
   input: {
