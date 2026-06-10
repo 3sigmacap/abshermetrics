@@ -118,7 +118,7 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 </div>
 
 <script type="module">
-import { attributeCarryChange } from './flight-engine.js';
+import { attributeCarryChange, simulateFlight } from './flight-engine.js';
 import { loadRawData } from './user-data.js';
 import { renderEmpty, renderError } from './empty-state.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
@@ -130,7 +130,22 @@ try{
   const base=await loadRawData();
   COLORS={...(base.colors||{})};
   window.__CLUB_ORDER=base.club_order||[];
-  SHOTS=[...base.shots];
+  // Use ENGINE-computed carry/total/apex/lateral here too, so Trends agrees with
+  // the Overview / Club Detail / 2D / 3D (all engine-modeled). The R50's own
+  // measured carry is preserved as `measuredCarry` for the "why carry changed" note.
+  SHOTS=base.shots.map(s=>{
+    const out={...s, measuredCarry: s.carry};
+    if(s.bs!=null && s.la!=null && s.spin!=null){
+      try{
+        const r=simulateFlight({ballSpeedMph:s.bs,launchDeg:s.la,spinRpm:s.spin,axisDeg:(s.axis||0),directionDeg:(s.ld||0)},{rollout:true});
+        out.carry=Math.round(r.carryYd*10)/10;
+        out.total=Math.round((r.totalYd??r.carryYd)*10)/10;
+        out.apex=Math.round(r.apexFt*10)/10;
+        out.dev=Math.round(r.lateralYd*10)/10;
+      }catch(e){/* keep R50 values if the sim fails */}
+    }
+    return out;
+  });
   const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
   SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
   SESSIONS.forEach(s=>sessState[s.id]=true);
@@ -295,7 +310,7 @@ function carryAttribution(club){
 function measuredCarryChange(club){
   const sess=SESSIONS.filter(s=>sessState[s.id]!==false&&SHOTS.some(x=>x.club===club&&x.session===s.id));
   if(sess.length<2)return null;
-  const cm=sid=>{const v=SHOTS.filter(x=>x.club===club&&x.session===sid&&x.carry!=null);return v.length?mean(v.map(x=>x.carry)):null;};
+  const cm=sid=>{const v=SHOTS.filter(x=>x.club===club&&x.session===sid&&x.measuredCarry!=null);return v.length?mean(v.map(x=>x.measuredCarry)):null;};
   const a=cm(sess[0].id), b=cm(sess[sess.length-1].id);
   return (a==null||b==null)?null:{first:a,last:b,delta:b-a};
 }
@@ -332,7 +347,7 @@ function attributionPanel(club,color){
     ? `Carry is essentially unchanged (${sign(r.total)}${r.total.toFixed(1)} yd modeled). The inputs below mostly cancel out.`
     : `Your carry ${r.total>0?'gained':'lost'} <b style="color:${totCol}">${sign(r.total)}${r.total.toFixed(1)} yd</b> between the first and latest session. Here's what the physics model says drove it:`;
   const measNote = meas
-    ? `<div class="note" style="margin-top:12px">Measured carry moved ${sign(meas.delta)}${meas.delta.toFixed(1)} yd (${fmt(meas.first,1)} → ${fmt(meas.last,1)}). The model attributes the change purely to launch-condition shifts; any gap vs measured is normal scatter, contact quality, or conditions the model doesn't see.</div>`
+    ? `<div class="note" style="margin-top:12px">For reference, your launch monitor's <b>measured</b> carry moved ${sign(meas.delta)}${meas.delta.toFixed(1)} yd (${fmt(meas.first,1)} → ${fmt(meas.last,1)}). Everything else here uses the physics <b>model</b>; any gap vs measured is normal scatter, contact quality, or conditions the model doesn't see.</div>`
     : '';
   return `<div class="panel">
     <h2 style="color:${color}">Why ${club}'s carry changed</h2>

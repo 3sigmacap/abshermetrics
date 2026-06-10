@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
-import { attributeCarryChange } from '@/engine';
+import { attributeCarryChange, simulateFlight } from '@/engine';
 import { useRawData } from '@/lib/dataStore';
 import { fmt, mean, sd } from '@/lib/format';
 import { type RawShot, type Session } from '@/rawData';
@@ -164,8 +164,12 @@ function makeCompute(SHOTS: RawShot[], SESSIONS: Session[], sessState: SessState
     );
     if (sess.length < 2) return null;
     const cm = (sid: string) => {
-      const v = SHOTS.filter((x) => x.club === club && x.session === sid && x.carry != null);
-      return v.length ? mean(v.map((x) => x.carry as number)) : null;
+      const v = SHOTS.filter(
+        (x) => x.club === club && x.session === sid && (x as RawShot & { measuredCarry?: number }).measuredCarry != null,
+      );
+      return v.length
+        ? mean(v.map((x) => (x as RawShot & { measuredCarry?: number }).measuredCarry as number))
+        : null;
     };
     const a = cm(sess[0].id);
     const b = cm(sess[sess.length - 1].id);
@@ -334,10 +338,9 @@ function AttributionPanel({
       </View>
       {meas && (
         <Text style={styles.note}>
-          Measured carry moved {sign(meas.delta)}
-          {meas.delta.toFixed(1)} yd ({fmt(meas.first, 1)} → {fmt(meas.last, 1)}). The model attributes the change
-          purely to launch-condition shifts; any gap vs measured is normal scatter, contact quality, or conditions the
-          model doesn't see.
+          For reference, your launch monitor&apos;s measured carry moved {sign(meas.delta)}
+          {meas.delta.toFixed(1)} yd ({fmt(meas.first, 1)} → {fmt(meas.last, 1)}). Everything else here uses the physics
+          model; any gap vs measured is normal scatter, contact quality, or conditions the model doesn&apos;t see.
         </Text>
       )}
     </View>
@@ -393,9 +396,34 @@ export default function Trends() {
     }
   }, [clubsWithData, shots]);
 
+  // Use ENGINE-computed carry/total/apex/lateral so Trends agrees with the Bag /
+  // Club Detail / 2D / 3D (all engine-modeled). The R50's own measured carry is
+  // preserved as `measuredCarry` for the "why carry changed" reference note.
+  const engineShots = useMemo(
+    () =>
+      shots.map((s) => {
+        const out: RawShot & { measuredCarry?: number } = { ...s, measuredCarry: s.carry };
+        if (s.bs != null && s.la != null && s.spin != null) {
+          try {
+            const r = simulateFlight(
+              { ballSpeedMph: s.bs, launchDeg: s.la, spinRpm: s.spin, axisDeg: s.axis || 0, directionDeg: s.ld || 0 },
+              { rollout: true },
+            );
+            out.carry = Math.round(r.carryYd * 10) / 10;
+            out.total = Math.round((r.totalYd ?? r.carryYd) * 10) / 10;
+            out.apex = Math.round(r.apexFt * 10) / 10;
+            out.dev = Math.round(r.lateralYd * 10) / 10;
+          } catch {
+            /* keep R50 values if the sim fails */
+          }
+        }
+        return out;
+      }),
+    [shots],
+  );
   const compute = useMemo(
-    () => makeCompute(shots, sessions, sessState),
-    [shots, sessions, sessState],
+    () => makeCompute(engineShots, sessions, sessState),
+    [engineShots, sessions, sessState],
   );
 
   const toggleSession = (id: string) =>
