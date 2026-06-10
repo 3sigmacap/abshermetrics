@@ -53,15 +53,15 @@ export function renderEmpty(container, { bag = false, onSample } = {}) {
   if (!container) return;
   ensureStyle();
   const hint = bag
-    ? 'Upload your launch-monitor CSV, or load the sample data to explore the app first.'
-    : 'Upload a session CSV on the Raw Data page to get started.';
+    ? 'Upload a CSV from Settings → Raw shot data, or load the sample data to explore the app.'
+    : 'Upload a session CSV from Settings → Raw shot data to get started.';
   container.innerHTML = `
     <div class="am-state">
       <div class="em-mark">αM</div>
       <h2>No shots yet</h2>
       <p>${hint}</p>
       ${bag ? '<button class="em-cta" id="amLoadSample" type="button">Load sample data</button><br>' : ''}
-      <a class="em-link" href="raw-data.html">Upload a session CSV &rarr;</a>
+      <a class="em-link" href="raw-data.html">Raw shot data &rarr;</a>
     </div>`;
   if (bag && typeof onSample === 'function') {
     const btn = container.querySelector('#amLoadSample');
