@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter, type Href } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -20,6 +21,24 @@ const tabIcon =
   ({ color, size }: { color: ColorValue; size: number }) => (
     <MaterialCommunityIcons name={name} size={size ?? 22} color={color as string} />
   );
+
+// Screenshot helper (no-op unless EXPO_PUBLIC_SCREENSHOT_MODE=1, only set for the
+// EAS "simulator" build). Reads a route from AsyncStorage and navigates there, so
+// App Store screenshots can be captured headlessly without tapping the simulator.
+function ScreenshotNav() {
+  const router = useRouter();
+  useEffect(() => {
+    if (process.env.EXPO_PUBLIC_SCREENSHOT_MODE !== '1') return;
+    let cancelled = false;
+    AsyncStorage.getItem('__shotRoute').then((r) => {
+      if (r && !cancelled) setTimeout(() => router.replace(r as Href), 500);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+  return null;
+}
 
 // Full-screen gate: spinner while restoring the session, sign-in when logged out,
 // nothing (reveals the app) once authenticated.
@@ -75,6 +94,7 @@ export default function RootLayout() {
               </Tabs>
             </SafeAreaView>
             <AuthOverlay />
+            <ScreenshotNav />
           </View>
         </DataProvider>
       </ProfileProvider>

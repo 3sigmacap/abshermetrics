@@ -22,6 +22,9 @@
     },
     "simulator": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SCREENSHOT_MODE": "1"
+      },
       "ios": {
         "simulator": true
       }
