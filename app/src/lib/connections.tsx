@@ -123,6 +123,12 @@ export function ConnectionsProvider({ children }: { children: ReactNode }) {
         .update({ status: 'accepted', responded_at: new Date().toISOString() })
         .eq('id', id);
       if (error) return { error: error.message };
+      // Push the requester's device that you accepted (best-effort).
+      try {
+        await supabase.functions.invoke('notify-accept', { body: { connectionId: id } });
+      } catch {
+        /* non-fatal */
+      }
       await refresh();
       return {};
     },

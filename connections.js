@@ -61,7 +61,15 @@ export async function acceptConnection(id) {
     .from('connections')
     .update({ status: 'accepted', responded_at: new Date().toISOString() })
     .eq('id', id);
-  return error ? { error: error.message } : {};
+  if (error) return { error: error.message };
+  // Push the requester's device that you accepted (best-effort; web itself has no
+  // native push, but the requester may be on mobile).
+  try {
+    await supabase.functions.invoke('notify-accept', { body: { connectionId: id } });
+  } catch (_) {
+    /* non-fatal */
+  }
+  return {};
 }
 
 /** Delete a connection row — used for decline (incoming), cancel (outgoing) and

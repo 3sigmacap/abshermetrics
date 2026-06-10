@@ -15,6 +15,7 @@
 // Deploy:  npx supabase functions deploy request-connection
 // (SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are injected automatically.)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { sendExpoPush, tokensForUser } from '../_shared/push.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -53,6 +54,11 @@ Deno.serve(async (req) => {
     if (!foundId) return json({ status: 'not_found' }); // Phase D: create an invite here
     if (foundId === user.id) return json({ status: 'self' });
 
+    // Caller (requester) display info — used for the connection row + push text.
+    const requesterName = (user.user_metadata?.display_name as string) ?? null;
+    const requesterEmail = user.email ?? null;
+    const callerName = requesterName || (requesterEmail || '').split('@')[0] || 'Someone';
+
     // Existing connection in either direction?
     const { data: existing, error: exErr } = await admin
       .from('connections')
@@ -73,15 +79,19 @@ Deno.serve(async (req) => {
           .update({ status: 'accepted', responded_at: new Date().toISOString() })
           .eq('id', row.id);
         if (upErr) return json({ error: upErr.message }, 500);
+        // Push the original requester that the caller accepted (now mutual).
+        await sendExpoPush(await tokensForUser(admin, row.requester_id), {
+          title: 'Connection accepted',
+          body: `${callerName} accepted your connection request.`,
+          data: { type: 'connection_accepted' },
+        });
         return json({ status: 'accepted' });
       }
       return json({ status: 'already' }); // I already requested them
     }
 
-    // Gather display info for both sides (so each can show WHO without reading
-    // the other's owner-only profiles row).
-    const requesterName = (user.user_metadata?.display_name as string) ?? null;
-    const requesterEmail = user.email ?? null;
+    // New request — store display info so each side can show WHO without reading
+    // the other's owner-only profiles row.
     const { data: addrProfile } = await admin
       .from('profiles')
       .select('display_name')
@@ -98,6 +108,12 @@ Deno.serve(async (req) => {
       addressee_email: target,
     });
     if (insErr) return json({ error: insErr.message }, 500);
+    // Push the addressee about the incoming request.
+    await sendExpoPush(await tokensForUser(admin, foundId), {
+      title: 'New connection request',
+      body: `${callerName} wants to connect on AbsherMetrics.`,
+      data: { type: 'connection_request' },
+    });
     return json({ status: 'requested' });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);

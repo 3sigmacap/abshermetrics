@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/lib/auth';
 import { BagPublisher } from '@/lib/bagSummary';
 import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
+import { PushRegistrar } from '@/lib/push';
 import { ProfileProvider } from '@/lib/profile';
 import { C } from '@/theme';
 
@@ -117,6 +118,7 @@ export default function RootLayout() {
               <AuthOverlay />
               <ScreenshotNav />
               <BagPublisher />
+              <PushRegistrar />
             </View>
           </DataProvider>
         </ConnectionsProvider>

@@ -36,6 +36,12 @@
           "imageWidth": 150,
           "resizeMode": "contain"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#d4ff4f"
+        }
       ]
     ],
     "experiments": {
