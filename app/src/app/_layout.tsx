@@ -93,6 +93,7 @@ function AppTabs() {
       <Tabs.Screen name="model" options={{ href: null, title: 'The Model' }} />
       <Tabs.Screen name="raw-data" options={{ href: null, title: 'Raw Data' }} />
       <Tabs.Screen name="connection-bag" options={{ href: null, title: 'Connection' }} />
+      <Tabs.Screen name="compare" options={{ href: null, title: 'Compare' }} />
     </Tabs>
   );
 }

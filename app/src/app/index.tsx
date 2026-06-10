@@ -173,6 +173,10 @@ export default function Overview() {
         ))}
       </View>
 
+      <Link href={'/compare' as Href} style={styles.compareBtn}>
+        ⚖ Compare with a connection →
+      </Link>
+
       <View style={styles.tableHead}>
         <Text style={styles.tableTitle}>CLUB SUMMARY</Text>
         <Text style={styles.tableSub}>carry & gapping · averages per club · swipe →</Text>
@@ -281,6 +285,19 @@ const styles = StyleSheet.create({
   statV: { fontFamily: mono, fontSize: 30, color: C.accent },
   statL: { fontFamily: mono, fontSize: 10, color: C.dim, letterSpacing: 1, marginTop: 3 },
 
+  compareBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 18,
+    fontFamily: mono,
+    fontSize: 13,
+    color: C.accent2,
+    borderWidth: 1,
+    borderColor: C.line2,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    overflow: 'hidden',
+  },
   tableHead: { marginTop: 22, marginBottom: 8 },
   tableTitle: { fontSize: 22, fontWeight: '800', color: C.ink, letterSpacing: 0.5 },
   tableSub: { fontFamily: mono, fontSize: 11, color: C.dim, marginTop: 2 },

@@ -1,0 +1,299 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Compare</title>
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;--bad:#ff9d9d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+a{color:inherit;text-decoration:none;}
+.nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2px;padding:14px 26px;background:#070d0ad9;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-right:auto;display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.nav a.tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);padding:8px 15px;border-radius:20px;border:1px solid transparent;transition:.18s;text-transform:uppercase;}
+.nav a.tab:hover{color:var(--ink);}
+.nav a.tab.on{color:var(--accent);border-color:var(--line2);background:#10201780;}
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:30px 26px 80px;}
+.back{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;transition:.18s;}
+.back:hover{color:var(--accent);}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+h1.big{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,80px);line-height:.92;letter-spacing:1px;margin:8px 0 6px;}
+h1.big span{color:var(--accent2);}
+.lead{font-size:16px;color:var(--dim);max-width:720px;font-weight:300;line-height:1.5;}
+.picker{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 10px;}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--dim);background:#0b1410cc;border:1px solid var(--line2);border-radius:20px;padding:8px 16px;cursor:pointer;transition:.18s;}
+.chip:hover{color:var(--ink);border-color:var(--accent);}
+.chip.on{color:#0a120d;background:var(--accent2);border-color:var(--accent2);font-weight:600;}
+.legend{display:flex;gap:18px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);margin:6px 0 18px;}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+.section{margin-top:26px;}
+.section h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;font-weight:400;margin-bottom:4px;}
+.section .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:12px;}
+.panel{border:1px solid var(--line);border-radius:12px;background:#0b1410cc;padding:16px;overflow-x:auto;}
+svg{display:block;max-width:100%;height:auto;}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:520px;}
+thead th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim2);text-align:right;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;}
+thead th:first-child{text-align:left;}
+tbody td{padding:10px 12px;border-bottom:1px solid #142219;text-align:right;font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--dim);}
+tbody tr:last-child td{border-bottom:none;}
+td.cl{text-align:left;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.5px;color:var(--ink);}
+.you{color:var(--accent);}
+.them{color:var(--accent2);}
+.pos{color:var(--accent);}
+.neg{color:var(--bad);}
+.zero{color:var(--dim2);}
+.trajbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.trajbar label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:1px;}
+select{background:#081109;border:1px solid var(--line2);border-radius:8px;color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-size:15px;padding:8px 12px;}
+select:focus{outline:none;border-color:var(--accent);}
+.trajgrid{display:grid;grid-template-columns:1fr;gap:16px;}
+@media(min-width:820px){.trajgrid{grid-template-columns:1fr 1fr;}}
+.trajcard h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;margin-bottom:8px;}
+.msg{margin-top:30px;font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--dim);line-height:1.7;}
+.msg a{color:var(--accent);text-decoration:underline;}
+@media(max-width:760px){
+  .nav{padding:10px 14px 8px;gap:6px 4px;flex-wrap:wrap;}
+  .nav .brand{flex:1 0 100%;margin-right:0;font-size:22px;}
+  .nav a.tab{flex:1;text-align:center;font-size:11px;padding:7px 6px;}
+  .page{padding:22px 14px 56px;}
+}
+</style>
+<script>document.documentElement.className+=" auth-pending"</script>
+<style>html.auth-pending body{visibility:hidden}</style>
+<script type="module" src="auth-gate.js"></script>
+</head><body>
+<div class="nav">
+<a href="index.html" class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></a>
+<a href="index.html" class="tab ">Overview</a>
+<a href="club-detail.html" class="tab ">Club Detail</a>
+<a href="trends.html" class="tab ">Trends</a>
+<a href="top-down.html" class="tab ">2D Dispersion</a>
+<a href="flight-3d.html" class="tab ">3D Flight</a>
+<a href="settings.html" class="tab ">Settings</a>
+</div>
+<div class="page">
+<a class="back" href="index.html">&lsaquo; Bag</a>
+<div class="kicker">Compare</div>
+<h1 class="big">YOU <span>VS</span> <span id="vsName">A CONNECTION</span></h1>
+<p class="lead">Your bag overlaid against a connection's — gapping ladder, per-club deltas, and average ball-flight. Both are aggregate summaries; neither sees the other's raw shots.</p>
+<div class="picker" id="picker"></div>
+<div id="cmp"></div>
+</div>
+
+<script type="module">
+import { getSession } from './auth.js';
+import { listConnections } from './connections.js';
+import { loadBagSummary, buildSummary } from './bag-summary.js';
+import { loadClubData } from './user-data.js';
+import { loadProfile } from './profile.js';
+import { clubSortIdx } from './club-compute.js';
+import { escapeHtml } from './user-data.js';
+
+const YOU = '#d4ff4f', THEM = '#7fd4ff';
+const cmp = document.getElementById('cmp');
+const picker = document.getElementById('picker');
+const showMsg = (h) => { cmp.innerHTML = `<div class="msg">${h}</div>`; };
+let selToken = 0; // guards against a slow load overwriting a newer selection
+
+// ---- load my own summary (fresh from my shots) ----
+let MINE = [];
+let MY_NAME = 'You';
+try {
+  const [cd, profile] = await Promise.all([loadClubData(), loadProfile()]);
+  MINE = buildSummary(cd, profile.clubSpecs || {});
+  MY_NAME = (profile.displayName || '').trim() || 'You';
+} catch (e) { /* handled below if empty */ }
+
+// ---- connections to pick from ----
+const { accepted, error: connErr } = await listConnections();
+if (connErr) {
+  showMsg('Could not load connections: ' + escapeHtml(connErr));
+} else if (!accepted || !accepted.length) {
+  showMsg('You have no connections yet. Add one in <a href="settings.html">Settings → Connections</a>, then come back to compare bags.');
+} else if (!MINE.length) {
+  showMsg('Upload a session first (no clubs in your own bag yet) — then you can compare it against a connection.');
+} else {
+  const params = new URLSearchParams(location.search);
+  const wanted = params.get('u');
+  // only honor ?u= if it's actually an accepted connection (RLS would block others anyway)
+  let activeId = accepted.some((c) => c.other.id === wanted) ? wanted : accepted[0].other.id;
+  picker.innerHTML = accepted.map((c) => {
+    const name = escapeHtml(c.other.name || (c.other.email || '').split('@')[0] || 'Player');
+    return `<button class="chip" data-id="${escapeHtml(c.other.id)}">${name}</button>`;
+  }).join('');
+  picker.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-id]');
+    if (!b) return;
+    activeId = b.dataset.id;
+    selectConnection(activeId);
+  });
+  selectConnection(activeId);
+}
+
+function findConn(id) { return accepted.find((c) => c.other.id === id); }
+
+async function selectConnection(id) {
+  const token = ++selToken;
+  [...picker.querySelectorAll('.chip')].forEach((b) => b.classList.toggle('on', b.dataset.id === id));
+  const conn = findConn(id);
+  const theirName = (conn?.other.name || (conn?.other.email || '').split('@')[0] || 'Connection');
+  document.getElementById('vsName').textContent = theirName.toUpperCase();
+  cmp.innerHTML = '<div class="msg">Loading…</div>';
+  const res = await loadBagSummary(id);
+  if (token !== selToken) return; // a newer selection superseded this load
+  if (res.error) { showMsg('Could not load that bag: ' + escapeHtml(res.error)); return; }
+  const theirs = res.summary || [];
+  if (!theirs.length) {
+    showMsg(escapeHtml(theirName) + " hasn't shared any club data yet.");
+    return;
+  }
+  renderCompare(MINE, theirs, MY_NAME, theirName);
+}
+
+function indexByClub(summary) {
+  const m = {};
+  summary.forEach((c) => { m[c.club] = c; });
+  return m;
+}
+
+function renderCompare(mine, theirs, myName, theirName) {
+  const my = indexByClub(mine), th = indexByClub(theirs);
+  const clubs = [...new Set([...mine.map((c) => c.club), ...theirs.map((c) => c.club)])]
+    .sort((a, b) => clubSortIdx(a) - clubSortIdx(b)); // longest first
+
+  cmp.innerHTML =
+    `<div class="legend"><span><span class="sw" style="background:${YOU}"></span>${escapeHtml(myName)}</span>` +
+    `<span><span class="sw" style="background:${THEM}"></span>${escapeHtml(theirName)}</span></div>` +
+    `<div class="section"><h2>GAPPING LADDER</h2><div class="sub">carry per club, both bags on one yardage scale</div>` +
+    `<div class="panel">${ladderSVG(clubs, my, th)}</div></div>` +
+    `<div class="section"><h2>PER-CLUB DELTAS</h2><div class="sub">your carry vs theirs (+ = you're longer)</div>` +
+    `<div class="panel">${deltaTable(clubs, my, th, myName, theirName)}</div></div>` +
+    `<div class="section"><h2>AVERAGE BALL FLIGHT</h2><div class="sub">your mean trajectory vs theirs, for one club</div>` +
+    `<div class="trajbar"><label for="trajClub">Club</label><select id="trajClub"></select></div>` +
+    `<div class="trajgrid" id="trajGrid"></div></div>`;
+
+  // trajectory club selector — clubs present in BOTH bags (need both means)
+  const both = clubs.filter((c) => my[c]?.mean?.length && th[c]?.mean?.length);
+  const sel = document.getElementById('trajClub');
+  const grid = document.getElementById('trajGrid');
+  if (!both.length) {
+    grid.innerHTML = '<div class="msg">No clubs in common with trajectory data yet.</div>';
+    sel.style.display = 'none';
+  } else {
+    sel.innerHTML = both.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    const draw = () => {
+      const me = my[sel.value], them = th[sel.value];
+      grid.innerHTML = (me && them) ? trajCards(me, them) : '<div class="msg">No trajectory for this club.</div>';
+    };
+    sel.addEventListener('change', draw);
+    draw();
+  }
+}
+
+// ---- gapping ladder: dumbbell chart (one row per club) ----
+function ladderSVG(clubs, my, th) {
+  const W = 880, rowH = 30, padT = 16, padB = 34, labelW = 116, deltaW = 86;
+  const H = padT + clubs.length * rowH + padB;
+  const cl = labelW, cr = W - deltaW;
+  const carries = [];
+  clubs.forEach((c) => { if (my[c]) carries.push(my[c].carry); if (th[c]) carries.push(th[c].carry); });
+  const lo = Math.min(...carries), hi = Math.max(...carries);
+  const span = Math.max(1, hi - lo);
+  const pad = span * 0.08;
+  const dMin = lo - pad, dMax = hi + pad;
+  const mapX = (v) => cl + ((v - dMin) / (dMax - dMin)) * (cr - cl);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="gapping ladder">`;
+  // x grid + axis labels (every 25 yd within range)
+  const step = 25;
+  const start = Math.ceil(dMin / step) * step;
+  for (let v = start; v <= dMax; v += step) {
+    const x = mapX(v);
+    s += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${H - padB}" stroke="#142219" stroke-width="1"/>`;
+    s += `<text x="${x}" y="${H - padB + 16}" fill="#5e7568" font-family="IBM Plex Mono,monospace" font-size="10" text-anchor="middle">${v}</text>`;
+  }
+  s += `<text x="${(cl + cr) / 2}" y="${H - 4}" fill="#5e7568" font-family="IBM Plex Mono,monospace" font-size="10" text-anchor="middle">carry (yd)</text>`;
+
+  clubs.forEach((c, i) => {
+    const y = padT + i * rowH + rowH / 2;
+    const me = my[c]?.carry, them = th[c]?.carry;
+    s += `<text x="0" y="${y + 4}" fill="#e8f3ec" font-family="Bebas Neue,sans-serif" font-size="16">${escapeHtml(c)}</text>`;
+    if (me != null && them != null) {
+      const x1 = mapX(me), x2 = mapX(them);
+      s += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#26432f" stroke-width="2"/>`;
+      const d = me - them;
+      const dStr = (d > 0 ? '+' : '') + d;
+      const col = d > 0 ? YOU : d < 0 ? '#ff9d9d' : '#5e7568';
+      s += `<text x="${W - deltaW + 8}" y="${y + 4}" fill="${col}" font-family="IBM Plex Mono,monospace" font-size="12">${dStr} yd</text>`;
+    }
+    if (me != null) s += `<circle cx="${mapX(me)}" cy="${y}" r="5.5" fill="${YOU}"/>`;
+    if (them != null) s += `<circle cx="${mapX(them)}" cy="${y}" r="5.5" fill="${THEM}"/>`;
+  });
+  s += '</svg>';
+  return s;
+}
+
+// ---- per-club delta table ----
+function deltaTable(clubs, my, th, myName, theirName) {
+  const dcell = (a, b) => {
+    if (a == null || b == null) return '<td class="zero">—</td>';
+    const d = a - b;
+    const cls = d > 0 ? 'pos' : d < 0 ? 'neg' : 'zero';
+    return `<td class="${cls}">${d > 0 ? '+' : ''}${d}</td>`;
+  };
+  let rows = '';
+  clubs.forEach((c) => {
+    const me = my[c], them = th[c];
+    rows +=
+      '<tr>' +
+      `<td class="cl">${escapeHtml(c)}</td>` +
+      `<td class="you">${me ? me.carry : '—'}</td>` +
+      `<td class="them">${them ? them.carry : '—'}</td>` +
+      dcell(me?.carry, them?.carry) +
+      `<td class="you">${me ? me.total : '—'}</td>` +
+      `<td class="them">${them ? them.total : '—'}</td>` +
+      dcell(me?.total, them?.total) +
+      '</tr>';
+  });
+  return `<table><thead><tr><th>Club</th>` +
+    `<th>${escapeHtml(myName)} carry</th><th>${escapeHtml(theirName)} carry</th><th>&Delta;</th>` +
+    `<th>${escapeHtml(myName)} total</th><th>${escapeHtml(theirName)} total</th><th>&Delta;</th>` +
+    `</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---- trajectory overlay (side + top-down), mean path you vs them ----
+function pts(mean) {
+  const p = [];
+  if (!mean || !mean.length) return p;
+  for (let i = 0; i + 2 < mean.length; i += 3) p.push([mean[i], mean[i + 1], mean[i + 2]]);
+  return p;
+}
+function trajCards(me, them) {
+  const a = pts(me.mean), b = pts(them.mean);
+  const all = a.concat(b);
+  const xMax = Math.max(...all.map((p) => p[0]), 1);
+  const yMax = Math.max(...all.map((p) => p[1]), 1);
+  const zMax = Math.max(...all.map((p) => Math.abs(p[2])), 1);
+  const side = trajSVG(a, b, (p) => p[0] / xMax, (p) => p[1] / yMax, true, 'Side · downrange × height');
+  const top = trajSVG(a, b, (p) => p[0] / xMax, (p) => 0.5 + (p[2] / zMax) * 0.5, false, 'Top-down · downrange × lateral');
+  return `<div class="trajcard"><h3>${side.title}</h3>${side.svg}</div>` +
+    `<div class="trajcard"><h3>${top.title}</h3>${top.svg}</div>`;
+}
+function trajSVG(a, b, fx, fy, bottomBaseline, title) {
+  const W = 420, H = 240, p = 24;
+  const X = (t) => p + t * (W - 2 * p);
+  const Y = (t) => bottomBaseline ? (H - p - t * (H - 2 * p)) : (p + t * (H - 2 * p));
+  const poly = (pts2, col) =>
+    `<polyline fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" points="${pts2.map((pt) => X(fx(pt)).toFixed(1) + ',' + Y(fy(pt)).toFixed(1)).join(' ')}"/>`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="${title}">`;
+  s += `<rect x="0" y="0" width="${W}" height="${H}" fill="#081109" rx="8"/>`;
+  if (bottomBaseline) s += `<line x1="${p}" y1="${H - p}" x2="${W - p}" y2="${H - p}" stroke="#1d3327" stroke-width="1"/>`;
+  else s += `<line x1="${p}" y1="${H / 2}" x2="${W - p}" y2="${H / 2}" stroke="#1d3327" stroke-width="1" stroke-dasharray="3 4"/>`;
+  s += poly(a, YOU) + poly(b, THEM) + '</svg>';
+  return { svg: s, title };
+}
+</script>
+</body></html>
