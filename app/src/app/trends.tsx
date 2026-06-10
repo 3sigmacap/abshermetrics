@@ -377,13 +377,21 @@ export default function Trends() {
     [shots, clubOrder],
   );
 
-  // default-select first club once data is in
+  // default-select the club tracked across the MOST sessions, so the trend +
+  // carry-change attribution are meaningful out of the box (not an empty club).
   useEffect(() => {
     if (!inited.current && clubsWithData.length) {
       inited.current = true;
-      setCurrent(clubsWithData[0]);
+      const sessionsPerClub: Record<string, Set<string>> = {};
+      shots.forEach((s) => {
+        (sessionsPerClub[s.club] ||= new Set<string>()).add(s.session);
+      });
+      const best = [...clubsWithData].sort(
+        (a, b) => (sessionsPerClub[b]?.size ?? 0) - (sessionsPerClub[a]?.size ?? 0),
+      )[0];
+      setCurrent(best ?? clubsWithData[0]);
     }
-  }, [clubsWithData]);
+  }, [clubsWithData, shots]);
 
   const compute = useMemo(
     () => makeCompute(shots, sessions, sessState),
