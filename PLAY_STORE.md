@@ -1,7 +1,7 @@
 # AbsherMetrics — Google Play submission pack
 
 Everything needed to fill out the Play Console listing. Copy-paste ready.
-Package: **com.abshermetrics.app** · Version: **1.0.0** · EAS project `@3sigma/abshermetrics`.
+Package: **com.abshermetrics.app** · Version: **1.0.1** · EAS project `@3sigma/abshermetrics`.
 
 ---
 
@@ -69,6 +69,12 @@ POWERFUL ANALYTICS
   tap Launch to watch the shot fly. Full-screen in landscape.
 • Raw data — every shot in a sortable table, filterable by session.
 
+CONNECT & COMPARE
+• Link up with other players by email, then compare bags side by side — a gapping
+  ladder, per-club carry and total gaps, and your average ball flight overlaid on
+  theirs. You share only your aggregate bag summary; your individual shots are never
+  shared.
+
 BUILT ON REAL PHYSICS
 • Upload a CSV from your launch monitor; your whole bag is computed on-device with
   the same ball-flight model used to simulate the trajectories — no guesswork, no
@@ -77,6 +83,7 @@ BUILT ON REAL PHYSICS
 
 PRIVATE BY DESIGN
 • Your account and shots are yours alone, protected by database row-level security.
+• Connections see only your aggregate bag summary — never your individual shots.
 • No ads. No third-party analytics. We don't sell or share your data.
 • Delete your account and all your data anytime, instantly, right in the app.
 
@@ -119,6 +126,9 @@ Notes for the reviewer's questions:
 - **No** location, contacts, financial info, photos, messages, device IDs, or
   advertising data. **No** data shared with third parties. **No** ads/analytics SDKs.
 - Data processing: stored on the developer's behalf by Supabase (hosted Postgres).
+- **Connections (user-to-user):** if a user accepts a connection, that person sees the
+  user's name, email, and **aggregate bag summary** (not raw shots). This is sharing
+  between app users the user chooses — **not** third-party sharing, so "Shared" stays No.
 
 ---
 
@@ -129,6 +139,9 @@ Notes for the reviewer's questions:
   - Username: `demo@abshermetrics.com` (password kept out of git — paste it from chat / your notes)
   - Pre-seeded with 5 sessions / 242 shots / 11 clubs so all charts render.
   - Instruction text: "Sign in with the email and password below. The account is pre-loaded with sample golf launch-monitor data."
+  - To test Connections: create a second account, add it by email under Settings →
+    Connections, accept, then tap "Compare with a connection" on the Bag. Sharing is
+    aggregate-only — no user-generated text/content; either party can remove the connection.
 - **Ads:** No, the app does not contain ads.
 - **Content rating (IARC):** category "Reference, News, or Educational" (or "Utility");
   answer **No** to all violence / sexual / language / controlled-substance / gambling /
@@ -150,10 +163,11 @@ Notes for the reviewer's questions:
    build), fill the release notes, and roll out. First production review can take
    a few days.
 
-### v1.0.0 release notes (suggested)
+### v1.0.1 release notes (suggested — first Android release)
 ```
-First release. Track your golf launch-monitor data, see your bag, dispersion,
-trends, and an interactive 3D ball flight. Private accounts; delete anytime.
+Track your golf launch-monitor data: your bag, dispersion, trends, and an interactive
+3D ball flight, all from a real ball-flight physics model. Connect with other players
+and compare bags side by side. Private accounts; delete anytime.
 ```
 
 ---

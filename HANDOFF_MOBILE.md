@@ -3,6 +3,13 @@
 Resume point for the native (iOS/Android) app + multi-user backend. The original
 web-app handoff is `HANDOFF.md`; this doc covers the Expo app and Supabase work.
 
+> **Status note (2026-06-10):** This is the original native-app build log. Since then the
+> mobile app merged to `main`, and **Connections & Compare + mobile push** shipped on top
+> of the multi-user base. The current build is **1.0.1** (iOS in App Store review; an
+> Android internal/test build is available). Live sources of truth: **`CLAUDE.md`** and
+> **`CONNECTIONS_PLAN.md`**. The `native-app`/`main` separation below is historical — all
+> app code is on `main` now.
+
 ## Big picture
 - Goal: turn the static web app into a **multi-user mobile app** (Android first → Play Store).
 - **Branch `native-app`** (off `main`). `main` = the web app, deployed on Render at
@@ -37,7 +44,11 @@ web-app handoff is `HANDOFF.md`; this doc covers the Expo app and Supabase work.
 
 ### Screens (`app/src/app/`)
 index (Bag), club-detail (Clubs), trends, dispersion (2D), flight-3d (3D), raw-data (Raw),
-model (hidden, linked from Bag), settings (hidden, via gear). Tab labels via `title`; icons = MaterialCommunityIcons tinted by tab color. All read per-user data with loading/empty states.
+model (hidden, linked from Bag), settings (hidden, via gear), **compare** + **connection-bag**
+(hidden, reached from the Bag's "Compare with a connection" button / the Connections list).
+Tab labels via `title`; icons = MaterialCommunityIcons tinted by tab color. All read per-user
+data with loading/empty states. `_layout.tsx` also mounts `<BagPublisher/>` + `<PushRegistrar/>`
+and shows a pending-request badge on the Settings tab.
 - **3D**: pure react-native-svg orthographic 3D (NOT expo-gl — that crashes on SDK 56 New Arch). Orbit (drag)/zoom (pinch)/pan (2-finger), Launch animation + mph HUD, Show mean/shots, All/None + club chips, roll-out always on. Landscape supported via `expo-screen-orientation` (unlock on focus, portrait on blur; header hidden in landscape; scene fills, controls in a side panel).
 - **Club Detail**: includes `@/components/AverageShot.tsx` (animated side+top views; respects reduceMotion; stacks vertically on narrow screens).
 - **Settings**: Account (name, email, change password, sign out, **Delete account**), My Clubs (loft + in-bag per club → saved to profiles.club_specs; lofts feed the Bag table), App (Reduce motion).
@@ -49,6 +60,7 @@ model (hidden, linked from Bag), settings (hidden, via gear). Tab labels via `ti
   auto-creates a profile on signup. Email confirmation is **OFF** (dev).
 - Added columns: `profiles.club_specs jsonb`, `profiles.prefs jsonb`.
 - **Edge function `delete-account`** (`supabase/functions/delete-account/index.ts`): DEPLOYED + verified — deletes the auth user (cascades to all data). App calls `supabase.functions.invoke('delete-account')`.
+- **Connections & Compare tables**: `connections`, `bag_summaries`, `push_tokens` (+ RLS; helpers `are_connected()`, `user_id_by_email()`). **Edge functions `request-connection` + `notify-accept`** (and `_shared/push.ts`) DEPLOYED + verified. Connections read aggregate `bag_summaries` only — raw shots stay owner-only. See `CONNECTIONS_PLAN.md`.
 - Seed script `app/scripts/seed-my-data.mjs`: loads repo-root raw-shots.json into an account (`cd app && SEED_EMAIL=.. SEED_PASSWORD=.. node scripts/seed-my-data.mjs`).
 - **Test account**: `spencer.absher@gmail.com` — seeded with 5 sessions / 242 raw shots (234 modeled, 8 excluded). NOTE: its password was shared in chat → should be changed.
 
@@ -57,6 +69,11 @@ model (hidden, linked from Bag), settings (hidden, via gear). Tab labels via `ti
 - **Phase 2 (done):** auth gating + sign-in/up; per-user data (read from Supabase, compute on-device); CSV upload → cloud; empty/loading states.
 - **Extras (done):** Settings menu; removed redundant nav-header titles (kept in-screen heroes); branded tab icons; landscape 3D; phone-fit Average Shot.
 - **Phase 3 (done):** account deletion (deployed + verified); privacy policy written; app icon/splash branded (in repo; appears after next build).
+- **Connections & Compare + mobile push (done; in the 1.0.1 build):** link by email,
+  accept/decline/remove, view a connection's aggregate bag, **Compare** (gapping ladder +
+  carry/total deltas + average-trajectory overlay), pending badge. iOS push works (APNs key
+  configured on build #6); **Android push needs FCM creds** (not yet set up — Connections/
+  Compare still work, push just won't deliver on Android).
 
 ## IMMEDIATE next steps (before/into Phase 4)
 1. **Publish `privacy.html` to `main`** so it's live at abshermetrics.com/privacy.html (Render serves `main`). Do it via a `git worktree` so it doesn't disturb the `native-app` checkout / running dev server. (Required for the Play listing + Data Safety + deletion URL — the `#deletion` anchor.)
@@ -69,5 +86,5 @@ model (hidden, linked from Bag), settings (hidden, via gear). Tab labels via `ti
 ## Conventions / gotchas
 - Adding a NEW native module → new dev build required (e.g., expo-gl was abandoned for SVG to avoid that crash). Pure-JS deps (supabase-js, svg... already in) need only a Metro restart.
 - `app/.env` holds the Supabase keys (git-ignored; anon/publishable key is safe to ship — RLS protects data).
-- Keychain: the Supabase CLI deploy from a non-interactive shell triggers a macOS keychain prompt; deploy via the dashboard or the user's own terminal instead.
+- Supabase CLI is now linked locally; `npx supabase functions deploy <fn> --project-ref uzqtotiilluwktewdlmr` and `npx supabase db query --linked` work from this machine. The token lives in the macOS keychain (service "Supabase CLI"); the first read prompts for approval — click **Always Allow**. For python tooling set `SSL_CERT_FILE=/etc/ssl/cert.pem`; the Management API blocks the default python User-Agent (use curl / a browser UA).
 - Optional cleanups: slim the legacy `@/data`/`@/rawData` bundled-JSON usage now that data is per-user; remove leftover Expo-template assets/components.

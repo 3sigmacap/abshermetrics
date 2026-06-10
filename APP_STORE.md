@@ -59,12 +59,19 @@ POWERFUL ANALYTICS
 - Interactive 3D ball flight — orbit, zoom, and pan a true-to-physics trajectory.
 - Raw data — every shot in a sortable table, filterable by session.
 
+CONNECT & COMPARE
+- Link up with other players by email, then compare bags side by side — a gapping
+  ladder, per-club carry and total gaps, and your average ball flight overlaid on
+  theirs. You share only your aggregate bag summary; your individual shots are never
+  shared. Get a notification when someone wants to connect.
+
 BUILT ON REAL PHYSICS
 - Upload a CSV from your launch monitor; your whole bag is computed on-device.
 - Set your clubs and lofts once; the app uses them everywhere.
 
 PRIVATE BY DESIGN
 - Your account and shots are yours alone (database row-level security).
+- Connections see only your aggregate bag summary — never your individual shots.
 - No ads. No third-party analytics. We don't sell or share your data.
 - Delete your account and all your data anytime, instantly, in the app.
 
@@ -97,6 +104,11 @@ Required: **6.9"** display (1320×2868). One set covers all iPhones.
 Explicitly NOT collected: location, contacts, identifiers/ad data, usage/analytics,
 diagnostics tied to identity, financial, browsing. No tracking, no data broker.
 
+**Connections (user-to-user):** if you accept a connection, that player can see your
+name, email, and **aggregate bag summary** (never your raw shots). This is sharing
+between app users you choose — not third-party sharing. iOS push notifications are
+used for connection requests/accepts (APNs key configured on the build).
+
 ## 5. App Review Information
 - **Sign-in required:** Yes → provide the demo account:
   - **Username:** `demo@abshermetrics.com`
@@ -104,7 +116,12 @@ diagnostics tied to identity, financial, browsing. No tracking, no data broker.
 - **Notes:** "Sign in with the demo account; it's pre-loaded with sample golf
   launch-monitor data (5 sessions, 242 shots) so every screen renders. The app
   ingests CSV exports from a Garmin Approach R50 launch monitor; testers without
-  one can tap 'Load sample data' on a new empty account."
+  one can tap 'Load sample data' on a new empty account.
+  To test Connections: create a second account, then from Settings → Connections add
+  it by email; accept from the other side; each side can then tap 'Compare with a
+  connection' on the Bag. Sharing is **aggregate only** (per-club averages + an
+  average trajectory) — there is no free-text or user-generated content, and either
+  party can remove the connection at any time."
 - **Contact:** your name / email / phone.
 
 ## 6. Compliance / gotchas (already handled or noted)
