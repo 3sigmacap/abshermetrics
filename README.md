@@ -20,6 +20,11 @@ it as tables, 2D dispersion, and interactive 3D trajectories.
   (how much of a carry change came from speed vs. launch vs. spin).
 - **2D dispersion** — true 1:1 top-down + side profile with 1σ ellipses.
 - **3D flight** — orbit the real fitted trajectories for every club.
+- **Connections & Compare** — link with other players by email (mutual accept), then
+  **Compare** bags from a button on the Bag: a gapping-ladder overlay, per-club
+  carry/total deltas, and overlaid average ball-flight (side + top-down). You share an
+  **aggregate bag summary only** — never your raw shots. Mobile gets **push
+  notifications** when someone requests or accepts a connection.
 - **Accounts** — sign in on any platform; upload your own R50 CSVs; manage your bag
   (lofts, in-bag), change password, delete account. New users can load sample data.
 
@@ -55,15 +60,21 @@ it as tables, 2D dispersion, and interactive 3D trajectories.
 /                      Web app (static, no build step) — served by Render from main
   index.html             Bag · club-detail · trends · top-down (2D) · flight-3d · raw-data
   settings.html          login.html · model.html · privacy.html
-  auth.js auth-gate.js   Supabase client, login gate, account chip
+  compare.html           Compare bags with a connection (overlay + deltas + trajectories)
+  connection-bag.html    Read-only view of a connection's aggregate bag
+  auth.js auth-gate.js   Supabase client, login gate, account chip, pending-connection badge
   user-data.js           per-user load / CSV upload / sample / delete (ports dataStore)
+  connections.js         request / accept / decline / remove connections (ports lib/connections)
+  bag-summary.js         publish / load the shareable aggregate bag summary
   club-compute.js        computeClubs() — bit-identical port of the mobile/Python model
   profile.js             name / lofts / prefs / password / delete-account
   empty-state.js         shared loading / empty / error UI
   flight-engine.js       ⭐ the physics engine (single source of truth)
 app/                   Mobile app — Expo / React Native (iOS + Android)
-  src/app/*.tsx          screens   src/lib/*.tsx   data/auth/profile
-supabase/              schema.sql (tables + RLS) · functions/ (delete-account)
+  src/app/*.tsx          screens (incl. compare.tsx, connection-bag.tsx)
+  src/lib/*.tsx          data/auth/profile + connections.tsx, bagSummary.tsx, push.tsx
+supabase/              schema.sql (tables + RLS) · functions/ (delete-account,
+                       request-connection, notify-accept, _shared/push.ts)
 store/                 store icons / feature graphics / screenshots
 ```
 
@@ -103,11 +114,17 @@ See [`RELEASE.md`](RELEASE.md) for the full pipeline.
   **service_role / secret key must never appear in any client.**
 - The web requires login; user uploads and writes are parameterized (no SQL/HTML
   injection) and stamped with `user_id` under RLS.
+- **Connections share aggregates only.** A connection can read your published
+  `bag_summary` (per-club averages + mean trajectory) but **never your raw `shots`** —
+  `shots`/`sessions` RLS stays owner-only; `bag_summaries` is readable by you or an
+  accepted connection (`are_connected()`). Email→user lookup and push sending happen
+  server-side in Edge Functions with the service-role key, never in a client.
 
 ## Documentation
 | Doc | What |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Project memory + the **web⇄mobile parity rule** |
+| [`CONNECTIONS_PLAN.md`](CONNECTIONS_PLAN.md) | Connections & Compare — spec, data model, status |
 | [`WEB_MULTIUSER.md`](WEB_MULTIUSER.md) | How the web became multi-user |
 | [`HANDOFF_MOBILE.md`](HANDOFF_MOBILE.md) | Mobile app build/submission notes |
 | [`RELEASE.md`](RELEASE.md) | Request → live pipeline (web deploy + mobile OTA/release) |
