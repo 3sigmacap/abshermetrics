@@ -2,17 +2,18 @@
 
 A golf launch-monitor analysis app shipped on three platforms that share one backend.
 
-## ▶ ACTIVE PROJECT: Connections & Compare (Phases A+B done; Phase C next)
+## ▶ ACTIVE PROJECT: Connections & Compare (Phases A–C done; D+E optional)
 Full approved spec + status in **`CONNECTIONS_PLAN.md`**. Read it first.
 Players link by email ("connections", mutual), share **Bag summary + avg trajectory
 only** (never raw shots), and **Compare** (overlay + deltas via a button on the Bag).
 Built on the `connections` branch off `main`, web + mobile in lockstep, Phases A–E.
-- **Phase A (link by email) + Phase B (publish/view bag summary): DONE, merged to main.**
+- **Phases A (link by email), B (publish/view bag summary), C (Compare): DONE.**
   Backend (connections + bag_summaries tables, RLS, are_connected/user_id_by_email,
   request-connection Edge Function) is **live on Supabase + verified** (RLS isolation +
-  upsert tested with real users). Web is live; mobile rides the next native build.
-- **Next: Phase C — Compare** (gapping-ladder overlay + per-club delta table + avg-shot
-  trajectory overlay) via a "Compare with a connection" button on the Bag.
+  upsert tested with real users; Compare reviewed via adversarial workflow). Web is live;
+  mobile rides the next native build (current store builds predate expo-updates → no OTA).
+- **Remaining (optional): Phase D** — email invites for non-users (needs SMTP in Supabase);
+  **Phase E** — mobile push (expo-notifications + push_tokens + sender Edge Function).
 
 ## ⭐ STANDING RULE: keep web + mobile in lockstep
 **Apply EVERY user-facing change (UI, feature, layout, copy) to BOTH the web app AND

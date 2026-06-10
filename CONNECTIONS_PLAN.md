@@ -11,6 +11,12 @@ to Render; merge per stable phase).
 - **Phase B — publish/view bag summary: DONE, merged to `main`.** publishBagSummary +
   loadBagSummary + "view a connection's bag" (web `connection-bag.html`, mobile
   `connection-bag.tsx`), reached from the Connections list.
+- **Phase C — Compare: DONE, merged to `main`.** "Compare with a connection" button on the
+  Bag (NOT a nav tab) → Compare view: gapping-ladder overlay + per-club carry/total delta
+  table + avg-shot trajectory overlay (side + top-down). Web `compare.html` (SVG), mobile
+  `compare.tsx` (react-native-svg). Reviewed via an adversarial multi-agent workflow;
+  confirmed fixes applied (race guard, ?u validation, defensive guards, mobile total
+  columns for parity). Both bags are aggregate-only — no raw-shot access.
 - **Backend is LIVE on Supabase (`uzqtotiilluwktewdlmr`) + verified.** Schema applied
   (connections, bag_summaries, are_connected, user_id_by_email + RLS); `request-connection`
   Edge Function deployed. Tested with real users: RLS isolation (connected can read the
@@ -144,20 +150,18 @@ shots**. Instead each user **publishes an aggregated `bag_summary`** (the Overvi
   `AbsherDemo2026!` (keep pristine).
 
 ## Where to resume after compaction
-1. Read this file + `CLAUDE.md` (auto-loaded) + `RELEASE.md`. Phases A+B are DONE and on
-   `main`; the backend is live + verified (see STATUS above).
-2. `git checkout connections` (branch already exists, off `main`). Pull `main` first.
-3. Build **Phase C — Compare**, web + mobile:
-   - A **"⚖ Compare with a connection →"** button on the Bag (`index.html` /
-     `app/src/app/index.tsx`) — NOT a nav tab.
-   - Compare view: web `compare.html` (auth-gated, link-only) + mobile `compare.tsx`
-     (register `href:null` in `_layout.tsx`, like `connection-bag`). Pick a connection
-     (list from `connections.js`/`lib/connections.ts`), load both bags via
-     `loadBagSummary()`, then render: **gapping-ladder overlay** (both carry ladders on
-     one chart) + **per-club delta table** (your carry vs theirs, ±) + **average-shot
-     trajectory overlay** (your `mean` path vs theirs — reuse the side/top-down render).
-   - Reuse the published summary's `mean` array for trajectories; both bags are already
-     aggregate-only, so no new data access is needed.
-4. Verify (web modules `node --check`; mobile `tsc`; optional live test reusing the
-   ephemeral-user harness pattern from Phases A/B). Commit per phase; merge to `main`
-   when stable. Then **Phase D** (email invites — needs SMTP) + **Phase E** (mobile push).
+Phases **A–C are DONE and live on web** (`main`); backend live + verified (see STATUS).
+What's left is optional and only if the user asks:
+1. **Ship mobile** — the mobile Connections/Compare code is on `main` but NOT on phones
+   (current store builds 1.0.0 predate `expo-updates`, so no OTA). It ships with the next
+   native build: `cd app && npm run release` (store review). That build also carries the
+   earlier tagline + engine-carry fixes.
+2. **Phase D — email invites** (web + mobile): extend `request-connection` so a non-user
+   email creates an `invite` row + `auth.admin.inviteUserByEmail(...)`; auto-connect on
+   signup; request/accept emails. **Needs custom SMTP configured in Supabase Auth** (owner).
+3. **Phase E — mobile push**: `push_tokens` table + expo-notifications registration + a
+   sender Edge Function (triggered on connection insert/accept → POST Expo push API).
+4. CLI ops: Supabase CLI is linked; token in keychain (service "Supabase CLI", acct
+   "supabase"); `db query --linked` / `functions deploy --project-ref uzqtotiilluwktewdlmr`
+   need `SUPABASE_ACCESS_TOKEN` (read from keychain) + `SSL_CERT_FILE=/etc/ssl/cert.pem`
+   for python; Management API blocks the default python UA (use curl/browser UA).
