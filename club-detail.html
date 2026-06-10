@@ -368,10 +368,11 @@ function renderClub(){
     return {
       bs:st.bs, la:st.la, ld:st.ld, spin:st.spin, axis:st.axis,
       bspin:st.bspin, sspin:st.sspin,
-      carry:(e.carry!=null?e.carry:st.carry),
-      total:(e.total!=null?e.total:st.total),
-      apex:(e.apex!=null?e.apex:st.apex),
-      dev:(e.dev!=null?e.dev:st.dev)
+      // carry/total/apex/dev are ENGINE-computed only — never the R50's own numbers
+      carry:(e.carry!=null?e.carry:0),
+      total:(e.total!=null?e.total:0),
+      apex:(e.apex!=null?e.apex:0),
+      dev:(e.dev!=null?e.dev:0)
     };
   });
   const carries=S.map(s=>s.carry);

@@ -231,7 +231,8 @@ function topDraw(){
         const dot=el(topSvg,'circle',{cx:sx(e2[0]),cy:sz(e2[2]),r:2.2,fill:d.color,opacity:0.55});
         // larger invisible hit target for easy hovering / tapping
         const hit=el(topSvg,'circle',{cx:sx(e2[0]),cy:sz(e2[2]),r:14,fill:'transparent',style:'cursor:pointer'});
-        const st=d.stats?d.stats[i]:null;
+        // launch inputs (bs/la/ld/spin/axis…) from R50 stats; carry/total/apex/dev from the ENGINE (derived)
+        const st=d.stats?{...d.stats[i], ...((d.derived&&d.derived[i])||{})}:null;
         const on=ev=>{dot.setAttribute('r',4);dot.setAttribute('opacity',1);showTip(ev,d,st);};
         const off=()=>{dot.setAttribute('r',2.2);dot.setAttribute('opacity',0.55);hideTip();};
         hit.addEventListener('mousemove',on);

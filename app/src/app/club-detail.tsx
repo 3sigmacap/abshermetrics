@@ -66,11 +66,10 @@ const SHOT_COLS: { k: ShotKey | '_n'; label: string; w: number; dp?: number; sig
 function buildShots(d: ClubData): Shot[] {
   const stats = (d.stats || []) as any[];
   const derived = (d.derived || []) as Derived[];
-  const pick = (a: number | undefined, b: number | undefined) =>
-    a != null ? a : b != null ? b : 0;
   return stats.map((st, i) => {
-    const e = derived[i] || {};
+    const e = derived[i] || ({} as Derived);
     return {
+      // launch inputs are the R50's legitimate measurements…
       bs: st.bs ?? 0,
       la: st.la ?? 0,
       ld: st.ld ?? 0,
@@ -78,10 +77,11 @@ function buildShots(d: ClubData): Shot[] {
       axis: st.axis ?? 0,
       bspin: st.bspin ?? 0,
       sspin: st.sspin ?? 0,
-      carry: pick(e.carry, st.carry),
-      total: pick(e.total, st.total),
-      apex: pick(e.apex, st.apex),
-      dev: pick(e.dev, st.dev),
+      // …carry/total/apex/dev are ENGINE-computed only — never the R50's own numbers
+      carry: e.carry ?? 0,
+      total: e.total ?? 0,
+      apex: e.apex ?? 0,
+      dev: e.dev ?? 0,
       _n: i + 1,
     };
   });

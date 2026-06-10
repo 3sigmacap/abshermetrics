@@ -548,7 +548,7 @@ function stepFlights(now){
 
 // hover readout on club rows
 list.addEventListener('mouseover',e=>{const r=e.target.closest('.row');if(!r)return;const d=clubObjs[r.dataset.club].data;
-  rdg.style.opacity=1;rdg.innerHTML='<b>'+d.club+'</b><br>carry '+d.carry+' y &middot; apex '+d.apex+' ft<br>lateral mean '+d.dev+' y<br>shots: '+d.n;});
+  rdg.style.opacity=1;rdg.innerHTML='<b>'+d.club+'</b><br>carry '+d.carry+' y &middot; apex '+d.apex+' ft<br>lateral mean '+(d.ell?d.ell.cz:0)+' y<br>shots: '+d.n;});
 list.addEventListener('mouseout',()=>rdg.style.opacity=0);
 
 // keyboard: space launches, A auto, 1-4 presets
