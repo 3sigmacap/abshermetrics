@@ -33,6 +33,13 @@ input::placeholder{color:var(--dim2);}
 .foot a{color:var(--dim);}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid #0006;border-top-color:var(--bg);border-radius:50%;vertical-align:-2px;margin-right:7px;animation:sp .7s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg)}}
+.or{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:var(--dim2);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line);}
+.oauth{display:flex;flex-direction:column;gap:10px;}
+.oauth button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:1px solid var(--line2);border-radius:10px;background:#081109;color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:500;padding:11px 16px;cursor:pointer;transition:.18s;}
+.oauth button:hover{border-color:var(--accent);}
+.oauth button:disabled{opacity:.5;cursor:default;}
+.oauth button svg{width:18px;height:18px;flex-shrink:0;}
 </style></head><body>
 <div class="wrap">
   <div class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></div>
@@ -58,20 +65,36 @@ input::placeholder{color:var(--dim2);}
       <button class="go" id="submit" type="submit">Sign in</button>
       <div class="msg" id="msg"></div>
     </form>
+    <div class="or">or</div>
+    <div class="oauth">
+      <button type="button" id="googleBtn" aria-label="Continue with Google">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="m6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+        <span>Continue with Google</span>
+      </button>
+      <button type="button" id="appleBtn" aria-label="Continue with Apple">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08c-.744.9-1.99 1.57-2.987 1.57c-.12 0-.23-.02-.3-.03c-.01-.06-.04-.22-.04-.39c0-1.15.572-2.27 1.206-2.98c.804-.94 2.142-1.64 3.248-1.68c.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12c-.945 1.34-1.94 2.71-3.43 2.71c-1.517 0-1.9-.88-3.63-.88c-1.698 0-2.302.91-3.67.91c-1.377 0-2.332-1.26-3.428-2.8c-1.287-1.82-2.323-4.63-2.323-7.28c0-4.28 2.797-6.55 5.552-6.55c1.448 0 2.675.95 3.6.95c.865 0 2.222-1.01 3.902-1.01c.643 0 2.928.06 4.428 2.16c-.12.07-2.61 1.53-2.61 4.5c0 3.46 3.02 4.68 3.06 4.7z"/></svg>
+        <span>Continue with Apple</span>
+      </button>
+    </div>
     <div class="hint" id="hint">Your data syncs across web, iOS, and Android.</div>
   </div>
   <div class="foot"><a href="privacy.html">Privacy</a> &middot; AbsherMetrics</div>
 </div>
 
 <script type="module">
-import { supabase, signIn, signUp } from './auth.js';
+import { supabase, signIn, signUp, signInWithOAuth } from './auth.js';
 
 const params = new URLSearchParams(location.search);
 const next = sanitizeNext(params.get('next'));
 
-// Already signed in? Skip the form.
+// Already signed in? Skip the form. (Also catches the OAuth round-trip: the provider
+// redirects back here with the session in the URL hash; detectSessionInUrl parses it,
+// getSession() returns it, and we forward to `next`.)
 const { data: { session } } = await supabase.auth.getSession();
 if (session) location.replace(next);
+// Belt-and-suspenders: if the OAuth session lands a beat after getSession() above,
+// forward as soon as supabase emits it.
+supabase.auth.onAuthStateChange((_e, s) => { if (s) location.replace(next); });
 
 const tabIn = document.getElementById('tabIn');
 const tabUp = document.getElementById('tabUp');
@@ -131,6 +154,29 @@ form.addEventListener('submit', async (e) => {
     busy(false);
   }
 });
+
+// ---- OAuth (Google / Apple) ----
+const googleBtn = document.getElementById('googleBtn');
+const appleBtn = document.getElementById('appleBtn');
+// Apple web sign-in turns on once the Apple provider is configured in Supabase.
+// Flip to true (and redeploy) after the Apple Developer + Supabase Apple setup is done.
+const SHOW_APPLE = false;
+if (!SHOW_APPLE) appleBtn.style.display = 'none';
+async function oauth(provider, btn) {
+  setMsg('');
+  googleBtn.disabled = appleBtn.disabled = submit.disabled = true;
+  btn.querySelector('span').textContent = 'Redirecting…';
+  const { error } = await signInWithOAuth(provider, next);
+  if (error) {
+    setMsg(error, 'err');
+    googleBtn.disabled = appleBtn.disabled = submit.disabled = false;
+    googleBtn.querySelector('span').textContent = 'Continue with Google';
+    appleBtn.querySelector('span').textContent = 'Continue with Apple';
+  }
+  // On success the browser navigates to the provider; nothing more runs here.
+}
+googleBtn.addEventListener('click', () => oauth('google', googleBtn));
+if (SHOW_APPLE) appleBtn.addEventListener('click', () => oauth('apple', appleBtn));
 
 // Only allow redirecting to a SAME-ORIGIN page (no open redirect). Resolve the
 // candidate against our origin and reject anything that lands off-site — this

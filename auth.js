@@ -75,6 +75,20 @@ export async function signUp(email, password, displayName) {
   return { error: error?.message, needsConfirm: !error && !data.session };
 }
 
+/** OAuth sign-in (Google / Apple) via Supabase's redirect flow. On success the browser
+ *  navigates away to the provider, so this only returns on an error. After the provider
+ *  round-trip the user lands back on login.html with the session in the URL hash;
+ *  detectSessionInUrl parses it and login.html forwards to `next`. The redirect target
+ *  is already allow-listed in Supabase (https://abshermetrics.com/**). */
+export async function signInWithOAuth(provider, next) {
+  const target = next ? 'login.html?next=' + encodeURIComponent(next) : 'login.html';
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider, // 'google' | 'apple'
+    options: { redirectTo: location.origin + '/' + target },
+  });
+  return { error: error?.message };
+}
+
 export async function signOut() {
   await supabase.auth.signOut();
   location.replace('login.html');
