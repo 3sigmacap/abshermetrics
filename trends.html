@@ -42,6 +42,7 @@ h1.big span{color:var(--accent);}
 .sesspanel[hidden]{display:none;}
 .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;}
 .sesslist{max-height:264px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding-right:4px;}
+.clublist{display:flex;flex-direction:column;gap:3px;padding-right:4px;}  /* club list: no scroll — show all clubs */
 .sessrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;transition:.12s;}
 .sessrow:hover{background:#13201880;}
 .sessrow .ck{width:15px;height:15px;border-radius:4px;border:1px solid var(--line2);flex-shrink:0;position:relative;}
@@ -149,7 +150,7 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
   <button class="sessdone" id="sessDone" type="button">Done</button>
 </div>
 <div class="sesspanel" id="clubPanel" hidden>
-  <div class="sesslist" id="clubList"></div>
+  <div class="clublist" id="clubList"></div>
 </div>
 <div id="content"></div>
 

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { attributeAvgCarryChange, simulateFlight } from '@/engine';
 import { useRawData } from '@/lib/dataStore';
@@ -343,6 +344,7 @@ export default function Trends() {
   const [activeMetric, setActiveMetric] = useState('carry');
   const [sessModal, setSessModal] = useState(false);
   const [clubModal, setClubModal] = useState(false);
+  const insets = useSafeAreaInsets(); // bottom inset so sheets clear the phone nav bar
   const inited = useRef(false);
   const sessInited = useRef(false);
 
@@ -653,7 +655,7 @@ export default function Trends() {
       </View>
       <Modal visible={sessModal} transparent animationType="slide" onRequestClose={() => setSessModal(false)}>
         <Pressable style={styles.sheetBackdrop} onPress={() => setSessModal(false)} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Compare sessions</Text>
           <View style={styles.presetsRow}>
@@ -697,10 +699,10 @@ export default function Trends() {
 
       <Modal visible={clubModal} transparent animationType="slide" onRequestClose={() => setClubModal(false)}>
         <Pressable style={styles.sheetBackdrop} onPress={() => setClubModal(false)} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { maxHeight: '90%', paddingBottom: insets.bottom + 24 }]}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Club</Text>
-          <ScrollView style={styles.sheetList}>
+          <View style={styles.clubList}>
             {clubsWithData.map((club) => {
               const on = club === current;
               const h = compute.clubHealth(club);
@@ -725,7 +727,7 @@ export default function Trends() {
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
       </Modal>
 
@@ -786,6 +788,7 @@ const styles = StyleSheet.create({
   sheetTitle: { fontFamily: mono, fontSize: 11, letterSpacing: 1, color: C.dim2, marginBottom: 12, textTransform: 'uppercase' },
   presetsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   sheetList: { maxHeight: 360 },
+  clubList: { marginTop: 2 }, // no maxHeight → all clubs show without scrolling
   sessRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9, paddingHorizontal: 4 },
   checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1, borderColor: C.line2, alignItems: 'center', justifyContent: 'center' },
   checkmark: { color: '#0a120d', fontSize: 12, fontWeight: '700' },
