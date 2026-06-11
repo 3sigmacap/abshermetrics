@@ -11,6 +11,19 @@ services:
         source: /
         destination: /index.html
     headers:
+      # App markup + code change on every deploy — always revalidate so updates
+      # appear immediately instead of being stuck behind an hour-long browser cache.
+      # (Conditional requests return cheap 304s when nothing changed.)
+      - path: /*.html
+        name: Cache-Control
+        value: no-cache
+      - path: /*.js
+        name: Cache-Control
+        value: no-cache
+      - path: /*.css
+        name: Cache-Control
+        value: no-cache
+      # Everything else (images, json, fonts) rarely changes between deploys — cache it.
       - path: /*
         name: Cache-Control
         value: public, max-age=3600
