@@ -16,7 +16,7 @@ import BackBar from '@/components/BackBar';
 import { useAuth } from '@/lib/auth';
 import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
-import { supabase } from '@/lib/supabase';
+import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
 import { orderIdx, type RawShot } from '@/rawData';
 import { C } from '@/theme';
 
@@ -57,101 +57,6 @@ interface Row extends RawShot {
   _color: string;
 }
 
-// ---- CSV parsing (mirrors FIELD_MAP / parseCSV / sessionFromFile) ----
-const FIELD_MAP: Record<string, string> = {
-  'Ball Speed': 'bs',
-  'Launch Angle': 'la',
-  'Launch Direction': 'ld',
-  Backspin: 'bspin',
-  Sidespin: 'sspin',
-  'Spin Rate': 'spin',
-  'Spin Axis': 'axis',
-  'Apex Height': 'apex',
-  'Carry Distance': 'carry',
-  'Total Distance': 'total',
-  'Carry Deviation Distance': 'dev',
-  'Club Speed': 'cs',
-  'Smash Factor': 'smash',
-};
-
-// Intermediate parsed shot, carrying a JS Date until sessionFromFile resolves it.
-type ParsedShot = RawShot & { _ts?: Date };
-
-// Abuse guards. RLS already scopes any uploaded data to the uploader's own
-// account, so these protect device memory + the shared DB quota, not isolation.
-const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB per file
-const MAX_ROWS = 10_000; // per file — a real range session is a few hundred shots
-
-function parseCSV(text: string): ParsedShot[] {
-  const lines = text
-    .replace(/^﻿/, '')
-    .split(/\r?\n/)
-    .filter((l) => l.trim().length);
-  if (lines.length < 2) return [];
-  const head = lines[0].split(',').map((h) => h.trim());
-  // detect & skip a units row (second row where Date cell is empty)
-  let start = 1;
-  const secondCells = lines[1].split(',');
-  if (!secondCells[0].trim()) start = 2;
-  const out: ParsedShot[] = [];
-  for (let i = start; i < lines.length; i++) {
-    const cells = lines[i].split(',');
-    const row: Record<string, string> = {};
-    head.forEach((h, j) => (row[h] = (cells[j] || '').trim()));
-    if (!row['Date']) continue;
-    const o: ParsedShot = { session: '', club: (row['Club Type'] || '').trim() };
-    for (const [csvName, key] of Object.entries(FIELD_MAP)) {
-      if (row[csvName] !== undefined && row[csvName] !== '') {
-        const n = parseFloat(row[csvName]);
-        const r = Math.round(n * 100) / 100;
-        // Number.isFinite rejects NaN AND Infinity (e.g. "1e308" overflows on round).
-        if (Number.isFinite(r)) (o as Record<string, unknown>)[key] = r;
-      }
-    }
-    // parse date: "06/05/26 15:24:33 PM"
-    const ds = (row['Date'] || '').replace(/\s*(AM|PM)\s*$/i, '').trim();
-    const m = ds.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
-    if (m) {
-      const yr = 2000 + +m[3];
-      o._ts = new Date(yr, +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
-    } else {
-      o._ts = new Date();
-    }
-    out.push(o);
-    if (out.length >= MAX_ROWS) break; // cap rows per file
-  }
-  return out;
-}
-
-function sessionFromFile(shots: ParsedShot[]): RawShot[] {
-  // each uploaded file = one session, labeled by date + start time
-  const valid = shots.filter((s) => s._ts);
-  if (!valid.length) return [];
-  valid.sort((a, b) => (a._ts as Date).getTime() - (b._ts as Date).getTime());
-  const startD = valid[0]._ts as Date;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const sid =
-    startD.getFullYear() +
-    '-' +
-    pad(startD.getMonth() + 1) +
-    '-' +
-    pad(startD.getDate()) +
-    '_' +
-    pad(startD.getHours()) +
-    pad(startD.getMinutes()) +
-    '_u';
-  const label =
-    startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
-    ' · ' +
-    startD.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const dateISO =
-    startD.getFullYear() + '-' + pad(startD.getMonth() + 1) + '-' + pad(startD.getDate());
-  return valid.map((s) => {
-    const ts = (s._ts as Date).toISOString();
-    const { _ts, ...rest } = s;
-    return { ...rest, session: sid, session_label: label, date: dateISO, ts } as RawShot;
-  });
-}
 
 // ---- cell rendering ----
 function numText(v: unknown, c: Col): string {
@@ -318,74 +223,32 @@ export default function RawData() {
         setBusy(false);
         return;
       }
-      setUploadMsg('Parsing ' + res.assets.length + ' file(s)…');
-      // Each file = one session's worth of shots.
-      const files: RawShot[][] = [];
+      setUploadMsg('Importing ' + res.assets.length + ' file(s)…');
+      // Each file = one session — imported via the shared importer (same path the
+      // "share to AbsherMetrics" handler uses).
+      let added = 0;
+      let sessions = 0;
+      let lastErr: string | undefined;
       for (const asset of res.assets) {
         if (asset.size && asset.size > MAX_FILE_BYTES) {
-          setUploadMsg('Skipped "' + (asset.name ?? 'file') + '": larger than 10 MB.');
+          lastErr = 'Skipped "' + (asset.name ?? 'file') + '": larger than 10 MB.';
           continue;
         }
-        const txt = asset.base64
-          ? decodeBase64Utf8(asset.base64)
-          : await new File(asset.uri).text();
-        const parsedShots = sessionFromFile(parseCSV(txt));
-        if (parsedShots.length) files.push(parsedShots);
+        const txt = asset.base64 ? decodeBase64Utf8(asset.base64) : await new File(asset.uri).text();
+        const r = await importCsvText(txt, userId);
+        if (r.error) lastErr = r.error;
+        else {
+          added += r.added;
+          sessions += 1;
+        }
       }
-      if (!files.length) {
-        setUploadMsg('No valid shot rows found in those files.');
+      if (sessions === 0) {
+        setUploadMsg(lastErr || 'No valid shot rows found in those files.');
         setBusy(false);
         return;
       }
-      setUploadMsg('Uploading ' + files.length + ' session(s)…');
-      let added = 0;
-      for (const parsedShots of files) {
-        const first = parsedShots[0];
-        const label = first.session_label || first.session;
-        const date = first.date ?? null;
-        // create the session row (RLS requires user_id)
-        const { data: sess, error: se } = await supabase
-          .from('sessions')
-          .insert({ user_id: userId, label, date })
-          .select('id')
-          .single();
-        if (se || !sess) {
-          setUploadMsg('Could not save session (' + (se?.message ?? 'unknown error') + ').');
-          setBusy(false);
-          return;
-        }
-        // insert the shot rows (user_id required on every row for RLS)
-        const insertRows = parsedShots.map((s) => ({
-          user_id: userId,
-          session_id: sess.id,
-          club: s.club,
-          ts: s.ts ?? null,
-          bs: s.bs ?? null,
-          la: s.la ?? null,
-          ld: s.ld ?? null,
-          bspin: s.bspin ?? null,
-          sspin: s.sspin ?? null,
-          spin: s.spin ?? null,
-          axis: s.axis ?? null,
-          apex: s.apex ?? null,
-          carry: s.carry ?? null,
-          total: s.total ?? null,
-          dev: s.dev ?? null,
-        }));
-        // Chunked inserts so a large session doesn't blow up a single request.
-        for (let i = 0; i < insertRows.length; i += 500) {
-          const { error: ie } = await supabase.from('shots').insert(insertRows.slice(i, i + 500));
-          if (ie) {
-            setUploadMsg('Could not save shots (' + ie.message + ').');
-            setBusy(false);
-            return;
-          }
-        }
-        added += insertRows.length;
-      }
-      setUploadMsg('Added ' + added + ' shots. Refreshing…');
       await refresh(); // reload from the cloud
-      setUploadMsg('Added ' + added + ' shots.');
+      setUploadMsg('Added ' + added + ' shots' + (lastErr ? ' · ' + lastErr : '') + '.');
     } catch (err) {
       setUploadMsg('Could not import (' + (err as Error).message + ').');
     } finally {

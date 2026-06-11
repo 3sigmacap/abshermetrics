@@ -42,6 +42,21 @@
         {
           "color": "#d4ff4f"
         }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsFileWithMaxCount": 1
+          },
+          "androidIntentFilters": [
+            "text/csv",
+            "text/comma-separated-values",
+            "application/csv",
+            "text/plain",
+            "application/octet-stream"
+          ]
+        }
       ]
     ],
     "experiments": {

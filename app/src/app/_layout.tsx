@@ -14,6 +14,7 @@ import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
 import { PushRegistrar } from '@/lib/push';
 import { ProfileProvider } from '@/lib/profile';
+import { ShareImporter } from '@/lib/shareImport';
 import { C } from '@/theme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -119,6 +120,7 @@ export default function RootLayout() {
               <ScreenshotNav />
               <BagPublisher />
               <PushRegistrar />
+              <ShareImporter />
             </View>
           </DataProvider>
         </ConnectionsProvider>
