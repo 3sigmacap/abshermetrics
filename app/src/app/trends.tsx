@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -339,6 +341,7 @@ export default function Trends() {
   const [sessState, setSessState] = useState<SessState>({});
   const [current, setCurrent] = useState<string | null>(null);
   const [activeMetric, setActiveMetric] = useState('carry');
+  const [sessModal, setSessModal] = useState(false);
   const inited = useRef(false);
   const sessInited = useRef(false);
 
@@ -346,9 +349,10 @@ export default function Trends() {
   useEffect(() => {
     if (sessInited.current || !sessions.length) return;
     sessInited.current = true;
+    const keep = new Set(sessions.slice(-10).map((s) => s.id)); // default: the last 10 sessions
     const st: SessState = {};
     sessions.forEach((s) => {
-      st[s.id] = true;
+      st[s.id] = keep.has(s.id);
     });
     setSessState(st);
   }, [sessions]);
@@ -410,14 +414,33 @@ export default function Trends() {
 
   const toggleSession = (id: string) =>
     setSessState((prev) => ({ ...prev, [id]: prev[id] === false }));
-  const setAllSessions = (on: boolean) =>
+  const applyPreset = (p: 'all' | 'none' | 'last5' | 'last10' | 'last30') =>
     setSessState(() => {
       const st: SessState = {};
-      sessions.forEach((s) => {
-        st[s.id] = on;
-      });
+      if (p === 'all') sessions.forEach((s) => { st[s.id] = true; });
+      else if (p === 'none') sessions.forEach((s) => { st[s.id] = false; });
+      else if (p === 'last5' || p === 'last10') {
+        const k = p === 'last5' ? 5 : 10;
+        const keep = new Set(sessions.slice(-k).map((s) => s.id)); // sessions are oldest→newest
+        sessions.forEach((s) => { st[s.id] = keep.has(s.id); });
+      } else {
+        const times = sessions.map((s) => Date.parse(s.date ?? '')).filter((t) => !Number.isNaN(t));
+        const latest = times.length ? Math.max(...times) : 0;
+        const cutoff = latest - 30 * 86400000;
+        sessions.forEach((s) => {
+          const t = Date.parse(s.date ?? '');
+          st[s.id] = Number.isNaN(t) ? true : t >= cutoff;
+        });
+      }
       return st;
     });
+  const sessSel = sessions.filter((s) => sessState[s.id] !== false).length;
+  const sessSummary =
+    sessSel === sessions.length
+      ? `All ${sessions.length} sessions`
+      : sessSel === 0
+        ? 'No sessions selected'
+        : `${sessSel} of ${sessions.length} sessions`;
 
   if (loading) {
     return (
@@ -609,38 +632,57 @@ export default function Trends() {
         <LegendDot color="#ff9d9d" label="needs a look" glow />
       </View>
 
-      {/* GLOBAL session selector */}
+      {/* GLOBAL session selector — compact summary opens a picker sheet (scales to many sessions) */}
       <View style={styles.sessWrap}>
         <Text style={styles.sessLabel}>COMPARE SESSIONS</Text>
-        <View style={styles.sessChips}>
-          {sessions.map((s) => {
-            const on = sessState[s.id] !== false;
-            const n = shots.filter((x) => x.session === s.id).length;
-            return (
-              <TouchableOpacity
-                key={s.id}
-                onPress={() => toggleSession(s.id)}
-                style={[
-                  styles.schip,
-                  on
-                    ? { backgroundColor: C.accent2, borderColor: C.accent2 }
-                    : { backgroundColor: C.bg2, borderColor: C.line2 },
-                ]}>
-                <Text style={[styles.schipText, { color: on ? '#0a120d' : C.dim }]}>
-                  {s.label}
-                  {s._uploaded ? ' •' : ''} ({n})
-                </Text>
+        <TouchableOpacity style={styles.sessSummary} onPress={() => setSessModal(true)}>
+          <Text style={styles.sessSummaryText}>{sessSummary}</Text>
+          <Text style={styles.sessChevron}>▾</Text>
+        </TouchableOpacity>
+      </View>
+      <Modal visible={sessModal} transparent animationType="slide" onRequestClose={() => setSessModal(false)}>
+        <Pressable style={styles.sheetBackdrop} onPress={() => setSessModal(false)} />
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Compare sessions</Text>
+          <View style={styles.presetsRow}>
+            {(
+              [
+                ['All', 'all'],
+                ['Last 5', 'last5'],
+                ['Last 10', 'last10'],
+                ['Last 30 days', 'last30'],
+                ['None', 'none'],
+              ] as const
+            ).map(([lbl, p]) => (
+              <TouchableOpacity key={p} style={[styles.schip, styles.schipMini]} onPress={() => applyPreset(p)}>
+                <Text style={[styles.schipText, { color: C.accent2 }]}>{lbl}</Text>
               </TouchableOpacity>
-            );
-          })}
-          <TouchableOpacity onPress={() => setAllSessions(true)} style={[styles.schip, styles.schipMini]}>
-            <Text style={[styles.schipText, { color: C.accent2 }]}>All</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setAllSessions(false)} style={[styles.schip, styles.schipMini]}>
-            <Text style={[styles.schipText, { color: C.accent2 }]}>None</Text>
+            ))}
+          </View>
+          <ScrollView style={styles.sheetList}>
+            {[...sessions].reverse().map((s) => {
+              const on = sessState[s.id] !== false;
+              const n = shots.filter((x) => x.session === s.id).length;
+              return (
+                <TouchableOpacity key={s.id} style={styles.sessRow} onPress={() => toggleSession(s.id)}>
+                  <View style={[styles.checkbox, on && { backgroundColor: C.accent2, borderColor: C.accent2 }]}>
+                    {on ? <Text style={styles.checkmark}>✓</Text> : null}
+                  </View>
+                  <Text style={[styles.sessRowLabel, { color: on ? C.ink : C.dim }]} numberOfLines={1}>
+                    {s.label}
+                    {s._uploaded ? ' •' : ''}
+                  </Text>
+                  <Text style={styles.sessRowCount}>{n} shots</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+          <TouchableOpacity style={styles.sheetDone} onPress={() => setSessModal(false)}>
+            <Text style={styles.sheetDoneText}>Done</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Modal>
 
       {/* club picker with health dots */}
       <View style={styles.picker}>
@@ -710,10 +752,25 @@ const styles = StyleSheet.create({
 
   sessWrap: { marginTop: 16 },
   sessLabel: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, marginBottom: 8 },
-  sessChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   schip: { borderWidth: 1, borderRadius: 16, paddingVertical: 6, paddingHorizontal: 11 },
   schipMini: { borderColor: '#2a4a52', paddingHorizontal: 9 },
   schipText: { fontFamily: mono, fontSize: 11 },
+  sessSummary: { flexDirection: 'row', alignItems: 'center', gap: 9, alignSelf: 'flex-start', backgroundColor: C.bg2, borderWidth: 1, borderColor: C.line2, borderRadius: 18, paddingVertical: 9, paddingHorizontal: 14 },
+  sessSummaryText: { fontFamily: mono, fontSize: 12, color: C.ink },
+  sessChevron: { fontFamily: mono, fontSize: 10, color: C.dim2 },
+  sheetBackdrop: { flex: 1, backgroundColor: '#000000aa' },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '80%', backgroundColor: C.bg2, borderTopWidth: 1, borderColor: C.line2, borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, paddingBottom: 28 },
+  sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 3, backgroundColor: C.line2, marginBottom: 12 },
+  sheetTitle: { fontFamily: mono, fontSize: 11, letterSpacing: 1, color: C.dim2, marginBottom: 12, textTransform: 'uppercase' },
+  presetsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  sheetList: { maxHeight: 360 },
+  sessRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9, paddingHorizontal: 4 },
+  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1, borderColor: C.line2, alignItems: 'center', justifyContent: 'center' },
+  checkmark: { color: '#0a120d', fontSize: 12, fontWeight: '700' },
+  sessRowLabel: { flex: 1, fontFamily: mono, fontSize: 12 },
+  sessRowCount: { fontFamily: mono, fontSize: 10, color: C.dim2 },
+  sheetDone: { marginTop: 12, alignSelf: 'flex-start', backgroundColor: C.accent2, borderRadius: 16, paddingVertical: 9, paddingHorizontal: 20 },
+  sheetDoneText: { fontFamily: mono, fontSize: 11, letterSpacing: 1, color: '#0a120d', fontWeight: '600', textTransform: 'uppercase' },
 
   picker: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 14, marginBottom: 4 },
   pchip: {

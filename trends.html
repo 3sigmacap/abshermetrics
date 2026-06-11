@@ -31,7 +31,25 @@ h1.big span{color:var(--accent);}
 .sesschips{display:flex;flex-wrap:wrap;gap:6px;}
 .schip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.13s;white-space:nowrap;}
 .schip:hover{color:var(--ink);}
-.schip.mini{padding:6px 9px;color:var(--accent2);border-color:#2a4a52;}
+.schip.mini{padding:6px 9px;color:var(--accent2);border-color:#2a4a52;cursor:pointer;}
+/* compact session selector: summary chip opens a panel with presets + full list */
+.sesssummary{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);background:var(--bg2);border:1px solid var(--line2);border-radius:18px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:.13s;}
+.sesssummary:hover{border-color:var(--accent2);}
+.sesssummary .chev{color:var(--dim2);font-size:10px;}
+.sesspanel{border:1px solid var(--line2);border-radius:12px;background:var(--bg2);padding:13px;margin:12px 0 2px;max-width:540px;}
+.sesspanel[hidden]{display:none;}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;}
+.sesslist{max-height:264px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding-right:4px;}
+.sessrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;transition:.12s;}
+.sessrow:hover{background:#13201880;}
+.sessrow .ck{width:15px;height:15px;border-radius:4px;border:1px solid var(--line2);flex-shrink:0;position:relative;}
+.sessrow.on .ck{background:var(--accent2);border-color:var(--accent2);}
+.sessrow.on .ck::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#0a120d;font-size:11px;font-weight:700;}
+.sessrow .lbl{flex:1;color:var(--dim);}
+.sessrow.on .lbl{color:var(--ink);}
+.sessrow .cnt{color:var(--dim2);font-size:10px;}
+.sessdone{margin-top:11px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#0a120d;background:var(--accent2);border:none;border-radius:16px;padding:8px 18px;cursor:pointer;}
+.sessdone:hover{filter:brightness(1.07);}
 
 .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0;}
 .ins{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;border-left:3px solid var(--line2);}
@@ -107,9 +125,18 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 
 <div class="sesswrap">
   <span class="sesslabel">Compare sessions</span>
-  <div class="sesschips" id="sessPicker"></div>
-  <button class="schip mini" id="sessAll">All</button>
-  <button class="schip mini" id="sessNone">None</button>
+  <button class="sesssummary" id="sessSummary" type="button"><span id="sessSummaryText">All sessions</span><span class="chev">▾</span></button>
+</div>
+<div class="sesspanel" id="sessPanel" hidden>
+  <div class="presets">
+    <button class="schip mini" type="button" data-preset="all">All</button>
+    <button class="schip mini" type="button" data-preset="last5">Last 5</button>
+    <button class="schip mini" type="button" data-preset="last10">Last 10</button>
+    <button class="schip mini" type="button" data-preset="last30">Last 30 days</button>
+    <button class="schip mini" type="button" data-preset="none">None</button>
+  </div>
+  <div class="sesslist" id="sessPicker"></div>
+  <button class="sessdone" id="sessDone" type="button">Done</button>
 </div>
 <div class="picker" id="picker"></div>
 <div id="content"></div>
@@ -148,7 +175,7 @@ try{
   });
   const sm={}; (base.sessions||[]).forEach(s=>sm[s.id]={...s});
   SESSIONS=Object.values(sm).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||a.id.localeCompare(b.id));
-  SESSIONS.forEach(s=>sessState[s.id]=true);
+  { const keep=new Set(SESSIONS.slice(-10).map(s=>s.id)); SESSIONS.forEach(s=>sessState[s.id]=keep.has(s.id)); }  // default: last 10 sessions
   let ci=0; SHOTS.forEach(s=>{if(!COLORS[s.club]){COLORS[s.club]=FALLBACK[ci%FALLBACK.length];ci++;}});
   __loadOk=true;
 }catch(e){
@@ -447,23 +474,53 @@ function render(){
 
 // ---- session selector (global; persists across club switches) ----
 const sessPicker=document.getElementById('sessPicker');
+const sessPanel=document.getElementById('sessPanel');
+const sessSummary=document.getElementById('sessSummary');
+const sessSummaryText=document.getElementById('sessSummaryText');
+
+function updateSummary(){
+  const total=SESSIONS.length;
+  const sel=SESSIONS.filter(s=>sessState[s.id]!==false).length;
+  sessSummaryText.textContent = sel===total ? 'All '+total+' sessions'
+    : sel===0 ? 'No sessions selected'
+    : sel+' of '+total+' sessions';
+}
 function buildSessionChips(){
   sessPicker.innerHTML='';
-  SESSIONS.forEach(s=>{
-    const b=document.createElement('button');
-    b.className='schip';b.dataset.sess=s.id;
+  // newest first so the most recent sessions are at the top of the list
+  [...SESSIONS].reverse().forEach(s=>{
+    const row=document.createElement('button');
+    row.className='sessrow';row.type='button';row.dataset.sess=s.id;
     const n=SHOTS.filter(x=>x.session===s.id).length;
-    b.textContent=s.label+(s._uploaded?' •':'')+' ('+n+')';
-    function paint(){const on=sessState[s.id]!==false;if(on){b.style.background='var(--accent2)';b.style.borderColor='var(--accent2)';b.style.color='#0a120d';}else{b.style.background='var(--bg2)';b.style.borderColor='var(--line2)';b.style.color='var(--dim)';}}
-    b.onclick=()=>{sessState[s.id]=(sessState[s.id]===false);paint();paintHealthDots();render();};
+    row.innerHTML='<span class="ck"></span><span class="lbl"></span><span class="cnt"></span>';
+    row.querySelector('.lbl').textContent=s.label+(s._uploaded?' •':'');
+    row.querySelector('.cnt').textContent=n+' shots';
+    const paint=()=>row.classList.toggle('on',sessState[s.id]!==false);
+    row.onclick=()=>{sessState[s.id]=(sessState[s.id]===false);paint();updateSummary();paintHealthDots();render();};
     paint();
-    sessPicker.appendChild(b);
+    sessPicker.appendChild(row);
   });
+  updateSummary();
 }
-function setAllSessions(on){SESSIONS.forEach(s=>sessState[s.id]=on);buildSessionChips();paintHealthDots();render();}
-const sessAllBtn=document.getElementById('sessAll'), sessNoneBtn=document.getElementById('sessNone');
-if(sessAllBtn)sessAllBtn.onclick=()=>setAllSessions(true);
-if(sessNoneBtn)sessNoneBtn.onclick=()=>setAllSessions(false);
+function applyPreset(p){
+  if(p==='all')SESSIONS.forEach(s=>sessState[s.id]=true);
+  else if(p==='none')SESSIONS.forEach(s=>sessState[s.id]=false);
+  else if(p==='last5'||p==='last10'){
+    const k=p==='last5'?5:10;
+    const keep=new Set(SESSIONS.slice(-k).map(s=>s.id));   // SESSIONS is oldest→newest
+    SESSIONS.forEach(s=>sessState[s.id]=keep.has(s.id));
+  }else if(p==='last30'){
+    const times=SESSIONS.map(s=>+new Date(s.date)).filter(t=>!isNaN(t));
+    const latest=times.length?Math.max(...times):0, cutoff=latest-30*86400000;
+    SESSIONS.forEach(s=>{const t=+new Date(s.date);sessState[s.id]=isNaN(t)?true:t>=cutoff;});
+  }
+  buildSessionChips();paintHealthDots();render();
+}
+// kept for any external callers
+function setAllSessions(on){applyPreset(on?'all':'none');}
+sessSummary.onclick=()=>{sessPanel.hidden=!sessPanel.hidden;};
+document.getElementById('sessDone').onclick=()=>{sessPanel.hidden=true;};
+document.querySelectorAll('#sessPanel [data-preset]').forEach(b=>b.onclick=()=>applyPreset(b.dataset.preset));
 
 if(!__loadOk){
   // a real load error already rendered via renderError() in the catch — don't clobber it
