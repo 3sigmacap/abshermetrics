@@ -51,7 +51,7 @@ lost 5 yards; you see that 4 of them came from slower ball speed and 1 from adde
 spin. That's a diagnosis of your game, not just a dashboard.
 
 POWERFUL ANALYTICS
-- Trends — compare any set of sessions and watch carry, launch, spin, and ball
+- Performance Analytics — compare any set of sessions and watch carry, launch, spin, and ball
   speed move over time, with the physics-based attribution of every carry change.
 - Your bag at a glance — carry, total, apex, ball speed, and loft for every club.
 - Per-club detail — an animated "average shot" from the side and top down.
@@ -91,7 +91,7 @@ Required: **6.9"** display (1320×2868). One set covers all iPhones.
   simulator build needs no Apple membership. Use an iPhone 16 Pro Max simulator,
   load the demo account, and File → Save Screen (⌘S). Claude can produce a
   simulator build and walk you through it.
-- Shots: Bag (with sample data), Club detail, 3D ball flight, Dispersion, Trends.
+- Shots: Bag (with sample data), Club detail, 3D ball flight, Dispersion, Performance Analytics.
 
 ## 4. App Privacy (App Store Connect → App Privacy)
 "Does this app collect data?" → **Yes**. None used for **tracking**. No third-party sharing.

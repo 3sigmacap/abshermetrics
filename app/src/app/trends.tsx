@@ -616,13 +616,13 @@ export default function Trends() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
-      <Text style={styles.kicker}>OVER TIME</Text>
+      <Text style={styles.kicker}>WHAT CHANGED — AND WHY</Text>
       <Text style={styles.title}>
-        Performance <Text style={styles.titleAccent}>Trends</Text>
+        Performance <Text style={styles.titleAccent}>Analytics</Text>
       </Text>
       <Text style={styles.lead}>
-        How each club's numbers have moved session to session. Pick a club to see its biggest changes, then drill into
-        any single metric. Meaningful shifts are flagged — small session-to-session noise is not.
+        Not just how your numbers moved session to session — why. Pick a club and every carry change is traced to its
+        cause: ball speed, launch, or spin.
       </Text>
 
       {/* legend */}

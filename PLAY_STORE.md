@@ -60,7 +60,7 @@ lost 5 yards; you see that 4 of them came from slower ball speed and 1 from adde
 spin. That's a diagnosis of your game, not just a dashboard.
 
 POWERFUL ANALYTICS
-• Trends — compare any set of sessions and watch carry, launch, spin, and ball
+• Performance Analytics — compare any set of sessions and watch carry, launch, spin, and ball
   speed move over time, with the physics-based attribution of every carry change.
 • Your bag at a glance — carry, total, apex, ball speed, and loft for every club.
 • Per-club detail — an animated "average shot" from the side and top down.
@@ -99,7 +99,7 @@ Stop guessing why you hit it shorter today. AbsherMetrics tells you why.
 - **App icon:** 512×512 PNG — derive from `app/assets/images/icon.png` (it's 1024; downscale to 512). (`favicon.png` is already 512 and is the same mark.)
 - **Feature graphic:** 1024×500 PNG — *(ask Claude to generate one — branded lime "AbsherMetrics" on dark.)*
 - **Phone screenshots:** 2–8 required. Capture on the phone (dev build is fine):
-  Bag, Club detail (average shot), 3D flight (portrait + landscape), Dispersion, Trends.
+  Bag, Club detail (average shot), 3D flight (portrait + landscape), Dispersion, Performance Analytics.
   PNG/JPG, 16:9 or 9:16, each side 320–3840 px.
 
 ---
@@ -165,7 +165,7 @@ Notes for the reviewer's questions:
 
 ### v1.0.1 release notes (suggested — first Android release)
 ```
-Track your golf launch-monitor data: your bag, dispersion, trends, and an interactive
+Track your golf launch-monitor data: your bag, dispersion, performance analytics, and an interactive
 3D ball flight, all from a real ball-flight physics model. Connect with other players
 and compare bags side by side. Private accounts; delete anytime.
 ```
