@@ -159,8 +159,8 @@ form.addEventListener('submit', async (e) => {
 const googleBtn = document.getElementById('googleBtn');
 const appleBtn = document.getElementById('appleBtn');
 // Apple web sign-in turns on once the Apple provider is configured in Supabase.
-// Flip to true (and redeploy) after the Apple Developer + Supabase Apple setup is done.
-const SHOW_APPLE = false;
+// Both Google + Apple providers are now live (2026-06-11).
+const SHOW_APPLE = true;
 if (!SHOW_APPLE) appleBtn.style.display = 'none';
 async function oauth(provider, btn) {
   setMsg('');
