@@ -48,6 +48,8 @@ h1.big span{color:var(--accent);}
 .sessrow .lbl{flex:1;color:var(--dim);}
 .sessrow.on .lbl{color:var(--ink);}
 .sessrow .cnt{color:var(--dim2);font-size:10px;}
+.sessrow .cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.sesssummary .hdot{flex-shrink:0;}
 .sessdone{margin-top:11px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#0a120d;background:var(--accent2);border:none;border-radius:16px;padding:8px 18px;cursor:pointer;}
 .sessdone:hover{filter:brightness(1.07);}
 
@@ -138,7 +140,13 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
   <div class="sesslist" id="sessPicker"></div>
   <button class="sessdone" id="sessDone" type="button">Done</button>
 </div>
-<div class="picker" id="picker"></div>
+<div class="sesswrap">
+  <span class="sesslabel">Club</span>
+  <button class="sesssummary" id="clubSummary" type="button"><span class="hdot" id="clubSummaryDot"></span><span id="clubSummaryText">—</span><span class="chev">▾</span></button>
+</div>
+<div class="sesspanel" id="clubPanel" hidden>
+  <div class="sesslist" id="clubList"></div>
+</div>
 <div id="content"></div>
 
 <div class="foot"><span>ABSHERMETRICS · session-over-session trends</span><span id="sessFoot"></span></div>
@@ -216,20 +224,34 @@ function series(club,m){
   return out;
 }
 
-// ---- picker ----
-const picker=document.getElementById('picker');
+// ---- club picker: compact summary opens a single-select list (tap a club = pick + close) ----
+const clubList=document.getElementById('clubList');
+const clubPanel=document.getElementById('clubPanel');
+const clubSummary=document.getElementById('clubSummary');
+const clubSummaryText=document.getElementById('clubSummaryText');
+const clubSummaryDot=document.getElementById('clubSummaryDot');
 const CLUB_ORDER=(window.__CLUB_ORDER||[]);
 const orderIdx=c=>{const i=CLUB_ORDER.indexOf(c);return i<0?999:i;};
 const clubsWithData=[...new Set(SHOTS.map(s=>s.club))].sort((a,b)=>orderIdx(a)-orderIdx(b));
-clubsWithData.forEach((club,i)=>{
-  const b=document.createElement('button');
-  b.className='pchip'+(i===0?' on':'');
-  b.textContent=club;b.dataset.club=club;
-  b.onclick=()=>select(club);
-  picker.appendChild(b);
+const HC={good:'#7fd4ff',bad:'#ff9d9d',neutral:'#5e7568'};
+const dotCss=h=>'width:9px;height:9px;border-radius:50%;flex-shrink:0;background:'+HC[h]+';box-shadow:0 0 6px '+HC[h];
+clubsWithData.forEach(club=>{
+  const row=document.createElement('button');
+  row.className='sessrow';row.type='button';row.dataset.club=club;
+  const n=new Set(SHOTS.filter(s=>s.club===club).map(s=>s.session)).size;
+  row.innerHTML='<span class="cdot"></span><span class="lbl"></span><span class="cnt"></span>';
+  row.querySelector('.lbl').textContent=club;
+  row.querySelector('.cnt').textContent=n+' session'+(n===1?'':'s');
+  row.onclick=()=>select(club);
+  clubList.appendChild(row);
 });
-function paintPicker(){[...picker.children].forEach(ch=>{const on=ch.dataset.club===current;ch.classList.toggle('on',on);const col=COLORS[ch.dataset.club]||'#d4ff4f';if(on){ch.style.background=col;ch.style.borderColor=col;ch.style.color='#0a120d';}else{ch.style.background='var(--bg2)';ch.style.borderColor='var(--line2)';ch.style.color='var(--dim)';}});}
-function select(c){current=c;paintPicker();render();}
+function updateClubSummary(){
+  clubSummaryText.textContent=current||'Select a club';
+  clubSummaryDot.style.cssText=current?dotCss(clubHealth(current)):'display:none';
+}
+// single-select: picking a club applies it and closes the picker immediately (no Done)
+function select(c){current=c;clubPanel.hidden=true;paintHealthDots();render();}
+clubSummary.onclick=()=>{clubPanel.hidden=!clubPanel.hidden;};
 
 // ---- overall health signal per club (for the indicator dots) ----
 // Looks at directional metrics; good if improving, bad if regressing, else neutral.
@@ -277,15 +299,14 @@ function classify2(serie,m,club){
   const sig=Math.abs(d)>thresh;
   return {dir:Math.abs(d)<1e-9?'flat':(d>0?'up':'down'),sig,delta:d,first,last};
 }
+// repaint the health dots in the club list (+ the summary chip) — clubHealth
+// depends on which sessions are selected, so this runs on any session change too.
 function paintHealthDots(){
-  const HC={good:'#7fd4ff',bad:'#ff9d9d',neutral:'#5e7568'};
-  [...picker.children].forEach(ch=>{
-    const club=ch.dataset.club;
-    const h=clubHealth(club);
-    let dot=ch.querySelector('.hdot');
-    if(!dot){dot=document.createElement('span');dot.className='hdot';ch.prepend(dot);}
-    dot.style.cssText='display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle;background:'+HC[h]+';box-shadow:0 0 6px '+HC[h];
+  [...clubList.children].forEach(row=>{
+    row.querySelector('.cdot').style.cssText=dotCss(clubHealth(row.dataset.club));
+    row.classList.toggle('on',row.dataset.club===current);
   });
+  updateClubSummary();
 }
 
 // significance: change is "meaningful" if |Δ| exceeds ~0.6× the pooled shot-to-shot SD
@@ -453,8 +474,8 @@ function render(){
   }).join('');
 
   document.getElementById('content').innerHTML=`
-    <div class="insights">${cards}</div>
     ${attributionPanel(current,color)}
+    <div class="insights">${cards}</div>
     <div class="panel">
       <h2 style="color:${color}">${current} — Metric Over Time</h2>
       <div class="hint">selected sessions · dots show session average · n = shots that session</div>
@@ -534,7 +555,7 @@ if(!__loadOk){
     const sessCount={};
     clubsWithData.forEach(c=>{sessCount[c]=new Set(SHOTS.filter(s=>s.club===c).map(s=>s.session)).size;});
     current=clubsWithData.reduce((best,c)=>sessCount[c]>sessCount[best]?c:best, clubsWithData[0]);
-    paintPicker();paintHealthDots();render();
+    paintHealthDots();render();
   }
   else document.getElementById('content').innerHTML='<div class="panel empty">No shot data found.</div>';
 }

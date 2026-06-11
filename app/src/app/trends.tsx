@@ -342,6 +342,7 @@ export default function Trends() {
   const [current, setCurrent] = useState<string | null>(null);
   const [activeMetric, setActiveMetric] = useState('carry');
   const [sessModal, setSessModal] = useState(false);
+  const [clubModal, setClubModal] = useState(false);
   const inited = useRef(false);
   const sessInited = useRef(false);
 
@@ -539,11 +540,11 @@ export default function Trends() {
 
       content = (
         <>
+          {/* attribution — the value: WHY carry changed, leads the page */}
+          <AttributionPanel club={current!} color={color} compute={compute} />
+
           {/* insight cards */}
           <View style={styles.insights}>{cards}</View>
-
-          {/* attribution */}
-          <AttributionPanel club={current!} color={color} compute={compute} />
 
           {/* metric over time */}
           <View style={styles.panel}>
@@ -684,35 +685,53 @@ export default function Trends() {
         </View>
       </Modal>
 
-      {/* club picker with health dots */}
-      <View style={styles.picker}>
-        {clubsWithData.map((club) => {
-          const on = club === current;
-          const cc = colors[club] || C.accent;
-          const h = compute.clubHealth(club);
-          return (
-            <TouchableOpacity
-              key={club}
-              onPress={() => setCurrent(club)}
-              style={[
-                styles.pchip,
-                on
-                  ? { backgroundColor: cc, borderColor: cc }
-                  : { backgroundColor: C.bg2, borderColor: C.line2 },
-              ]}>
-              <View style={[styles.hdot, { backgroundColor: HEALTH[h] }]} />
-              <Text style={[styles.pchipText, { color: on ? '#0a120d' : C.dim, fontWeight: on ? '600' : '400' }]}>
-                {club}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      {/* club selector — compact summary opens a single-select picker (tap a club = pick + close, no Done) */}
+      <View style={styles.sessWrap}>
+        <Text style={styles.sessLabel}>CLUB</Text>
+        <TouchableOpacity style={styles.sessSummary} onPress={() => setClubModal(true)}>
+          {current ? <View style={[styles.clubDot, { backgroundColor: HEALTH[compute.clubHealth(current)] }]} /> : null}
+          <Text style={styles.sessSummaryText}>{current ?? 'Select a club'}</Text>
+          <Text style={styles.sessChevron}>▾</Text>
+        </TouchableOpacity>
       </View>
+      <Modal visible={clubModal} transparent animationType="slide" onRequestClose={() => setClubModal(false)}>
+        <Pressable style={styles.sheetBackdrop} onPress={() => setClubModal(false)} />
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Club</Text>
+          <ScrollView style={styles.sheetList}>
+            {clubsWithData.map((club) => {
+              const on = club === current;
+              const h = compute.clubHealth(club);
+              const n = new Set(shots.filter((x) => x.club === club).map((x) => x.session)).size;
+              return (
+                <TouchableOpacity
+                  key={club}
+                  style={styles.sessRow}
+                  onPress={() => {
+                    setCurrent(club);
+                    setClubModal(false);
+                  }}>
+                  <View style={[styles.clubDot, { backgroundColor: HEALTH[h] }]} />
+                  <Text
+                    style={[styles.sessRowLabel, { color: on ? C.ink : C.dim, fontWeight: on ? '700' : '400' }]}
+                    numberOfLines={1}>
+                    {club}
+                  </Text>
+                  <Text style={styles.sessRowCount}>
+                    {n} session{n === 1 ? '' : 's'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {content}
 
       <View style={styles.foot}>
-        <Text style={styles.footText}>ABSHERMETRICS · session-over-session trends</Text>
+        <Text style={styles.footText}>ABSHERMETRICS · performance analytics</Text>
         <Text style={styles.footText}>{sessions.length} sessions</Text>
       </View>
     </ScrollView>
@@ -783,6 +802,7 @@ const styles = StyleSheet.create({
   },
   pchipText: { fontFamily: mono, fontSize: 12 },
   hdot: { width: 7, height: 7, borderRadius: 3.5, marginRight: 7 },
+  clubDot: { width: 10, height: 10, borderRadius: 5 },
 
   insights: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 18, marginBottom: 4 },
   ins: {
