@@ -1,18 +1,21 @@
 import { type Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { signInWithApple, signInWithGoogle, signOutGoogle } from './oauth';
 import { supabase } from './supabase';
 
 /**
  * Auth state for the app. Wrap the root in <AuthProvider> (Phase 2) and use
- * useAuth() to read the session and call signUp / signIn / signOut. Sessions
- * persist via AsyncStorage (configured in supabase.ts).
+ * useAuth() to read the session and call signUp / signIn / signInGoogle /
+ * signInApple / signOut. Sessions persist via AsyncStorage (configured in supabase.ts).
  */
 interface AuthState {
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signInGoogle: () => Promise<{ error?: string }>;
+  signInApple: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -48,7 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         return { error: error?.message };
       },
+      signInGoogle: () => signInWithGoogle(),
+      signInApple: () => signInWithApple(),
       signOut: async () => {
+        await signOutGoogle();
         await supabase.auth.signOut();
       },
     }),

@@ -2,7 +2,7 @@
   "expo": {
     "name": "AbsherMetrics",
     "slug": "abshermetrics",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "abshermetrics",
@@ -10,6 +10,7 @@
     "ios": {
       "bundleIdentifier": "com.abshermetrics.app",
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -56,6 +57,12 @@
             "text/plain",
             "application/octet-stream"
           ]
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.244470461095-q8onrduod8afkbkbvvhonuhvdfoeustu"
         }
       ]
     ],
