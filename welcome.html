@@ -117,15 +117,23 @@ async function awaitSession(timeoutMs = 6000) {
 }
 
 const session = await awaitSession();
+const meta = session?.user?.user_metadata || {};
+// Clicking the invite link signs the user in BEFORE they set a password (Supabase
+// consumes the token and creates a session). So an invited user who hasn't set a
+// password yet must ALWAYS see this form — even on a reload/app-switch after the
+// one-time URL token is gone — otherwise they'd slip into the app passwordless and
+// the connection would never get accepted. We stamp `password_set` when they finish.
+const needsPassword = !!(meta.invited_by && !meta.password_set);
 
 if (!session) {
   hide(loading);
   show(invalid);
-} else if (!arrivedFromLink) {
-  // A normal signed-in user wandered onto /welcome — send them into the app.
+} else if (!needsPassword && !arrivedFromLink) {
+  // A fully-onboarded signed-in user wandered onto /welcome — send them into the app.
   location.replace('index.html');
 } else {
-  // Invited user: let them set a name + password to finish their account.
+  // Invited user who still needs a password (or someone arriving via an auth link,
+  // e.g. recovery): let them set a name + password to finish their account.
   const user = session.user;
   $('email').value = user.email || '';
   // Only promise auto-connect when we actually have the inviter id to act on.
@@ -152,7 +160,9 @@ form?.addEventListener('submit', async (e) => {
   if (!password || password.length < 6) { setMsg('Choose a password of at least 6 characters.', 'err'); return; }
   busy(true); setMsg('');
   try {
-    const { error } = await supabase.auth.updateUser({ password, data: { display_name: name } });
+    // Stamp password_set so a reload/app-switch won't re-show this form or let the
+    // app bounce them back here — they're now a normal account.
+    const { error } = await supabase.auth.updateUser({ password, data: { display_name: name, password_set: true } });
     if (error) { setMsg(error.message, 'err'); return; }
 
     const uid = session.user.id;

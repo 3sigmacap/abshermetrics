@@ -45,6 +45,14 @@ export async function guard() {
     }
     return null;
   }
+  // An invited user is signed in (passwordless) the moment they click the invite link,
+  // before they set a password. Force them to finish on welcome.html — otherwise an
+  // app-switch/reload could drop them into the app with no password set.
+  const meta = session.user?.user_metadata || {};
+  if (meta.invited_by && !meta.password_set) {
+    location.replace('welcome.html');
+    return null;
+  }
   return session;
 }
 
