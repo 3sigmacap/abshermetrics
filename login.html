@@ -99,6 +99,9 @@ function setMode(m){
 tabIn.addEventListener('click', () => setMode('in'));
 tabUp.addEventListener('click', () => setMode('up'));
 
+// Arriving from the marketing page's "Create account" CTA opens the sign-up tab.
+if (params.get('signup')) setMode('up');
+
 function setMsg(text, kind){ msg.textContent = text; msg.className = 'msg' + (kind ? ' ' + kind : ''); }
 function busy(on){
   submit.disabled = on;

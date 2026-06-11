@@ -36,7 +36,13 @@ export async function guard() {
   const session = await getSession();
   if (!session) {
     const here = location.pathname.split('/').pop() || 'index.html';
-    location.replace('login.html?next=' + encodeURIComponent(here + location.search));
+    // Signed-out visitor to the bare domain / app root → marketing home page.
+    // Deep links to a specific page still go to login (remembering the target).
+    if (here === 'index.html' || here === '') {
+      location.replace('home.html');
+    } else {
+      location.replace('login.html?next=' + encodeURIComponent(here + location.search));
+    }
     return null;
   }
   return session;

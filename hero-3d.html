@@ -1,0 +1,190 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — 3D ball flight</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:#070d0a;}
+#scene{position:fixed;inset:0;}
+canvas{display:block;}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"}}</script>
+</head><body>
+<div id="scene"></div>
+<script type="module">
+// Self-contained, un-gated, auto-playing version of the 3D ball-flight scene used
+// in flight-3d.html. It loads the baked demo dataset (shots.json) directly — no
+// auth, no Supabase — slowly orbits the camera and re-fires every shot on a loop.
+// It's purely decorative (the parent page sets pointer-events:none on the iframe),
+// so it shows off the real 3D visualization without any controls.
+import * as THREE from 'three';
+
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let DATA = [];
+try { DATA = await fetch('shots.json').then(r => r.json()); }
+catch (e) { console.error('hero-3d: failed to load shots.json', e); }
+
+if (DATA && DATA.length) {
+
+  // ---- scene ----
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x070d0a);
+  scene.fog = new THREE.Fog(0x070d0a, 500, 1300);
+  const host = document.getElementById('scene');
+  const cam = new THREE.PerspectiveCamera(45, 1, 1, 5000);
+  // preserveDrawingBuffer keeps the last frame in the buffer so the canvas can be
+  // captured by screenshot/social-preview tools (WebGL is otherwise black to them).
+  const rnd = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  rnd.setPixelRatio(Math.min(devicePixelRatio, 2));
+  host.appendChild(rnd.domElement);
+
+  // Vertical scale: engine height is in FEET, downrange/lateral in YARDS, so /3 to
+  // draw true-to-scale (1:1). (Same as flight-3d.html.)
+  const VEXAG = 1.0, FT_PER_YD = 3, Hscale = VEXAG / FT_PER_YD;
+  const P = (x, y, z) => new THREE.Vector3(x, y * Hscale, z);
+  const TUBE_R = 0.282;
+
+  // ---- ground ----
+  const FIELD_X0 = -20, FIELD_X1 = 320, FIELD_Z = 70;
+  const gridMat = new THREE.LineBasicMaterial({ color: 0x14241b });
+  const gridGrp = new THREE.Group();
+  for (let x = FIELD_X0; x <= FIELD_X1; x += 20)
+    gridGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(x, 0, -FIELD_Z), P(x, 0, FIELD_Z)]), gridMat));
+  for (let z = -FIELD_Z; z <= FIELD_Z; z += 20)
+    gridGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(FIELD_X0, 0, z), P(FIELD_X1, 0, z)]), gridMat));
+  scene.add(gridGrp);
+  const mkMat = new THREE.LineBasicMaterial({ color: 0x2a4a38 });
+  for (let yd = 0; yd <= 300; yd += 50)
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(yd, 0, -40), P(yd, 0, 40)]), mkMat));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(0, 0, 0), P(300, 0, 0)]), new THREE.LineBasicMaterial({ color: 0x39604a })));
+  const tee = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 16), new THREE.MeshBasicMaterial({ color: 0xd4ff4f }));
+  tee.position.copy(P(0, 0, 0)); scene.add(tee);
+  function label(txt, pos, size = 16, col = '#7a9486') {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 48; const x = c.getContext('2d');
+    x.fillStyle = col; x.font = '28px monospace'; x.textAlign = 'center'; x.fillText(txt, 64, 32);
+    const t = new THREE.CanvasTexture(c); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false }));
+    s.position.copy(pos); s.scale.set(size, size * 0.375, 1); scene.add(s);
+  }
+  for (let yd = 50; yd <= 300; yd += 50) label(yd + 'y', P(yd, 0, -66));
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.5); dl.position.set(100, 300, 200); scene.add(dl);
+
+  // ---- per-club objects ----
+  const toPts = (flat) => { const a = []; for (let i = 0; i < flat.length; i += 3) a.push(P(flat[i], flat[i + 1], flat[i + 2])); return a; };
+  const clubObjs = {};
+  DATA.forEach(d => {
+    const col = new THREE.Color(d.color);
+    const grp = new THREE.Group();
+    // faint individual shots
+    d.shots.forEach(s => {
+      const g = new THREE.BufferGeometry().setFromPoints(toPts(s));
+      grp.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.12 })));
+    });
+    // landing points
+    const land = []; d.shots.forEach(s => { const n = s.length; land.push(P(s[n - 3], 0, s[n - 1])); });
+    grp.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(land), new THREE.PointsMaterial({ color: col, size: 3.4, transparent: true, opacity: 0.5 })));
+    // bright mean tube
+    const meanPts = toPts(d.mean);
+    const curve = new THREE.CatmullRomCurve3(meanPts);
+    grp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 80, TUBE_R, 8, false), new THREE.MeshBasicMaterial({ color: col })));
+    const mn = d.mean.length;
+    const mk = new THREE.Mesh(new THREE.SphereGeometry(1.4, 16, 16), new THREE.MeshBasicMaterial({ color: col }));
+    mk.position.copy(P(d.mean[mn - 3], 0, d.mean[mn - 1])); grp.add(mk);
+    // bounce + roll ground path (for the animated ball only)
+    let rollPtsClean = null;
+    if (Array.isArray(d.meanRoll) && d.meanRoll.length >= 6) {
+      const rollPts = toPts(d.meanRoll);
+      const clean = rollPts.filter((p, i) => i === 0 || p.distanceTo(rollPts[i - 1]) > 1e-4);
+      if (clean.length >= 2) rollPtsClean = clean;
+    }
+    // animated ball + trail (hidden until launched)
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    ball.visible = false; grp.add(ball);
+    const trailGeom = new THREE.BufferGeometry();
+    trailGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(60 * 3), 3));
+    const trail = new THREE.Line(trailGeom, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.9 }));
+    trail.visible = false; grp.add(trail);
+
+    scene.add(grp);
+    clubObjs[d.club] = { grp, ball, trail, flightPts: meanPts.map(p => p.clone()), rollPts: rollPtsClean, col: d.color, data: d, anim: null };
+  });
+
+  // ---- camera (orbit) ----
+  const tgt = P(150, 22, 0).clone();
+  let az = -0.7, el = 0.42, dist = 320;      // ~20% closer than the app's 400 — less empty space
+  function updCam() {
+    cam.position.set(tgt.x + dist * Math.cos(el) * Math.sin(az), tgt.y + dist * Math.sin(el), tgt.z + dist * Math.cos(el) * Math.cos(az));
+    cam.lookAt(tgt);
+  }
+
+  // ---- ball flight animation (mirrors flight-3d.html, minus the HUD) ----
+  const TIMESCALE = 1.0, MIN_DUR = 300, MAX_DUR = 12000;
+  const ROLL_MS_PER_YD = 26, ROLL_MIN_MS = 350, ROLL_MAX_MS = 1600;
+  let flying = 0;
+  function startFlight(o) {
+    const pts = o.flightPts;
+    const ftReal = (o.data.flightTime || 3.2);
+    const dur = Math.max(MIN_DUR, Math.min(MAX_DUR, ftReal * 1000 * TIMESCALE));
+    o.ball.visible = true; o.trail.visible = true; o.ball.material.color.set(o.col);
+    flying++;
+    let roll = null, rollDur = 0;
+    if (o.rollPts && o.rollPts.length >= 2) {
+      roll = o.rollPts;
+      let gyd = 0; for (let i = 1; i < roll.length; i++) { const a = roll[i], b = roll[i - 1]; gyd += Math.hypot(a.x - b.x, a.z - b.z); }
+      rollDur = Math.max(ROLL_MIN_MS, Math.min(ROLL_MAX_MS, gyd * ROLL_MS_PER_YD));
+    }
+    o.anim = { pts, t0: performance.now(), dur, roll, rollDur, phase: 'air', trailPos: [] };
+  }
+  function launchAll() {
+    DATA.forEach((d, i) => { setTimeout(() => startFlight(clubObjs[d.club]), i * 140); });
+  }
+  function stepFlights(now) {
+    DATA.forEach(d => {
+      const o = clubObjs[d.club]; if (!o.anim) return;
+      const a = o.anim; let pos, done = false;
+      if (a.phase === 'air') {
+        let u = (now - a.t0) / a.dur; if (u >= 1) u = 1;
+        const idx = u * (a.pts.length - 1), i0 = Math.floor(idx), f = idx - i0;
+        const p0 = a.pts[Math.min(i0, a.pts.length - 1)], p1 = a.pts[Math.min(i0 + 1, a.pts.length - 1)];
+        pos = p0.clone().lerp(p1, f);
+        if (u >= 1) { if (a.roll) { a.phase = 'roll'; a.rollT0 = now; } else done = true; }
+      } else {
+        let ru = (now - a.rollT0) / a.rollDur; if (ru >= 1) { ru = 1; done = true; }
+        const idx = ru * (a.roll.length - 1), i0 = Math.floor(idx), f = idx - i0;
+        const p0 = a.roll[Math.min(i0, a.roll.length - 1)], p1 = a.roll[Math.min(i0 + 1, a.roll.length - 1)];
+        pos = p0.clone().lerp(p1, f);
+      }
+      o.ball.position.copy(pos);
+      a.trailPos.push(pos.clone()); if (a.trailPos.length > 60) a.trailPos.shift();
+      const arr = o.trail.geometry.attributes.position.array;
+      for (let k = 0; k < 60; k++) { const sp = a.trailPos[Math.max(0, a.trailPos.length - 60 + k)] || a.trailPos[0] || pos; arr[k * 3] = sp.x; arr[k * 3 + 1] = sp.y; arr[k * 3 + 2] = sp.z; }
+      o.trail.geometry.attributes.position.needsUpdate = true;
+      o.trail.geometry.setDrawRange(0, Math.min(60, a.trailPos.length));
+      if (done) { o.ball.visible = false; o.trail.visible = false; o.anim = null; flying--; }
+    });
+  }
+
+  function resize() { const w = host.clientWidth, h = host.clientHeight; cam.aspect = w / h; cam.updateProjectionMatrix(); rnd.setSize(w, h); }
+  addEventListener('resize', resize); resize(); updCam();
+
+  // ---- render loop + autoplay ----
+  rnd.render(scene, cam);                    // always paint an initial frame (no black flash)
+  if (!REDUCED) {
+    // requestAnimationFrame is auto-suspended by the browser in background tabs,
+    // so no explicit visibility guard is needed — the orbit/animation pauses on its own.
+    // Re-fire on a cycle long enough for the last-staggered, longest-hanging shot
+    // (the 3 Wood) to finish its full carry + bounce + roll before it resets.
+    const cycleMs = Math.max(...DATA.map((d, i) => i * 140 + (d.flightTime || 3.2) * 1000)) + ROLL_MAX_MS + 1800;
+    launchAll();
+    setInterval(launchAll, cycleMs);
+    (function loop() {
+      requestAnimationFrame(loop);
+      az += 0.0016;                          // gentle auto-orbit
+      updCam();
+      stepFlights(performance.now());
+      rnd.render(scene, cam);
+    })();
+  }
+}
+</script>
+</body></html>
