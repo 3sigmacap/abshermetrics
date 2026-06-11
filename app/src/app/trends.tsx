@@ -633,13 +633,23 @@ export default function Trends() {
         <LegendDot color="#ff9d9d" label="needs a look" glow />
       </View>
 
-      {/* GLOBAL session selector — compact summary opens a picker sheet (scales to many sessions) */}
-      <View style={styles.sessWrap}>
-        <Text style={styles.sessLabel}>COMPARE SESSIONS</Text>
-        <TouchableOpacity style={styles.sessSummary} onPress={() => setSessModal(true)}>
-          <Text style={styles.sessSummaryText}>{sessSummary}</Text>
-          <Text style={styles.sessChevron}>▾</Text>
-        </TouchableOpacity>
+      {/* selectors: sessions + club side by side; each opens its own picker sheet */}
+      <View style={styles.selRow}>
+        <View style={styles.selItem}>
+          <Text style={styles.sessLabel}>COMPARE SESSIONS</Text>
+          <TouchableOpacity style={styles.sessSummary} onPress={() => setSessModal(true)}>
+            <Text style={styles.sessSummaryText}>{sessSummary}</Text>
+            <Text style={styles.sessChevron}>▾</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.selItem}>
+          <Text style={styles.sessLabel}>CLUB</Text>
+          <TouchableOpacity style={styles.sessSummary} onPress={() => setClubModal(true)}>
+            {current ? <View style={[styles.clubDot, { backgroundColor: HEALTH[compute.clubHealth(current)] }]} /> : null}
+            <Text style={styles.sessSummaryText}>{current ?? 'Select a club'}</Text>
+            <Text style={styles.sessChevron}>▾</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <Modal visible={sessModal} transparent animationType="slide" onRequestClose={() => setSessModal(false)}>
         <Pressable style={styles.sheetBackdrop} onPress={() => setSessModal(false)} />
@@ -685,15 +695,6 @@ export default function Trends() {
         </View>
       </Modal>
 
-      {/* club selector — compact summary opens a single-select picker (tap a club = pick + close, no Done) */}
-      <View style={styles.sessWrap}>
-        <Text style={styles.sessLabel}>CLUB</Text>
-        <TouchableOpacity style={styles.sessSummary} onPress={() => setClubModal(true)}>
-          {current ? <View style={[styles.clubDot, { backgroundColor: HEALTH[compute.clubHealth(current)] }]} /> : null}
-          <Text style={styles.sessSummaryText}>{current ?? 'Select a club'}</Text>
-          <Text style={styles.sessChevron}>▾</Text>
-        </TouchableOpacity>
-      </View>
       <Modal visible={clubModal} transparent animationType="slide" onRequestClose={() => setClubModal(false)}>
         <Pressable style={styles.sheetBackdrop} onPress={() => setClubModal(false)} />
         <View style={styles.sheet}>
@@ -770,6 +771,8 @@ const styles = StyleSheet.create({
   legendText: { fontFamily: mono, fontSize: 11, color: C.dim },
 
   sessWrap: { marginTop: 16 },
+  selRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 16, alignItems: 'flex-start' },
+  selItem: {},
   sessLabel: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, marginBottom: 8 },
   schip: { borderWidth: 1, borderRadius: 16, paddingVertical: 6, paddingHorizontal: 11 },
   schipMini: { borderColor: '#2a4a52', paddingHorizontal: 9 },

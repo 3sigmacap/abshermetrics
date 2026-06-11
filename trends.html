@@ -27,6 +27,8 @@ h1.big span{color:var(--accent);}
 
 /* session selector (mirrors Raw Data) — global, persists across club switches */
 .sesswrap{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin:16px 0 2px;}
+.selrow{display:flex;gap:14px 30px;flex-wrap:wrap;align-items:center;margin:16px 0 2px;}
+.selitem{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;}
 .sesslabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
 .sesschips{display:flex;flex-wrap:wrap;gap:6px;}
 .schip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 11px;border-radius:16px;border:1px solid var(--line2);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.13s;white-space:nowrap;}
@@ -125,9 +127,15 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
   <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff9d9d;box-shadow:0 0 6px #ff9d9d;margin-right:6px"></span>needs a look</span>
 </div>
 
-<div class="sesswrap">
-  <span class="sesslabel">Compare sessions</span>
-  <button class="sesssummary" id="sessSummary" type="button"><span id="sessSummaryText">All sessions</span><span class="chev">▾</span></button>
+<div class="selrow">
+  <div class="selitem">
+    <span class="sesslabel">Compare sessions</span>
+    <button class="sesssummary" id="sessSummary" type="button"><span id="sessSummaryText">All sessions</span><span class="chev">▾</span></button>
+  </div>
+  <div class="selitem">
+    <span class="sesslabel">Club</span>
+    <button class="sesssummary" id="clubSummary" type="button"><span class="hdot" id="clubSummaryDot"></span><span id="clubSummaryText">—</span><span class="chev">▾</span></button>
+  </div>
 </div>
 <div class="sesspanel" id="sessPanel" hidden>
   <div class="presets">
@@ -139,10 +147,6 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
   </div>
   <div class="sesslist" id="sessPicker"></div>
   <button class="sessdone" id="sessDone" type="button">Done</button>
-</div>
-<div class="sesswrap">
-  <span class="sesslabel">Club</span>
-  <button class="sesssummary" id="clubSummary" type="button"><span class="hdot" id="clubSummaryDot"></span><span id="clubSummaryText">—</span><span class="chev">▾</span></button>
 </div>
 <div class="sesspanel" id="clubPanel" hidden>
   <div class="sesslist" id="clubList"></div>
