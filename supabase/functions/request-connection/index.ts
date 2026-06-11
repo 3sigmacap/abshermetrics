@@ -5,12 +5,15 @@
 // connection (or auto-accepts if the other person already requested you).
 //
 // Input  : { email: string }
-// Returns: { status: 'requested' | 'accepted' | 'already' | 'self' | 'not_found' }
-//   requested  — a pending request was created
-//   accepted   — the other person had already requested you, so it's now mutual
-//   already    — a request/connection already exists between you two
-//   self       — that email is your own account
-//   not_found  — no AbsherMetrics account uses that email yet (Phase D: send an invite)
+// Returns: { status: 'requested'|'accepted'|'already'|'self'|'invited'|'invite_failed'|'rate_limited' }
+//   requested      — a pending request was created (existing user)
+//   accepted       — the other person had already requested you, so it's now mutual
+//   already        — a request/connection already exists between you two
+//   self           — that email is your own account
+//   invited        — no account yet → an email invite was sent + a pending connection
+//                    created, so it's waiting for them when they join (Phase D)
+//   invite_failed  — the invite email couldn't be sent (usually: SMTP not configured)
+//   rate_limited   — caller hit the per-day email-invite cap (429)
 //
 // Deploy:  npx supabase functions deploy request-connection
 // (SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are injected automatically.)
@@ -48,16 +51,67 @@ Deno.serve(async (req) => {
 
     const admin = createClient(url, service);
 
-    // Resolve the email -> user id (service-role RPC).
-    const { data: foundId, error: rpcErr } = await admin.rpc('user_id_by_email', { p_email: target });
-    if (rpcErr) return json({ error: rpcErr.message }, 500);
-    if (!foundId) return json({ status: 'not_found' }); // Phase D: create an invite here
-    if (foundId === user.id) return json({ status: 'self' });
-
-    // Caller (requester) display info — used for the connection row + push text.
+    // Caller (requester) display info — used for the connection row, invite + push text.
     const requesterName = (user.user_metadata?.display_name as string) ?? null;
     const requesterEmail = user.email ?? null;
     const callerName = requesterName || (requesterEmail || '').split('@')[0] || 'Someone';
+
+    // Resolve the email -> user id (service-role RPC).
+    const { data: foundId, error: rpcErr } = await admin.rpc('user_id_by_email', { p_email: target });
+    if (rpcErr) return json({ error: rpcErr.message }, 500);
+
+    // ── Phase D ─ no AbsherMetrics account uses that email yet ──────────────────
+    // Send an email invite (Supabase Auth) AND create a pending connection to the
+    // freshly-invited user, so the request is already waiting for them the moment
+    // they accept the invite and join. Re-inviting the same email is impossible to
+    // double-send: once invited, the user EXISTS, so the next call resolves foundId
+    // (→ the 'already' path below) instead of landing here again.
+    if (!foundId) {
+      // Rate limit: cap how many fresh email invites one account can send per day.
+      // Each invite creates a real auth user + sends an email, so this blocks spam and
+      // email-quota exhaustion. The invites table is the per-user audit log we count.
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count: recentInvites } = await admin
+        .from('invites')
+        .select('id', { count: 'exact', head: true })
+        .eq('inviter_id', user.id)
+        .gte('created_at', dayAgo);
+      const dailyCap = parseInt(Deno.env.get('MAX_INVITES_PER_DAY') || '25', 10);
+      if ((recentInvites ?? 0) >= dailyCap) {
+        return json({ status: 'rate_limited', error: 'Daily invite limit reached. Try again tomorrow.' }, 429);
+      }
+
+      const site = Deno.env.get('SITE_URL') || 'https://abshermetrics.com';
+      const { data: invited, error: invErr } = await admin.auth.admin.inviteUserByEmail(target, {
+        data: { invited_by: user.id, invited_by_name: callerName },
+        redirectTo: `${site}/welcome.html`,
+      });
+      if (invErr || !invited?.user) {
+        // Couldn't send (most often: custom SMTP not configured yet). Keep the
+        // client-facing error generic — don't echo the internal server message.
+        console.error('inviteUserByEmail failed:', invErr?.message);
+        return json({ status: 'invite_failed', error: 'Could not send the invite email right now.' });
+      }
+      // Audit record of the email invite (best-effort — log, but never block on it).
+      const { error: auditErr } = await admin.from('invites').insert({ inviter_id: user.id, email: target });
+      if (auditErr) console.warn('invites insert failed:', auditErr.message);
+      // Pending connection so it's waiting for them on join. Tolerate a duplicate from
+      // a race (unique-violation = Postgres error code 23505).
+      const { error: insErr } = await admin.from('connections').insert({
+        requester_id: user.id,
+        addressee_id: invited.user.id,
+        status: 'pending',
+        requester_name: requesterName,
+        requester_email: requesterEmail,
+        addressee_name: null,
+        addressee_email: target,
+      });
+      const isDup = insErr && (insErr.code === '23505' || /duplicate key/i.test(insErr.message ?? ''));
+      if (insErr && !isDup) return json({ error: insErr.message }, 500);
+      return json({ status: 'invited' });
+    }
+
+    if (foundId === user.id) return json({ status: 'self' });
 
     // Existing connection in either direction?
     const { data: existing, error: exErr } = await admin

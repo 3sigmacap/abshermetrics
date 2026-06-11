@@ -39,7 +39,9 @@ interface ConnState {
   pendingCount: number; // incoming pending (for the tab badge)
   loading: boolean;
   refresh: () => Promise<void>;
-  /** status: 'requested' | 'accepted' | 'already' | 'self' | 'not_found'. */
+  /** status: 'requested' | 'accepted' | 'already' | 'self' | 'invited' | 'invite_failed'.
+   *  'invited' = no account yet → an email invite was sent + a pending connection
+   *  created; 'invite_failed' = the invite email couldn't be sent (SMTP not set up). */
   request: (email: string) => Promise<{ status?: string; error?: string }>;
   accept: (id: string) => Promise<{ error?: string }>;
   decline: (id: string) => Promise<{ error?: string }>;

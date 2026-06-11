@@ -44,7 +44,26 @@ to Render; merge per stable phase).
 - **Android NOT built yet:** same 1.0.1 code on `main`; needs `app/google-play-key.json` (store
   submit) + FCM credentials in Expo (push delivery), then
   `npx eas-cli build -p android --profile production --auto-submit`.
-- **Only Phase D (email invites) remains** — optional, needs SMTP (see below).
+- **Phase D — email invites: BUILT (2026-06-11), on branch `connections-phase-d`.** When you
+  add a connection by an email with no account, `request-connection` now sends an email invite
+  (`inviteUserByEmail`) + creates a PENDING connection to the freshly-invited user + logs an
+  `invites` audit row → returns `invited`. The invitee lands on the new **`welcome.html`**, sets
+  name + password, and is **auto-connected to the inviter** (scoped to `invited_by` only — other
+  pending requests stay manual, so no unconsented auto-accept). Per-account **daily invite cap**
+  (`MAX_INVITES_PER_DAY`, default 25) guards against spam/quota abuse. Reviewed via an adversarial
+  multi-agent workflow; confirmed fixes applied (rate limit, generic error copy to avoid an SMTP-
+  state leak, Postgres `23505` duplicate guard, best-effort logging, gated welcome copy).
+  **Production config the owner must set (else invites silently no-op):**
+  1. **Custom SMTP** in Supabase Auth (we're using **Resend**) — without it every invite returns
+     `invite_failed`.
+  2. **Redirect allow-list:** add `https://abshermetrics.com/welcome.html` under Supabase Auth →
+     URL Configuration → Redirect URLs (else the invite link falls back to the Site URL and the
+     invitee never reaches the set-password page).
+  3. **Customize the "Invite user" email template** to name AbsherMetrics + the inviter
+     (`{{ .Data.invited_by_name }}` is available from the invite metadata).
+  - **Mobile invitees:** email links open in the phone's **browser** → they finish on `welcome.html`,
+    then sign in on the native app with the password they set (web session does not transfer to the
+    app's AsyncStorage). This is expected/standard; a native deep-link is a possible future polish.
 
 ## Locked decisions (from the design conversation)
 1. **Share scope:** a player's **Bag/Overview summary only** — per-club aggregates,

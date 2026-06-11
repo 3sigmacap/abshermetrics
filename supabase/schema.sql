@@ -222,3 +222,35 @@ create index if not exists push_tokens_user_idx on public.push_tokens (user_id);
 drop policy if exists "push_tokens own" on public.push_tokens;
 create policy "push_tokens own" on public.push_tokens
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── invites (Phase D: email invites for non-users) ──────────────────────────
+-- When you add a connection by an email that has no AbsherMetrics account yet, the
+-- request-connection Edge Function sends an invite email (Supabase Auth
+-- inviteUserByEmail) AND creates a pending connection to the freshly-invited user,
+-- so your request is already waiting for them the moment they join. This table is an
+-- audit record of those email invites. Rows are written ONLY by the Edge Function
+-- (service_role); the inviter may read/delete their own. Never holds shot data.
+create table if not exists public.invites (
+  id          uuid primary key default gen_random_uuid(),
+  inviter_id  uuid not null references auth.users (id) on delete cascade,
+  email       text not null,                       -- the invited (lowercased) email
+  status      text not null default 'pending',     -- 'pending' | 'accepted'
+  created_at  timestamptz not null default now(),
+  accepted_at timestamptz
+);
+
+alter table public.invites enable row level security;
+
+create index if not exists invites_inviter_idx on public.invites (inviter_id);
+create index if not exists invites_email_idx on public.invites (lower(email));
+
+-- The inviter may read/delete their own invite rows. There is NO insert/update policy
+-- for clients: invites are created solely by the service-role Edge Function, so a
+-- client can never forge or spam invite rows.
+drop policy if exists "invites select own" on public.invites;
+create policy "invites select own" on public.invites
+  for select using (auth.uid() = inviter_id);
+
+drop policy if exists "invites delete own" on public.invites;
+create policy "invites delete own" on public.invites
+  for delete using (auth.uid() = inviter_id);

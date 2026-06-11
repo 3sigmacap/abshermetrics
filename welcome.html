@@ -1,0 +1,200 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AbsherMetrics — Welcome</title>
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070d0a;--bg2:#0b1410;--panel:#0e1a14;--line:#1d3327;--line2:#26432f;--ink:#e8f3ec;--dim:#8aa596;--dim2:#5e7568;--accent:#d4ff4f;--accent2:#7fd4ff;--bad:#ff9d9d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow Condensed',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 500px at 80% -10%,#13261b80,transparent 60%),radial-gradient(700px 600px at -10% 110%,#0e2a3140,transparent 55%);}
+.wrap{position:relative;z-index:1;width:100%;max-width:420px;}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;display:flex;align-items:center;gap:11px;justify-content:center;margin-bottom:6px;}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);}
+.brand b{color:var(--accent);font-weight:400;}
+.tagline{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:26px;}
+.card{border:1px solid var(--line);border-radius:14px;background:#0b1410cc;padding:26px 24px 28px;}
+.welcome{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;margin-bottom:6px;}
+.lead{font-size:15px;color:var(--dim);line-height:1.5;margin-bottom:22px;}
+.lead b{color:var(--ink);font-weight:500;}
+label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2);margin:0 0 6px 2px;}
+.field{margin-bottom:16px;}
+input{width:100%;background:#081109;border:1px solid var(--line2);border-radius:9px;color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-size:17px;padding:12px 13px;transition:.18s;}
+input:focus{outline:none;border-color:var(--accent);}
+input::placeholder{color:var(--dim2);}
+input[readonly]{color:var(--dim);background:#070d0a;cursor:default;}
+.go{width:100%;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--bg);background:var(--accent);border:none;border-radius:10px;padding:13px;cursor:pointer;margin-top:4px;transition:.18s;}
+.go:hover{filter:brightness(1.07);}
+.go:disabled{opacity:.5;cursor:default;}
+.msg{margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;text-align:center;min-height:18px;}
+.msg.err{color:var(--bad);}
+.msg.ok{color:var(--accent);}
+.foot{margin-top:22px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim2);text-transform:uppercase;}
+.foot a{color:var(--dim);}
+.center{text-align:center;}
+.center a{color:var(--accent);text-decoration:none;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid #0006;border-top-color:var(--bg);border-radius:50%;vertical-align:-2px;margin-right:7px;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hidden{display:none;}
+</style></head><body>
+<div class="wrap">
+  <div class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></div>
+  <div class="tagline">The physics behind every yard.</div>
+  <div class="card">
+    <!-- Loading -->
+    <div id="loading" class="center"><span class="spin"></span>Loading your invite…</div>
+
+    <!-- Set-password form (shown when an invite session is present) -->
+    <form id="form" class="hidden" autocomplete="on">
+      <div class="welcome">You're invited 👋</div>
+      <div class="lead" id="lead">Set a password to finish creating your AbsherMetrics account.</div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" readonly>
+      </div>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label for="password">Choose a password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" placeholder="••••••••" minlength="6" required>
+      </div>
+      <button class="go" id="submit" type="submit">Create account</button>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <!-- Invalid / expired link -->
+    <div id="invalid" class="hidden center">
+      <div class="welcome">This invite link isn't valid</div>
+      <div class="lead">It may have expired or already been used.</div>
+      <div class="center"><a href="login.html">Go to sign in →</a></div>
+    </div>
+  </div>
+  <div class="foot"><a href="privacy.html">Privacy</a> &middot; AbsherMetrics</div>
+</div>
+
+<script type="module">
+// Snapshot whether we arrived from an invite/recovery link BEFORE supabase-js
+// consumes the URL (detectSessionInUrl strips the hash once it parses the token).
+const arrivedFromLink = /access_token=|refresh_token=|[?&]code=|type=(invite|recovery|signup)/.test(
+  location.hash + location.search,
+);
+
+const { supabase } = await import('./auth.js');
+
+const $ = (id) => document.getElementById(id);
+const loading = $('loading');
+const form = $('form');
+const invalid = $('invalid');
+const submit = $('submit');
+const pwd = $('password');
+const msg = $('msg');
+
+function setMsg(text, kind) { msg.textContent = text; msg.className = 'msg' + (kind ? ' ' + kind : ''); }
+function show(el) { el.classList.remove('hidden'); }
+function hide(el) { el.classList.add('hidden'); }
+
+// Wait briefly for supabase-js to establish a session from the URL token. It fires
+// onAuthStateChange asynchronously; also poll getSession a few times as a fallback.
+async function awaitSession(timeoutMs = 6000) {
+  const existing = (await supabase.auth.getSession()).data.session;
+  if (existing) return existing;
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (s) => { if (!done) { done = true; sub?.subscription?.unsubscribe(); resolve(s); } };
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (s) finish(s); });
+    const started = Date.now();
+    const poll = async () => {
+      if (done) return;
+      const s = (await supabase.auth.getSession()).data.session;
+      if (s) return finish(s);
+      if (Date.now() - started > timeoutMs) return finish(null);
+      setTimeout(poll, 250);
+    };
+    poll();
+  });
+}
+
+const session = await awaitSession();
+
+if (!session) {
+  hide(loading);
+  show(invalid);
+} else if (!arrivedFromLink) {
+  // A normal signed-in user wandered onto /welcome — send them into the app.
+  location.replace('index.html');
+} else {
+  // Invited user: let them set a name + password to finish their account.
+  const user = session.user;
+  $('email').value = user.email || '';
+  // Only promise auto-connect when we actually have the inviter id to act on.
+  const inviterName = user.user_metadata?.invited_by_name;
+  const inviterId = user.user_metadata?.invited_by;
+  if (inviterName && inviterId) {
+    $('lead').innerHTML = `<b>${escapeHtml(inviterName)}</b> invited you to connect on AbsherMetrics. Set a password to finish creating your account — you'll be connected automatically.`;
+  }
+  const presetName = user.user_metadata?.display_name;
+  if (presetName) $('name').value = presetName;
+  hide(loading);
+  show(form);
+}
+
+function busy(on) {
+  submit.disabled = on;
+  submit.innerHTML = on ? '<span class="spin"></span>Creating…' : 'Create account';
+}
+
+form?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const password = pwd.value;
+  const name = $('name').value.trim();
+  if (!password || password.length < 6) { setMsg('Choose a password of at least 6 characters.', 'err'); return; }
+  busy(true); setMsg('');
+  try {
+    const { error } = await supabase.auth.updateUser({ password, data: { display_name: name } });
+    if (error) { setMsg(error.message, 'err'); return; }
+
+    const uid = session.user.id;
+    // Keep the profile row's display name in sync (best-effort).
+    try { await supabase.from('profiles').upsert({ id: uid, display_name: name || null }); }
+    catch (e) { console.warn('profile upsert failed:', e); }
+
+    // Auto-connect (best-effort): accept the pending request from the person who
+    // invited you — ONLY theirs (scoped by invited_by). Any other pending requests
+    // to you stay for you to decide in Settings, so we never auto-accept a connection
+    // you didn't consent to. You're the addressee, so RLS lets you flip it to accepted.
+    // If any of this fails the account is still fine — you can accept manually later.
+    const inviter = session.user.user_metadata?.invited_by;
+    if (inviter) {
+      try {
+        const { data: rows, error: accErr } = await supabase
+          .from('connections')
+          .update({ status: 'accepted', responded_at: new Date().toISOString() })
+          .eq('requester_id', inviter)
+          .eq('addressee_id', uid)
+          .eq('status', 'pending')
+          .select('id');
+        if (accErr) console.warn('auto-accept failed:', accErr.message);
+        // Notify the inviter (best-effort; they may be on mobile).
+        for (const r of rows || []) {
+          supabase.functions
+            .invoke('notify-accept', { body: { connectionId: r.id } })
+            .catch((e) => console.warn('notify-accept failed:', e));
+        }
+      } catch (e) { console.warn('auto-accept threw:', e); /* they can accept manually in Settings */ }
+    }
+
+    setMsg('Account ready — taking you in…', 'ok');
+    location.replace('index.html');
+  } finally {
+    busy(false);
+  }
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+</script>
+</body></html>

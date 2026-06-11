@@ -10,7 +10,9 @@
 import { supabase, getSession } from './auth.js';
 
 /** Send a connection request to an email. Returns { status } or { error }.
- *  status: 'requested' | 'accepted' | 'already' | 'self' | 'not_found'. */
+ *  status: 'requested' | 'accepted' | 'already' | 'self' | 'invited' | 'invite_failed'.
+ *  'invited' = no account yet, so an email invite was sent + a pending connection
+ *  created; 'invite_failed' = the invite email couldn't be sent (SMTP not set up). */
 export async function requestConnection(email) {
   const e = String(email || '').trim();
   if (!e) return { error: 'Enter an email address.' };

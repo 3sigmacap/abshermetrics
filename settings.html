@@ -354,10 +354,14 @@ connAdd.addEventListener('click', async () => {
     accepted: "You're now connected!",
     already: 'You already have a request or connection with that player.',
     self: "That's your own email.",
-    not_found: 'No AbsherMetrics account uses that email yet. (Email invites are coming soon.)',
+    invited: 'No account yet — we emailed them an invite. Your request is waiting for them when they join.',
+    invite_failed: "Couldn't send the invite email right now. Please try again later.",
+    rate_limited: "You've sent a lot of invites today — please try again tomorrow.",
+    not_found: 'No AbsherMetrics account uses that email yet.',
   };
-  flash(messages[status] || 'Done.', status === 'self' || status === 'not_found');
-  if (status === 'requested' || status === 'accepted') connEmail.value = '';
+  const isErr = status === 'self' || status === 'invite_failed' || status === 'rate_limited' || status === 'not_found';
+  flash(messages[status] || 'Done.', isErr);
+  if (status === 'requested' || status === 'accepted' || status === 'invited') connEmail.value = '';
   renderConnections();
 });
 
