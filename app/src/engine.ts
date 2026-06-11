@@ -61,6 +61,26 @@ export const attributeCarryChange = (engine as any).attributeCarryChange as (
   pct: { ballSpeed: number; launch: number; spin: number };
 };
 
+export interface ShotInput {
+  bs: number;
+  la: number;
+  spin: number;
+}
+export interface AvgCarryAttribution {
+  carryA: number;
+  carryB: number;
+  total: number;
+  parts: { ballSpeed: number; launch: number; spin: number; consistency: number };
+  pct: { ballSpeed: number; launch: number; spin: number; consistency: number };
+  A: { ballSpeedMph: number; launchDeg: number; spinRpm: number };
+  B: { ballSpeedMph: number; launchDeg: number; spinRpm: number };
+}
+export const attributeAvgCarryChange = (engine as any).attributeAvgCarryChange as (
+  shotsA: ShotInput[],
+  shotsB: ShotInput[],
+  opts?: Record<string, unknown>,
+) => AvgCarryAttribution;
+
 export const normalizeLaunch = (engine as any).normalizeLaunch as (L: Launch) => Launch;
 export const BALL = (engine as any).BALL;
 export const STD_ATMOS = (engine as any).STD_ATMOS;

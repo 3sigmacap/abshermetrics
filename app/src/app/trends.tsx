@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
-import { attributeCarryChange, simulateFlight } from '@/engine';
+import { attributeAvgCarryChange, simulateFlight } from '@/engine';
 import { useRawData } from '@/lib/dataStore';
 import { fmt, mean, sd } from '@/lib/format';
 import { type RawShot, type Session } from '@/rawData';
@@ -70,7 +70,12 @@ function makeCompute(SHOTS: RawShot[], SESSIONS: Session[], sessState: SessState
       if (!shown(s.id)) return;
       const k = m.base || m.key;
       const vals = SHOTS.filter(
-        (x) => x.club === club && x.session === s.id && (x as any)[k] !== undefined && (x as any)[k] !== null,
+        (x) =>
+          x.club === club &&
+          x.session === s.id &&
+          !(x as RawShot & { excluded?: boolean }).excluded &&
+          (x as any)[k] !== undefined &&
+          (x as any)[k] !== null,
       ).map((x) => (x as any)[k] as number);
       if (!vals.length) return;
       const v = m.derived === 'sd' ? sd(vals) : mean(vals);
@@ -129,54 +134,37 @@ function makeCompute(SHOTS: RawShot[], SESSIONS: Session[], sessState: SessState
     return 'neutral';
   }
 
-  // WHY did carry change? physics attribution: first selected vs latest selected
+  // WHY did carry change? Runs every REAL shot through the engine, averages those
+  // carries per session (so the total matches the trend line), then attributes the
+  // change to ball speed / launch / spin + a "consistency" remainder.
   function carryAttribution(club: string) {
-    const sess = SESSIONS.filter(
-      (s) => shown(s.id) && SHOTS.some((x) => x.club === club && x.session === s.id),
-    );
+    const has = (sid: string) =>
+      SHOTS.some((x) => x.club === club && x.session === sid && !(x as RawShot & { excluded?: boolean }).excluded);
+    const sess = SESSIONS.filter((s) => shown(s.id) && has(s.id));
     if (sess.length < 2) return null;
-    const agg = (sid: string) => {
-      const v = SHOTS.filter((x) => x.club === club && x.session === sid);
-      const m = (k: string) => mean(v.map((x) => (x as any)[k]).filter((x: any) => x != null) as number[]);
-      return { ballSpeedMph: m('bs'), launchDeg: m('la'), spinRpm: m('spin'), n: v.length };
-    };
-    const A = agg(sess[0].id);
-    const B = agg(sess[sess.length - 1].id);
-    if (
-      [A.ballSpeedMph, A.launchDeg, A.spinRpm, B.ballSpeedMph, B.launchDeg, B.spinRpm].some((x) =>
-        Number.isNaN(x),
-      )
-    )
-      return null;
+    const shotsFor = (sid: string) =>
+      SHOTS.filter(
+        (x) =>
+          x.club === club &&
+          x.session === sid &&
+          !(x as RawShot & { excluded?: boolean }).excluded &&
+          x.bs != null &&
+          x.la != null &&
+          x.spin != null,
+      ).map((x) => ({ bs: x.bs as number, la: x.la as number, spin: x.spin as number }));
+    const SA = shotsFor(sess[0].id);
+    const SB = shotsFor(sess[sess.length - 1].id);
+    if (!SA.length || !SB.length) return null;
     let r;
     try {
-      r = attributeCarryChange(A, B);
+      r = attributeAvgCarryChange(SA, SB);
     } catch {
       return null;
     }
-    return { A, B, r, firstLabel: sess[0].label, lastLabel: sess[sess.length - 1].label };
+    return { A: r.A, B: r.B, r, firstLabel: sess[0].label, lastLabel: sess[sess.length - 1].label };
   }
 
-  // measured carry change (from the data) alongside the modeled one
-  function measuredCarryChange(club: string) {
-    const sess = SESSIONS.filter(
-      (s) => shown(s.id) && SHOTS.some((x) => x.club === club && x.session === s.id),
-    );
-    if (sess.length < 2) return null;
-    const cm = (sid: string) => {
-      const v = SHOTS.filter(
-        (x) => x.club === club && x.session === sid && (x as RawShot & { measuredCarry?: number }).measuredCarry != null,
-      );
-      return v.length
-        ? mean(v.map((x) => (x as RawShot & { measuredCarry?: number }).measuredCarry as number))
-        : null;
-    };
-    const a = cm(sess[0].id);
-    const b = cm(sess[sess.length - 1].id);
-    return a == null || b == null ? null : { first: a, last: b, delta: b - a };
-  }
-
-  return { series, classify2, clubHealth, carryAttribution, measuredCarryChange };
+  return { series, classify2, clubHealth, carryAttribution };
 }
 
 // tone for a classified metric (good = moving the better way / centering)
@@ -276,11 +264,11 @@ function AttributionPanel({
   const at = compute.carryAttribution(club);
   if (!at) return null;
   const { A, B, r } = at;
-  const meas = compute.measuredCarryChange(club);
-  const parts = [
+  const parts: { label: string; d: number; from?: number; to?: number; unit?: string; dp?: number; sub?: string }[] = [
     { label: 'Ball speed', d: r.parts.ballSpeed, from: A.ballSpeedMph, to: B.ballSpeedMph, unit: 'mph', dp: 1 },
     { label: 'Launch angle', d: r.parts.launch, from: A.launchDeg, to: B.launchDeg, unit: '°', dp: 1 },
     { label: 'Spin', d: r.parts.spin, from: A.spinRpm, to: B.spinRpm, unit: 'rpm', dp: 0 },
+    { label: 'Strike consistency', d: r.parts.consistency, sub: 'shot-to-shot contact & shot mix' },
   ];
   const maxAbs = Math.max(...parts.map((p) => Math.abs(p.d)), 0.1);
   const sign = (x: number) => (x > 0 ? '+' : '');
@@ -294,7 +282,7 @@ function AttributionPanel({
       {Math.abs(r.total) < 0.5 ? (
         <Text style={styles.attrLead}>
           Carry is essentially unchanged ({sign(r.total)}
-          {r.total.toFixed(1)} yd modeled). The inputs below mostly cancel out.
+          {r.total.toFixed(1)} yd). The parts below mostly cancel out.
         </Text>
       ) : (
         <Text style={styles.attrLead}>
@@ -303,7 +291,8 @@ function AttributionPanel({
             {sign(r.total)}
             {r.total.toFixed(1)} yd
           </Text>{' '}
-          between the first and latest session. Here's what the physics model says drove it:
+          between the first and latest session — the same change shown on the chart. Here&apos;s what
+          the physics model says drove it:
         </Text>
       )}
       <View style={{ gap: 11, marginTop: 4 }}>
@@ -316,7 +305,7 @@ function AttributionPanel({
               <View style={styles.attrName}>
                 <Text style={styles.attrNameText}>{p.label}</Text>
                 <Text style={styles.attrSub}>
-                  {fmt(p.from, p.dp)} → {fmt(p.to, p.dp)} {p.unit}
+                  {p.sub != null ? p.sub : `${fmt(p.from, p.dp)} → ${fmt(p.to, p.dp)} ${p.unit}`}
                 </Text>
               </View>
               <View style={styles.attrTrack}>
@@ -336,13 +325,6 @@ function AttributionPanel({
           );
         })}
       </View>
-      {meas && (
-        <Text style={styles.note}>
-          For reference, your launch monitor&apos;s measured carry moved {sign(meas.delta)}
-          {meas.delta.toFixed(1)} yd ({fmt(meas.first, 1)} → {fmt(meas.last, 1)}). Everything else here uses the physics
-          model; any gap vs measured is normal scatter, contact quality, or conditions the model doesn&apos;t see.
-        </Text>
-      )}
     </View>
   );
 }

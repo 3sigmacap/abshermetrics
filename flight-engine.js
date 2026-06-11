@@ -588,3 +588,81 @@ function permutations(arr) {
   }
   return out;
 }
+
+/* ----------------------------------------------------------------------------
+ * attributeAvgCarryChange — carry-change attribution done the RIGHT way.
+ *
+ * Given two sessions of REAL shots (each {bs, la, spin}), this runs every real
+ * shot through the engine, averages those carries per session, and reports the
+ * change (B - A). That total EQUALS the change shown on the carry trend line —
+ * the engine is never run on a fabricated "average shot" (averaged ball speed /
+ * launch / spin that no real swing produced).
+ *
+ * It then attributes that change to ball speed / launch / spin by taking each
+ * REAL first-session shot, nudging it by the average input change, and Shapley-
+ * decomposing the carry effect (averaged over the real shots). Whatever the input
+ * changes don't explain is reported as `consistency` (your shot-to-shot contact /
+ * shot mix changed). The four parts sum EXACTLY to the total.
+ *
+ * Returns { carryA, carryB, total, parts:{ballSpeed,launch,spin,consistency},
+ *           pct:{...}, A:{ballSpeedMph,launchDeg,spinRpm}, B:{...} }.
+ * -------------------------------------------------------------------------- */
+export function attributeAvgCarryChange(shotsA, shotsB, opts = {}) {
+  const avg = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0);
+  const r1 = (x) => Math.round(x * 10) / 10;
+  const carryRaw = (bs, la, spin) =>
+    simulateFlight({ ballSpeedMph: bs, launchDeg: la, spinRpm: spin, axisDeg: 0, directionDeg: 0 }, opts).carryYd;
+
+  // total = change in the AVERAGE of each real shot's modeled carry. Per-shot carry
+  // is rounded to 0.1 yd to mirror the trend line exactly, then averaged.
+  const carryA = avg(shotsA.map((s) => r1(carryRaw(s.bs, s.la, s.spin))));
+  const carryB = avg(shotsB.map((s) => r1(carryRaw(s.bs, s.la, s.spin))));
+  const total = carryB - carryA;
+
+  // mean real inputs per session (for the from→to labels + the input deltas)
+  const mi = (arr, k) => avg(arr.map((s) => s[k]).filter((x) => x != null));
+  const A = { ballSpeedMph: mi(shotsA, 'bs'), launchDeg: mi(shotsA, 'la'), spinRpm: mi(shotsA, 'spin') };
+  const B = { ballSpeedMph: mi(shotsB, 'bs'), launchDeg: mi(shotsB, 'la'), spinRpm: mi(shotsB, 'spin') };
+  const d = { bs: B.ballSpeedMph - A.ballSpeedMph, la: B.launchDeg - A.launchDeg, spin: B.spinRpm - A.spinRpm };
+
+  // Per-shot Shapley of the average input change, over the real first-session shots.
+  const vars = ['bs', 'la', 'spin'];
+  const perms = permutations(vars);
+  const base = shotsA.length ? shotsA : shotsB;
+  const acc = { bs: 0, la: 0, spin: 0 };
+  for (const s of base) {
+    const cw = (set) =>
+      carryRaw(
+        s.bs + (set.has('bs') ? d.bs : 0),
+        s.la + (set.has('la') ? d.la : 0),
+        s.spin + (set.has('spin') ? d.spin : 0),
+      );
+    const sc = { bs: 0, la: 0, spin: 0 };
+    for (const order of perms) {
+      const used = new Set();
+      let prev = cw(used);
+      for (const v of order) {
+        used.add(v);
+        const now = cw(used);
+        sc[v] += now - prev;
+        prev = now;
+      }
+    }
+    for (const v of vars) acc[v] += sc[v] / perms.length;
+  }
+  const n = base.length || 1;
+  const ballSpeed = acc.bs / n;
+  const launch = acc.la / n;
+  const spin = acc.spin / n;
+  const consistency = total - (ballSpeed + launch + spin); // remainder: contact / shot mix
+
+  const parts = { ballSpeed, launch, spin, consistency };
+  const denom = Math.abs(ballSpeed) + Math.abs(launch) + Math.abs(spin) + Math.abs(consistency) || 1;
+  const pct = {
+    ballSpeed: (ballSpeed / denom) * 100,
+    launch: (launch / denom) * 100,
+    spin: (spin / denom) * 100,
+    consistency: (consistency / denom) * 100,
+  };
+  return { carryA, carryB, total, parts, pct, A, B };
+}

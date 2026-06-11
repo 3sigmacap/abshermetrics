@@ -118,7 +118,7 @@ table.t td.tone-good{color:var(--good);} table.t td.tone-bad{color:var(--bad);} 
 </div>
 
 <script type="module">
-import { attributeCarryChange, simulateFlight } from './flight-engine.js';
+import { attributeAvgCarryChange, simulateFlight } from './flight-engine.js';
 import { loadRawData } from './user-data.js';
 import { renderEmpty, renderError } from './empty-state.js';
 let SESSIONS=[], SHOTS=[], COLORS={};
@@ -180,7 +180,7 @@ function series(club,m){
   const out=[];
   SESSIONS.forEach(s=>{
     if(sessState[s.id]===false)return;   // only the sessions chosen in the picker
-    const vals=SHOTS.filter(x=>x.club===club&&x.session===s.id&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
+    const vals=SHOTS.filter(x=>x.club===club&&x.session===s.id&&!x.excluded&&x[m.base||m.key]!==undefined).map(x=>x[m.base||m.key]);
     if(!vals.length)return;
     let v;
     if(m.derived==='sd')v=sd(vals); else v=mean(vals);
@@ -289,42 +289,32 @@ function lineChart(serie,m,color,W=720,H=240){
 // ---- Average-shot flight views (side profile + top-down), engine-computed ----
 // ---- WHY did carry change? Physics-based attribution (uses flight-engine.js) ----
 // Compares the club's FIRST session vs its LATEST session. Takes each session's
-// mean ball speed / launch / spin, asks the engine how much of the modeled
-// carry change each input is responsible for (Shapley split, parts sum to total).
+// Runs EVERY real shot through the engine, averages those carries per session, and
+// reports the change (matches the trend line — never a fabricated "average shot").
+// Then attributes the change to ball speed / launch / spin + a "consistency" remainder.
 function carryAttribution(club){
-  const sess=SESSIONS.filter(s=>sessState[s.id]!==false&&SHOTS.some(x=>x.club===club&&x.session===s.id));
+  const has=sid=>SHOTS.some(x=>x.club===club&&x.session===sid&&!x.excluded);
+  const sess=SESSIONS.filter(s=>sessState[s.id]!==false&&has(s.id));
   if(sess.length<2) return null;
-  const agg=sid=>{
-    const v=SHOTS.filter(x=>x.club===club&&x.session===sid);
-    const m=k=>mean(v.map(x=>x[k]).filter(x=>x!=null));
-    return {ballSpeedMph:m('bs'), launchDeg:m('la'), spinRpm:m('spin'), n:v.length};
-  };
-  const A=agg(sess[0].id), B=agg(sess[sess.length-1].id);
-  if([A.ballSpeedMph,A.launchDeg,A.spinRpm,B.ballSpeedMph,B.launchDeg,B.spinRpm].some(x=>Number.isNaN(x))) return null;
+  const shotsFor=sid=>SHOTS.filter(x=>x.club===club&&x.session===sid&&!x.excluded&&x.bs!=null&&x.la!=null&&x.spin!=null)
+    .map(x=>({bs:x.bs,la:x.la,spin:x.spin}));
+  const SA=shotsFor(sess[0].id), SB=shotsFor(sess[sess.length-1].id);
+  if(!SA.length||!SB.length) return null;
   let r;
-  try{ r=attributeCarryChange(A,B); }catch(e){ return null; }
-  return {A,B,r,firstLabel:sess[0].label,lastLabel:sess[sess.length-1].label};
-}
-
-// also report the MEASURED carry change (from the data) alongside the modeled one
-function measuredCarryChange(club){
-  const sess=SESSIONS.filter(s=>sessState[s.id]!==false&&SHOTS.some(x=>x.club===club&&x.session===s.id));
-  if(sess.length<2)return null;
-  const cm=sid=>{const v=SHOTS.filter(x=>x.club===club&&x.session===sid&&x.measuredCarry!=null);return v.length?mean(v.map(x=>x.measuredCarry)):null;};
-  const a=cm(sess[0].id), b=cm(sess[sess.length-1].id);
-  return (a==null||b==null)?null:{first:a,last:b,delta:b-a};
+  try{ r=attributeAvgCarryChange(SA,SB); }catch(e){ return null; }
+  return {A:r.A,B:r.B,r,firstLabel:sess[0].label,lastLabel:sess[sess.length-1].label};
 }
 
 function attributionPanel(club,color){
   const at=carryAttribution(club);
   if(!at) return '';
   const {A,B,r}=at;
-  const meas=measuredCarryChange(club);
   // bar widths from |contribution| share
   const parts=[
     {k:'ballSpeed',label:'Ball speed',d:r.parts.ballSpeed,from:A.ballSpeedMph,to:B.ballSpeedMph,unit:'mph',dp:1},
     {k:'launch',   label:'Launch angle',d:r.parts.launch,  from:A.launchDeg,   to:B.launchDeg,   unit:'°',  dp:1},
     {k:'spin',     label:'Spin',        d:r.parts.spin,    from:A.spinRpm,     to:B.spinRpm,     unit:'rpm',dp:0},
+    {k:'consistency',label:'Strike consistency',d:r.parts.consistency,sub:'shot-to-shot contact &amp; shot mix'},
   ];
   const maxAbs=Math.max(...parts.map(p=>Math.abs(p.d)),0.1);
   const sign=x=>x>0?'+':'';
@@ -332,9 +322,10 @@ function attributionPanel(club,color){
   const rows=parts.map(p=>{
     const w=Math.abs(p.d)/maxAbs*100;
     const pos=p.d>=0;
+    const subtxt = p.sub!=null ? p.sub : `${fmt(p.from,p.dp)} → ${fmt(p.to,p.dp)} ${p.unit}`;
     return `<div class="attr-row">
       <div class="attr-name">${p.label}
-        <span class="attr-sub">${fmt(p.from,p.dp)} → ${fmt(p.to,p.dp)} ${p.unit}</span>
+        <span class="attr-sub">${subtxt}</span>
       </div>
       <div class="attr-bar"><div class="attr-track">
         <div class="attr-fill ${pos?'pos':'neg2'}" style="width:${w}%;background:${col(p.d)}"></div>
@@ -344,17 +335,13 @@ function attributionPanel(club,color){
   }).join('');
   const totCol=Math.abs(r.total)<0.3?'var(--dim)':(r.total>0?'var(--up)':'var(--down)');
   const lead = Math.abs(r.total)<0.5
-    ? `Carry is essentially unchanged (${sign(r.total)}${r.total.toFixed(1)} yd modeled). The inputs below mostly cancel out.`
-    : `Your carry ${r.total>0?'gained':'lost'} <b style="color:${totCol}">${sign(r.total)}${r.total.toFixed(1)} yd</b> between the first and latest session. Here's what the physics model says drove it:`;
-  const measNote = meas
-    ? `<div class="note" style="margin-top:12px">For reference, your launch monitor's <b>measured</b> carry moved ${sign(meas.delta)}${meas.delta.toFixed(1)} yd (${fmt(meas.first,1)} → ${fmt(meas.last,1)}). Everything else here uses the physics <b>model</b>; any gap vs measured is normal scatter, contact quality, or conditions the model doesn't see.</div>`
-    : '';
+    ? `Carry is essentially unchanged (${sign(r.total)}${r.total.toFixed(1)} yd). The parts below mostly cancel out.`
+    : `Your carry ${r.total>0?'gained':'lost'} <b style="color:${totCol}">${sign(r.total)}${r.total.toFixed(1)} yd</b> between the first and latest session — the same change shown on the chart. Here's what the physics model says drove it:`;
   return `<div class="panel">
     <h2 style="color:${color}">Why ${club}'s carry changed</h2>
     <div class="hint">first session → latest · physics attribution via drag + Magnus flight model</div>
     <p class="desc" style="font-size:14.5px;color:var(--dim);margin:2px 0 14px;line-height:1.5">${lead}</p>
     <div class="attr">${rows}</div>
-    ${measNote}
   </div>`;
 }
 
