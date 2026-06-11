@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+
+import { ClubMultiSelect } from '@/components/ClubMultiSelect';
 import {
   ActivityIndicator,
   LayoutChangeEvent,
@@ -608,52 +610,13 @@ export default function Dispersion() {
         2D <Text style={styles.titleAccent}>DISPERSION</Text> VIEWS
       </Text>
 
-      {/* club chips */}
-      <View style={styles.chips}>
-        {data.map((d) => {
-          const on = visible[d.club];
-          return (
-            <Pressable
-              key={d.club}
-              onPress={() => toggle(d.club)}
-              style={[
-                styles.chip,
-                on
-                  ? { backgroundColor: d.color, borderColor: d.color }
-                  : { backgroundColor: C.panel, borderColor: C.line },
-              ]}>
-              <View
-                style={[
-                  styles.sw,
-                  { backgroundColor: on ? '#0a120d' : d.color },
-                ]}
-              />
-              <Text style={[styles.chipText, { color: on ? '#0a120d' : C.dim }]}>
-                {d.club}
-              </Text>
-              <Text style={[styles.chipNum, { color: on ? '#0a120d' : C.dim2 }]}>
-                {' '}
-                {d.ell ? `${d.ell.rz}y` : ''}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* option buttons */}
-      <View style={styles.opts}>
+      {/* club filter — compact menu (multi-select) + display toggle */}
+      <View style={styles.controls}>
+        <ClubMultiSelect clubs={data} visible={visible} onToggle={toggle} onSetAll={setAll} />
         <Pressable
           onPress={() => setShowShots((s) => !s)}
           style={[styles.gb, showShots && styles.gbOn]}>
-          <Text style={[styles.gbText, showShots && styles.gbTextOn]}>
-            Individual shots
-          </Text>
-        </Pressable>
-        <Pressable onPress={() => setAll(true)} style={styles.gb}>
-          <Text style={styles.gbText}>All clubs on</Text>
-        </Pressable>
-        <Pressable onPress={() => setAll(false)} style={styles.gb}>
-          <Text style={styles.gbText}>All clubs off</Text>
+          <Text style={[styles.gbText, showShots && styles.gbTextOn]}>Individual shots</Text>
         </Pressable>
       </View>
 
@@ -704,6 +667,7 @@ const styles = StyleSheet.create({
   titleAccent: { color: C.accent },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 16 },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, alignItems: 'flex-end', marginTop: 16 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,6 +2,8 @@ import { useFocusEffect } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+
+import { ClubMultiSelect } from '@/components/ClubMultiSelect';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { Circle, G, Line, Path, Polygon, Svg } from 'react-native-svg';
@@ -466,23 +468,7 @@ export default function Flight3D() {
         </Pressable>
       </View>
       <View style={styles.row}>
-        <Pressable onPress={() => setGroup(() => true)} style={[styles.btn, styles.ghost]}>
-          <Text style={[styles.btnTxt, { color: C.dim }]}>All</Text>
-        </Pressable>
-        <Pressable onPress={() => setGroup(() => false)} style={[styles.btn, styles.ghost]}>
-          <Text style={[styles.btnTxt, { color: C.dim }]}>None</Text>
-        </Pressable>
-      </View>
-      <View style={styles.row}>
-        {clubs.map((c) => {
-          const on = visible[c.club];
-          return (
-            <Pressable key={c.club} onPress={() => toggle(c.club)} style={[styles.clubChip, chip(on, c.color)]}>
-              <View style={[styles.dot, { backgroundColor: on ? '#0a120d' : c.color }]} />
-              <Text style={[styles.clubTxt, chipTxt(on, c.color)]}>{c.club}</Text>
-            </Pressable>
-          );
-        })}
+        <ClubMultiSelect clubs={clubs} visible={visible} onToggle={toggle} onSetAll={(on) => setGroup(() => on)} />
       </View>
     </>
   );
