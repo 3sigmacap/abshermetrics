@@ -87,6 +87,18 @@ export async function fetchUserData() {
   });
   sessions.forEach((s) => (s.n = counts[s.id] ?? 0));
 
+  // Chronological order by the earliest shot TIME, not just date — two sessions on
+  // the same day are ordered by their actual shot timestamps (the `date` column is
+  // date-only). Keeps "first → latest" correct on Trends, etc.
+  const firstTs = {};
+  shots.forEach((s) => {
+    if (s.session && s.ts && (firstTs[s.session] === undefined || s.ts < firstTs[s.session])) {
+      firstTs[s.session] = s.ts;
+    }
+  });
+  const sortKey = (s) => firstTs[s.id] ?? s.date ?? '';
+  sessions.sort((a, b) => (sortKey(a) < sortKey(b) ? -1 : sortKey(a) > sortKey(b) ? 1 : 0));
+
   return { shots, sessions };
 }
 
