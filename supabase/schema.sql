@@ -134,16 +134,35 @@ drop policy if exists "connections delete own" on public.connections;
 create policy "connections delete own" on public.connections
   for delete using (auth.uid() in (requester_id, addressee_id));
 
--- Direct client INSERT is allowed only with yourself as requester (defense-in-depth;
--- the normal path is the Edge Function, which uses service_role to set both sides).
+-- Direct client INSERT only with yourself as requester AND status forced to 'pending'
+-- (defense-in-depth) so a client can never self-grant an 'accepted' connection (which
+-- would expose the addressee's bag_summary without consent). The normal path is the
+-- Edge Function, which uses service_role to set both sides.
 drop policy if exists "connections insert own" on public.connections;
 create policy "connections insert own" on public.connections
-  for insert with check (auth.uid() = requester_id and addressee_id <> requester_id);
+  for insert with check (auth.uid() = requester_id and addressee_id <> requester_id and status = 'pending');
 
 -- Only the addressee can accept (flip a pending row to accepted).
 drop policy if exists "connections accept by addressee" on public.connections;
 create policy "connections accept by addressee" on public.connections
   for update using (auth.uid() = addressee_id) with check (auth.uid() = addressee_id);
+
+-- requester_id / addressee_id are immutable after creation. RLS can't restrict which
+-- columns an UPDATE changes, so without this the addressee could repoint requester_id
+-- at a third party. Only status / responded_at / display fields may change.
+create or replace function public.connections_lock_identity()
+returns trigger language plpgsql as $$
+begin
+  if new.requester_id is distinct from old.requester_id
+     or new.addressee_id is distinct from old.addressee_id then
+    raise exception 'requester_id / addressee_id are immutable';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists connections_lock_identity on public.connections;
+create trigger connections_lock_identity before update on public.connections
+  for each row execute function public.connections_lock_identity();
 
 -- security-definer helper: true iff an ACCEPTED connection exists between a and b
 -- (either direction). Used by the bag_summaries read policy.
@@ -309,6 +328,24 @@ create policy "follows insert own" on public.follows
 drop policy if exists "follows approve by followed" on public.follows;
 create policy "follows approve by followed" on public.follows
   for update using (auth.uid() = followed_id) with check (auth.uid() = followed_id);
+
+-- follower_id / followed_id are immutable after creation. RLS can't restrict which
+-- columns an UPDATE changes, so without this the followed user could repoint
+-- follower_id at a third party (granting them an unrequested follow). Only status /
+-- responded_at / display fields may change via UPDATE.
+create or replace function public.follows_lock_identity()
+returns trigger language plpgsql as $$
+begin
+  if new.follower_id is distinct from old.follower_id
+     or new.followed_id is distinct from old.followed_id then
+    raise exception 'follower_id / followed_id are immutable';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists follows_lock_identity on public.follows;
+create trigger follows_lock_identity before update on public.follows
+  for each row execute function public.follows_lock_identity();
 
 -- security-definer helper: true iff `p_follower` has an APPROVED follow of `p_followed`.
 -- Used by the read-grant policies below. Directional (follower → followed).
