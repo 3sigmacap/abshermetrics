@@ -254,3 +254,94 @@ create policy "invites select own" on public.invites
 drop policy if exists "invites delete own" on public.invites;
 create policy "invites delete own" on public.invites
   for delete using (auth.uid() = inviter_id);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- FOLLOWS  (spectator / "ghost" view — see CLAUDE.md / FOLLOWS_PLAN.md)
+-- A FOLLOW lets one user (the follower) VIEW another user's (the followed) full
+-- account READ-ONLY — raw shots, sessions, profile — once the followed user APPROVES.
+-- This is deliberately different from connections (which share aggregate bag_summaries
+-- only). A follower can never WRITE the followed user's data. Consent is mandatory:
+-- only the followed user can approve a pending follow.
+-- ════════════════════════════════════════════════════════════════════════════
+
+create table if not exists public.follows (
+  id           uuid primary key default gen_random_uuid(),
+  follower_id  uuid not null references auth.users (id) on delete cascade,  -- the viewer
+  followed_id  uuid not null references auth.users (id) on delete cascade,  -- the player being viewed
+  -- Denormalized display info (written by the follow-request Edge Function via
+  -- service_role) so each side can show WHO without reading the other's profile.
+  -- Only ever a name + email of someone in an explicit follow relationship.
+  follower_name  text,
+  follower_email text,
+  followed_name  text,
+  followed_email text,
+  status       text not null default 'pending',  -- 'pending' | 'approved'
+  created_at   timestamptz not null default now(),
+  responded_at timestamptz,
+  unique (follower_id, followed_id),
+  check (follower_id <> followed_id)
+);
+
+alter table public.follows enable row level security;
+
+create index if not exists follows_follower_idx on public.follows (follower_id);
+create index if not exists follows_followed_idx on public.follows (followed_id);
+
+-- Either participant may read or delete the row (delete = decline / revoke / cancel).
+drop policy if exists "follows select own" on public.follows;
+create policy "follows select own" on public.follows
+  for select using (auth.uid() in (follower_id, followed_id));
+
+drop policy if exists "follows delete own" on public.follows;
+create policy "follows delete own" on public.follows
+  for delete using (auth.uid() in (follower_id, followed_id));
+
+-- Direct client INSERT only with yourself as the follower AND status forced to
+-- 'pending' — so a client can NEVER self-grant an approved follow (that would bypass
+-- the followed user's consent and expose raw shots). Only the followed user can
+-- approve, via the UPDATE policy below. (The normal path is the follow-request Edge
+-- Function using service_role; this client policy is defense-in-depth.)
+drop policy if exists "follows insert own" on public.follows;
+create policy "follows insert own" on public.follows
+  for insert with check (auth.uid() = follower_id and followed_id <> follower_id and status = 'pending');
+
+-- Only the FOLLOWED user can approve (flip a pending row to approved) — consent gate.
+drop policy if exists "follows approve by followed" on public.follows;
+create policy "follows approve by followed" on public.follows
+  for update using (auth.uid() = followed_id) with check (auth.uid() = followed_id);
+
+-- security-definer helper: true iff `p_follower` has an APPROVED follow of `p_followed`.
+-- Used by the read-grant policies below. Directional (follower → followed).
+create or replace function public.is_following(p_follower uuid, p_followed uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.follows f
+    where f.status = 'approved'
+      and f.follower_id = p_follower
+      and f.followed_id = p_followed
+  );
+$$;
+
+-- ── Follower READ grants (the core of the feature) ──────────────────────────
+-- These are ADDITIVE, SELECT-only policies. RLS policies are permissive (OR'd), so
+-- the existing owner-only "for all" policies still govern INSERT/UPDATE/DELETE — a
+-- follower gets READ access ONLY, and only while an approved follow exists. The owner
+-- always retains full control and can revoke (delete the follow) at any time.
+drop policy if exists "shots followers read" on public.shots;
+create policy "shots followers read" on public.shots
+  for select using (public.is_following(auth.uid(), user_id));
+
+drop policy if exists "sessions followers read" on public.sessions;
+create policy "sessions followers read" on public.sessions
+  for select using (public.is_following(auth.uid(), user_id));
+
+-- Followers need the followed user's profile (display_name, club_specs, prefs) to
+-- render the bag/analytics correctly. Read-only; the owner-only update policy stands.
+drop policy if exists "profiles followers read" on public.profiles;
+create policy "profiles followers read" on public.profiles
+  for select using (public.is_following(auth.uid(), id));
