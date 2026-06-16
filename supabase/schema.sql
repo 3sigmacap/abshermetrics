@@ -26,6 +26,14 @@ create policy "profiles update own" on public.profiles for update using (auth.ui
 alter table public.profiles add column if not exists club_specs jsonb not null default '{}'::jsonb;
 alter table public.profiles add column if not exists prefs jsonb not null default '{}'::jsonb;
 
+-- First-run onboarding flag. A NEW account starts false; on first login the app asks
+-- "track my own game" or "follow another player" and sets this true once they choose
+-- (the choice itself just optionally fires a follow request). Existing accounts were
+-- backfilled to true at migration time so only brand-new signups see the prompt.
+-- The choice used to live on the signup form; it moved here so it's a deliberate
+-- first-login step (and so OAuth signups get it too). Covered by the own-row policies.
+alter table public.profiles add column if not exists onboarded boolean not null default false;
+
 -- auto-create a profile row when a new auth user signs up
 create or replace function public.handle_new_user()
 returns trigger

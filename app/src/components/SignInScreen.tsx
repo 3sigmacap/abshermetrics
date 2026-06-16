@@ -13,16 +13,12 @@ import {
 } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
-import { useFollows } from '@/lib/follows';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { C } from '@/theme';
 
 export default function SignInScreen() {
   const { signIn, signUp, signInGoogle, signInApple } = useAuth();
-  const foll = useFollows();
   const [mode, setMode] = useState<'in' | 'up'>('in');
-  const [purpose, setPurpose] = useState<'track' | 'follow'>('track');
-  const [followEmail, setFollowEmail] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -64,17 +60,11 @@ export default function SignInScreen() {
       return;
     }
     if (mode === 'up') {
-      // "Follow a player": fire the follow request. It completes server-side even as
-      // the session lands and this screen unmounts.
-      if (purpose === 'follow' && followEmail.trim()) {
-        foll.request(followEmail.trim()).catch(() => {});
-      }
-      // If email confirmation is on, no session yet — tell the user. If it's off,
-      // a session is set and the app reveals itself automatically.
+      // The "track my game / follow a player" choice now happens on first login
+      // (OnboardingScreen), not here. If email confirmation is on, no session yet —
+      // tell the user. If it's off, a session is set and the app reveals itself.
       setNotice(
-        purpose === 'follow' && followEmail.trim()
-          ? 'Account created — we asked that player to approve your follow. Switch to their account once approved.'
-          : 'Account created. If sign-in doesn’t happen automatically, check your email to confirm, then sign in.',
+        'Account created. If sign-in doesn’t happen automatically, check your email to confirm, then sign in.',
       );
       setMode('in');
     }
@@ -88,20 +78,6 @@ export default function SignInScreen() {
         </Text>
         <Text style={styles.tagline}>The physics behind every yard.</Text>
         <Text style={styles.sub}>{mode === 'in' ? 'Sign in to your bag' : 'Create your account'}</Text>
-
-        {mode === 'up' ? (
-          <>
-            <Text style={styles.label}>I WANT TO…</Text>
-            <View style={styles.purposeRow}>
-              <Pressable style={[styles.ptab, purpose === 'track' && styles.ptabOn]} onPress={() => setPurpose('track')}>
-                <Text style={[styles.ptabTxt, purpose === 'track' && styles.ptabTxtOn]}>Track my game</Text>
-              </Pressable>
-              <Pressable style={[styles.ptab, purpose === 'follow' && styles.ptabOn]} onPress={() => setPurpose('follow')}>
-                <Text style={[styles.ptabTxt, purpose === 'follow' && styles.ptabTxtOn]}>Follow a player</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : null}
 
         <Text style={styles.label}>EMAIL</Text>
         <TextInput
@@ -128,23 +104,6 @@ export default function SignInScreen() {
           onSubmitEditing={submit}
           returnKeyType="go"
         />
-
-        {mode === 'up' && purpose === 'follow' ? (
-          <>
-            <Text style={styles.label}>PLAYER’S EMAIL TO FOLLOW</Text>
-            <TextInput
-              style={styles.input}
-              value={followEmail}
-              onChangeText={setFollowEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              placeholder="player@example.com"
-              placeholderTextColor={C.dim2}
-              inputMode="email"
-            />
-          </>
-        ) : null}
 
         {error ? <Text style={styles.err}>{error}</Text> : null}
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
@@ -247,10 +206,5 @@ const styles = StyleSheet.create({
   },
   oauthTxt: { color: C.ink, fontWeight: '600', fontSize: 15 },
   appleBtn: { width: '100%', height: 48 },
-  purposeRow: { flexDirection: 'row', gap: 8 },
-  ptab: { flex: 1, borderWidth: 1, borderColor: C.line2, backgroundColor: C.bg2, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
-  ptabOn: { backgroundColor: C.accent, borderColor: C.accent },
-  ptabTxt: { color: C.dim, fontFamily: mono, fontSize: 12, letterSpacing: 0.5 },
-  ptabTxtOn: { color: '#0a120d', fontWeight: '700' },
   toggle: { color: C.dim, fontFamily: mono, fontSize: 12.5, textAlign: 'center', marginTop: 20 },
 });

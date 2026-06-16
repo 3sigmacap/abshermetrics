@@ -40,9 +40,6 @@ input::placeholder{color:var(--dim2);}
 .oauth button:hover{border-color:var(--accent);}
 .oauth button:disabled{opacity:.5;cursor:default;}
 .oauth button svg{width:18px;height:18px;flex-shrink:0;}
-.purpose{display:flex;gap:8px;}
-.ptab{flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.5px;color:var(--dim);background:#081109;border:1px solid var(--line2);border-radius:9px;padding:11px 8px;cursor:pointer;transition:.18s;}
-.ptab.on{color:var(--bg);background:var(--accent);border-color:var(--accent);font-weight:500;}
 </style></head><body>
 <div class="wrap">
   <div class="brand"><span class="dot"></span>ABSHER<b>METRICS</b></div>
@@ -57,13 +54,6 @@ input::placeholder{color:var(--dim2);}
         <label for="name">Name</label>
         <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name">
       </div>
-      <div class="field" id="purposeField" style="display:none">
-        <label>I want to…</label>
-        <div class="purpose">
-          <button type="button" class="ptab on" id="pTrack">Track my game</button>
-          <button type="button" class="ptab" id="pFollow">Follow a player</button>
-        </div>
-      </div>
       <div class="field">
         <label for="email">Email</label>
         <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
@@ -71,10 +61,6 @@ input::placeholder{color:var(--dim2);}
       <div class="field">
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" minlength="6" required>
-      </div>
-      <div class="field" id="followField" style="display:none">
-        <label for="followEmail">Player's email to follow</label>
-        <input id="followEmail" name="followEmail" type="email" autocomplete="off" inputmode="email" placeholder="player@example.com">
       </div>
       <button class="go" id="submit" type="submit">Sign in</button>
       <div class="msg" id="msg"></div>
@@ -97,7 +83,6 @@ input::placeholder{color:var(--dim2);}
 
 <script type="module">
 import { supabase, signIn, signUp, signInWithOAuth } from './auth.js';
-import { requestFollow } from './follows.js';
 
 const params = new URLSearchParams(location.search);
 const next = sanitizeNext(params.get('next'));
@@ -119,13 +104,7 @@ const submit = document.getElementById('submit');
 const pwd = document.getElementById('password');
 const msg = document.getElementById('msg');
 const hint = document.getElementById('hint');
-const purposeField = document.getElementById('purposeField');
-const followField = document.getElementById('followField');
-const followEmail = document.getElementById('followEmail');
-const pTrack = document.getElementById('pTrack');
-const pFollow = document.getElementById('pFollow');
 let mode = 'in'; // 'in' | 'up'
-let purpose = 'track'; // 'track' | 'follow' (signup only)
 
 function setMode(m){
   mode = m;
@@ -133,8 +112,6 @@ function setMode(m){
   tabUp.classList.toggle('on', up);
   tabIn.classList.toggle('on', !up);
   nameField.style.display = up ? '' : 'none';
-  purposeField.style.display = up ? '' : 'none';
-  followField.style.display = up && purpose === 'follow' ? '' : 'none';
   submit.textContent = up ? 'Create account' : 'Sign in';
   pwd.setAttribute('autocomplete', up ? 'new-password' : 'current-password');
   hint.textContent = up
@@ -144,15 +121,6 @@ function setMode(m){
 }
 tabIn.addEventListener('click', () => setMode('in'));
 tabUp.addEventListener('click', () => setMode('up'));
-
-function setPurpose(p){
-  purpose = p;
-  pTrack.classList.toggle('on', p === 'track');
-  pFollow.classList.toggle('on', p === 'follow');
-  followField.style.display = mode === 'up' && p === 'follow' ? '' : 'none';
-}
-pTrack.addEventListener('click', () => setPurpose('track'));
-pFollow.addEventListener('click', () => setPurpose('follow'));
 
 // Arriving from the marketing page's "Create account" CTA opens the sign-up tab.
 if (params.get('signup')) setMode('up');
@@ -177,16 +145,8 @@ form.addEventListener('submit', async (e) => {
       const { error, needsConfirm } = await signUp(email, password, name);
       if (error) { setMsg(error, 'err'); return; }
       if (needsConfirm) { setMsg('Check your email to confirm your account, then sign in.', 'ok'); setMode('in'); return; }
-      // "Follow a player": now that we have a session, send the follow request.
-      if (purpose === 'follow' && followEmail.value.trim()) {
-        const { status, error: fErr } = await requestFollow(followEmail.value.trim());
-        if (fErr) setMsg('Account created, but the follow request failed: ' + fErr, 'err');
-        else if (status === 'not_found') setMsg("Account created. No account uses that email yet — add them later from Settings → Followers.", 'err');
-        else if (status === 'self') setMsg('Account created. (That follow email was your own.)', 'ok');
-        else setMsg('Account created — we asked that player to approve your follow. Switch to their account from the menu once approved.', 'ok');
-        setTimeout(() => location.replace(next), 1800);
-        return;
-      }
+      // New account: the "track my game / follow a player" choice now happens on
+      // first login (onboarding.js), not here — so just forward into the app.
     } else {
       const { error } = await signIn(email, password);
       if (error) { setMsg(error, 'err'); return; }

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View, type ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import OnboardingScreen from '@/components/OnboardingScreen';
 import SignInScreen from '@/components/SignInScreen';
 import ViewBar from '@/components/ViewBar';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -15,7 +16,7 @@ import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
 import { FollowsProvider, useFollows } from '@/lib/follows';
 import { PushRegistrar } from '@/lib/push';
-import { ProfileProvider } from '@/lib/profile';
+import { ProfileProvider, useProfile } from '@/lib/profile';
 import { ShareImporter } from '@/lib/shareImport';
 import { ViewProvider } from '@/lib/viewContext';
 import { C } from '@/theme';
@@ -61,6 +62,22 @@ function AuthOverlay() {
       ) : (
         <SignInScreen />
       )}
+    </View>
+  );
+}
+
+// First-login prompt: shown once, on top of the app, after the session is restored
+// but before the user has chosen "track my game" vs "follow a player". Gated by
+// profiles.onboarded (loaded by ProfileProvider for the signed-in user). null =
+// still loading (show nothing to avoid a flash); false = show; true = done.
+function OnboardingOverlay() {
+  const { session, loading } = useAuth();
+  const { onboarded } = useProfile();
+  if (loading || !session) return null; // signed out → AuthOverlay handles it
+  if (onboarded !== false) return null;
+  return (
+    <View style={styles.overlay}>
+      <OnboardingScreen />
     </View>
   );
 }
@@ -125,6 +142,7 @@ export default function RootLayout() {
                     <AppTabs />
                   </SafeAreaView>
                   <AuthOverlay />
+                  <OnboardingOverlay />
                   <ScreenshotNav />
                   <BagPublisher />
                   <PushRegistrar />
