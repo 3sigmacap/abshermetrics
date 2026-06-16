@@ -11,6 +11,7 @@ import {
 } from './club-compute.js';
 import { publishBagSummary } from './bag-summary.js';
 import { loadProfile } from './profile.js';
+import { getViewedUserId, isViewingOther } from './view-context.js';
 
 export { CLUB_ORDER, clubSortIdx };
 
@@ -18,6 +19,9 @@ export { CLUB_ORDER, clubSortIdx };
  *  current numbers. Best-effort (never fails a mutation). Called after any data
  *  change; also runs on Bag load for users whose data predates this feature. */
 export async function republishSummary() {
+  // Only ever publish YOUR OWN summary. When spectating another player, loadClubData()
+  // returns their data — never republish that as ours.
+  if (await isViewingOther()) return;
   try {
     const [cd, profile] = await Promise.all([loadClubData(), loadProfile()]);
     await publishBagSummary(cd, profile);
@@ -39,12 +43,17 @@ export function escapeHtml(s) {
 
 /** Raw fetch: the user's sessions + shots, normalized to the RawShot/Session shapes. */
 export async function fetchUserData() {
+  // Scope to the VIEWED user (self by default; an approved followed player when
+  // spectating). The explicit user_id filter is required now that follower-read RLS
+  // is permissive — an unfiltered select would mix in every followed player's rows.
+  const uid = await getViewedUserId();
   const { data: srows, error: se } = await supabase
     .from('sessions')
     .select('*')
+    .eq('user_id', uid)
     .order('date', { ascending: true });
   if (se) throw se;
-  const { data: shotRows, error: she } = await supabase.from('shots').select('*');
+  const { data: shotRows, error: she } = await supabase.from('shots').select('*').eq('user_id', uid);
   if (she) throw she;
 
   const sessions = (srows ?? []).map((s) => ({

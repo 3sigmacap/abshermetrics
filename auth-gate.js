@@ -9,21 +9,101 @@
 // (3) mounts a small account chip (name + Sign out) into the existing .nav.
 import { guard, signOut, displayNameOf } from './auth.js';
 import { pendingIncomingCount } from './connections.js';
+import { listFollows, pendingFollowCount } from './follows.js';
+import { getViewedUserId, setViewedUserId, rawStoredViewedUser } from './view-context.js';
 
 const session = await guard(); // redirects + returns null when signed out
 
 if (session) {
+  // Validate + mount the "viewing" switcher BEFORE revealing the page, so a stale
+  // viewed-user is corrected before any data loads.
+  await mountViewSwitcher(session);
   mountAccountChip(session);
   document.documentElement.classList.remove('auth-pending');
-  // Pending-connection badge on the Settings tab (non-blocking).
+  // Pending request badge on the Settings tab (connections + follows; non-blocking).
   mountPendingBadge();
+}
+
+/** Spectator "view as" control: if you have approved follows, a chip in the nav lets
+ *  you switch between "My data" and each player you follow. Viewing another shows a
+ *  read-only banner. Also self-heals a stale stored viewed-user (e.g. follow revoked). */
+async function mountViewSwitcher(session) {
+  const me = session.user.id;
+  let following = [];
+  try { following = (await listFollows()).following || []; } catch (_) { /* ignore */ }
+
+  // Self-heal: if the stored viewed-user is no longer an approved follow, reset to self.
+  const stored = rawStoredViewedUser();
+  if (stored && stored !== me && !following.some((f) => f.other.id === stored)) {
+    await setViewedUserId(null);
+  }
+  if (!following.length) return; // nothing to spectate
+
+  const viewed = await getViewedUserId();
+  const viewingOther = viewed !== me;
+  const current = following.find((f) => f.other.id === viewed);
+  const label = (p) => (p?.name || (p?.email || '').split('@')[0] || 'Player');
+
+  if (!document.getElementById('amViewStyle')) {
+    const st = document.createElement('style');
+    st.id = 'amViewStyle';
+    st.textContent = `
+      .am-view{display:flex;align-items:center;gap:8px;margin-left:14px;font-family:'IBM Plex Mono',monospace;}
+      .am-view select{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.5px;color:var(--ink,#e8f3ec);
+        background:#10201780;border:1px solid var(--line2,#26432f);border-radius:18px;padding:7px 10px;cursor:pointer;}
+      .am-view select:focus{outline:none;border-color:var(--accent,#d4ff4f);}
+      .am-view .eye{font-size:13px;}
+      .am-viewbar{position:sticky;top:0;z-index:50;background:#1a1206;border-bottom:1px solid #3a2a0a;
+        color:#ffce6b;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.5px;
+        display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 14px;}
+      .am-viewbar b{color:#ffe1a0;}
+      .am-viewbar button{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#1a1206;background:#ffce6b;
+        border:none;border-radius:14px;padding:5px 11px;cursor:pointer;font-weight:600;}
+      html.am-readonly .am-writes{display:none !important;}`;
+    document.head.appendChild(st);
+  }
+
+  // Read-only flag + banner when spectating someone else.
+  if (viewingOther) {
+    document.documentElement.classList.add('am-readonly');
+    const bar = document.createElement('div');
+    bar.className = 'am-viewbar';
+    bar.innerHTML = `<span>👁 Viewing <b>${escapeHtmlLite(label(current?.other))}</b>'s account — read-only</span>`;
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.textContent = 'Back to My data';
+    back.addEventListener('click', async () => { await setViewedUserId(null); location.reload(); });
+    bar.appendChild(back);
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+
+  // The switcher in the nav.
+  const nav = document.querySelector('.nav');
+  if (nav) {
+    const wrap = document.createElement('div');
+    wrap.className = 'am-view';
+    const sel = document.createElement('select');
+    sel.innerHTML =
+      `<option value="${me}"${!viewingOther ? ' selected' : ''}>👁 My data</option>` +
+      following
+        .map((f) => `<option value="${escapeHtmlLite(f.other.id)}"${f.other.id === viewed ? ' selected' : ''}>👁 ${escapeHtmlLite(label(f.other))}</option>`)
+        .join('');
+    sel.addEventListener('change', async () => { await setViewedUserId(sel.value); location.reload(); });
+    wrap.appendChild(sel);
+    nav.appendChild(wrap);
+  }
+}
+
+function escapeHtmlLite(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 /** Decorate the Settings nav tab with a small badge when connection requests are
  *  waiting. Lives here so every page gets it (mirrors mobile's Settings-tab badge). */
 async function mountPendingBadge() {
   try {
-    const n = await pendingIncomingCount();
+    const [conn, foll] = await Promise.all([pendingIncomingCount(), pendingFollowCount()]);
+    const n = (conn || 0) + (foll || 0);
     if (!n) return;
     const link = document.querySelector('.nav a.tab[href="settings.html"]');
     if (!link || link.querySelector('.am-badge')) return;
