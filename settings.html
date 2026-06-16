@@ -109,7 +109,7 @@ input::placeholder{color:var(--dim2);}
 <div class="flash" id="flash"></div>
 
 <!-- ACCOUNT -->
-<div class="section">
+<div class="section am-writes">
   <div class="section-title">Account</div>
   <div class="panel">
     <label class="label" for="name">Display name</label>
@@ -160,8 +160,25 @@ input::placeholder{color:var(--dim2);}
   </div>
 </div>
 
-<!-- MY CLUBS -->
+<!-- FOLLOWERS -->
 <div class="section">
+  <div class="section-title">Followers</div>
+  <div class="panel" id="follPanel">
+    <div class="help">Let someone <b>spectate</b> your account — they see your full data read-only (a coach, a parent). Or follow a player to view theirs. You approve every follower, and only people you approve ever see your raw shots.</div>
+    <label class="label" for="follEmail">Follow a player by email</label>
+    <div class="row">
+      <input type="email" id="follEmail" placeholder="player@email.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="small-btn" id="follAdd" type="button">Follow</button>
+    </div>
+    <div id="follPendingIn"></div>
+    <div id="follFollowers"></div>
+    <div id="follPendingOut"></div>
+    <div id="follFollowing"></div>
+  </div>
+</div>
+
+<!-- MY CLUBS -->
+<div class="section am-writes">
   <div class="section-title">My Clubs</div>
   <div class="panel">
     <div class="help">Lofts feed the rest of the app. Toggle a club off if it isn't in your bag.</div>
@@ -176,7 +193,7 @@ input::placeholder{color:var(--dim2);}
 </div>
 
 <!-- APP -->
-<div class="section">
+<div class="section am-writes">
   <div class="section-title">App</div>
   <div class="panel">
     <div class="toggle-row">
@@ -203,6 +220,8 @@ import { signOut } from './auth.js';
 import {
   requestConnection, listConnections, acceptConnection, declineConnection, removeConnection,
 } from './connections.js';
+import { requestFollow, listFollows, approveFollow, removeFollow } from './follows.js';
+import { setViewedUserId } from './view-context.js';
 
 const $ = (id) => document.getElementById(id);
 let busy = false;
@@ -382,5 +401,79 @@ $('connPanel').addEventListener('click', async (e) => {
 });
 
 renderConnections();
+
+// ---- followers (spectator mode) ----
+const follEmail = $('follEmail');
+const follAdd = $('follAdd');
+
+function follRow(f, kind) {
+  const name = escapeHtml(f.other.name || (f.other.email || '').split('@')[0] || 'Player');
+  const email = escapeHtml(f.other.email || '');
+  let right;
+  if (kind === 'reqIn') {
+    right = `<button class="conn-btn conn-accept" data-fact="approve" data-id="${f.id}">Approve</button>
+      <button class="conn-btn conn-decline" data-fact="deny" data-id="${f.id}">Deny</button>`;
+  } else if (kind === 'follower') {
+    right = `<span class="conn-tag">Spectating you</span>
+      <button class="conn-btn conn-remove" data-fact="remove" data-id="${f.id}">Remove</button>`;
+  } else if (kind === 'reqOut') {
+    right = `<span class="conn-tag">Awaiting approval</span>
+      <button class="conn-btn conn-remove" data-fact="remove" data-id="${f.id}">Cancel</button>`;
+  } else { // following
+    right = `<button class="conn-btn conn-view" data-fact="view" data-uid="${escapeHtml(f.other.id)}">View account</button>
+      <button class="conn-btn conn-remove" data-fact="remove" data-id="${f.id}">Unfollow</button>`;
+  }
+  return `<div class="conn-row"><div class="conn-who"><div class="nm">${name}</div><div class="em">${email}</div></div>${right}</div>`;
+}
+
+async function renderFollows() {
+  const { following, followers, pendingIn, pendingOut, error } = await listFollows();
+  if (error) { $('follPendingIn').innerHTML = `<div class="conn-empty">Could not load followers: ${escapeHtml(error)}</div>`; return; }
+  $('follPendingIn').innerHTML = pendingIn.length
+    ? '<div class="conn-sub">Wants to follow you</div>' + pendingIn.map((f) => follRow(f, 'reqIn')).join('') : '';
+  $('follFollowers').innerHTML = followers.length
+    ? '<div class="conn-sub">Following you</div>' + followers.map((f) => follRow(f, 'follower')).join('') : '';
+  $('follPendingOut').innerHTML = pendingOut.length
+    ? '<div class="conn-sub">Requested</div>' + pendingOut.map((f) => follRow(f, 'reqOut')).join('') : '';
+  $('follFollowing').innerHTML = '<div class="conn-sub">You follow</div>' + (following.length
+    ? following.map((f) => follRow(f, 'following')).join('')
+    : '<div class="conn-empty">You aren’t following anyone yet.</div>');
+}
+
+follAdd.addEventListener('click', async () => {
+  const email = follEmail.value.trim();
+  if (!email) { flash('Enter an email address.', true); return; }
+  if (busy) return; busy = true; follAdd.disabled = true;
+  const { status, error } = await requestFollow(email);
+  busy = false; follAdd.disabled = false;
+  if (error) { flash(error, true); return; }
+  const messages = {
+    requested: 'Request sent — they’ll get to approve you.',
+    already: 'You already follow / have a pending request for that player.',
+    self: "That's your own email.",
+    not_found: 'No AbsherMetrics account uses that email yet.',
+  };
+  const isErr = status === 'self' || status === 'not_found';
+  flash(messages[status] || 'Done.', isErr);
+  if (status === 'requested') follEmail.value = '';
+  renderFollows();
+});
+follEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); follAdd.click(); } });
+
+$('follPanel').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-fact]');
+  if (!btn) return;
+  const { fact, id, uid } = btn.dataset;
+  if (fact === 'view') { await setViewedUserId(uid); location.href = 'index.html'; return; }
+  if (fact === 'remove' && !window.confirm('Remove this follow relationship?')) return;
+  if (busy) return; busy = true; btn.disabled = true;
+  const res = fact === 'approve' ? await approveFollow(id) : await removeFollow(id);
+  busy = false;
+  if (res?.error) { flash(res.error, true); btn.disabled = false; return; }
+  if (fact === 'approve') flash('Approved — they can now view your account.');
+  renderFollows();
+});
+
+renderFollows();
 </script>
 </body></html>

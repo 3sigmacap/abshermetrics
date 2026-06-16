@@ -4,6 +4,7 @@
 // passes RLS because auth.uid() = id.
 import { supabase, getSession } from './auth.js';
 import { DEFAULT_LOFTS } from './club-compute.js';
+import { getViewedUserId } from './view-context.js';
 
 export { DEFAULT_LOFTS };
 
@@ -12,11 +13,14 @@ export const loftOf = (clubSpecs, club) => clubSpecs?.[club]?.loft ?? DEFAULT_LO
 /** In-bag resolution: per-club override, else TRUE (clubs default to in the bag). */
 export const inBagOf = (clubSpecs, club) => clubSpecs?.[club]?.inBag ?? true;
 
-/** Load the signed-in user's profile row (display name, club_specs, prefs). */
-export async function loadProfile() {
+/** Load a profile row (display name, club_specs, prefs). Defaults to the VIEWED user
+ *  (self normally; an approved followed player when spectating) so the bag computes
+ *  with THEIR lofts. Pass a target id to force a specific user. Writes always target
+ *  self (updateName/saveClubSpecs/updatePrefs use the session id). */
+export async function loadProfile(targetId) {
   const session = await getSession();
   const email = session?.user?.email ?? '';
-  const uid = session?.user?.id;
+  const uid = targetId || (await getViewedUserId());
   if (!uid) return { displayName: '', email, clubSpecs: {}, prefs: {} };
   // select('*') so it works even if club_specs/prefs columns aren't present yet.
   const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
