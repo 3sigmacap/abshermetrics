@@ -27,6 +27,9 @@ interface ProfileState {
   clubSpecs: Record<string, ClubSpec>;
   prefs: AppPrefs;
   loading: boolean;
+  /** First-run flag for the signed-in user (NOT the viewed user): null while loading,
+   *  false = show the "track vs follow" prompt, true = already chosen. */
+  onboarded: boolean | null;
   /** loft for a club: user override, else standard default, else null */
   getLoft: (club: string) => number | null;
   inBag: (club: string) => boolean;
@@ -34,6 +37,8 @@ interface ProfileState {
   saveClubSpecs: (specs: Record<string, ClubSpec>) => Promise<{ error?: string }>;
   updatePrefs: (p: Partial<AppPrefs>) => Promise<{ error?: string }>;
   changePassword: (password: string) => Promise<{ error?: string }>;
+  /** Mark the first-run prompt done (upserts profiles.onboarded = true for self). */
+  completeOnboarding: () => Promise<void>;
 }
 
 const ProfileContext = createContext<ProfileState | undefined>(undefined);
@@ -44,10 +49,35 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [clubSpecs, setClubSpecs] = useState<Record<string, ClubSpec>>({});
   const [prefs, setPrefs] = useState<AppPrefs>({});
   const [loading, setLoading] = useState(true);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   const email = session?.user?.email ?? '';
   const { viewedUserId, selfId } = useView();
   const uid = selfId; // writes ALWAYS target self; reads use the viewed user.
+
+  // First-run flag is keyed to the SIGNED-IN user, independent of who we're viewing.
+  useEffect(() => {
+    let cancelled = false;
+    if (!uid) {
+      setOnboarded(null);
+      return;
+    }
+    supabase
+      .from('profiles')
+      .select('onboarded')
+      .eq('id', uid)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        // No row yet / error → treat as not-onboarded (show the prompt) only when we
+        // actually got a clean "missing" answer; on a hard error, skip the prompt.
+        if (error) setOnboarded(true);
+        else setOnboarded(data ? !!data.onboarded : false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
 
   const refresh = useCallback(async () => {
     if (!viewedUserId) {
@@ -84,6 +114,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       clubSpecs,
       prefs,
       loading,
+      onboarded,
       getLoft: (club) => clubSpecs[club]?.loft ?? DEFAULT_LOFTS[club] ?? null,
       inBag: (club) => clubSpecs[club]?.inBag ?? true,
       updateName: async (name) => {
@@ -120,8 +151,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.updateUser({ password });
         return error ? { error: error.message } : {};
       },
+      completeOnboarding: async () => {
+        if (!uid) return;
+        // Upsert (not update) so it works even if the row is somehow missing.
+        await supabase.from('profiles').upsert({ id: uid, onboarded: true }, { onConflict: 'id' });
+        setOnboarded(true);
+      },
     }),
-    [displayName, email, clubSpecs, prefs, loading, uid],
+    [displayName, email, clubSpecs, prefs, loading, onboarded, uid],
   );
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;

@@ -11,6 +11,7 @@ import { guard, signOut, displayNameOf } from './auth.js';
 import { pendingIncomingCount } from './connections.js';
 import { listFollows, pendingFollowCount } from './follows.js';
 import { getViewedUserId, setViewedUserId, rawStoredViewedUser } from './view-context.js';
+import { maybeShowOnboarding } from './onboarding.js';
 
 const session = await guard(); // redirects + returns null when signed out
 
@@ -22,6 +23,8 @@ if (session) {
   document.documentElement.classList.remove('auth-pending');
   // Pending request badge on the Settings tab (connections + follows; non-blocking).
   mountPendingBadge();
+  // First-login prompt: "track my game" vs "follow a player" (once per account).
+  maybeShowOnboarding(session);
 }
 
 /** Spectator "view as" control: if you have approved follows, a chip in the nav lets
