@@ -16,6 +16,8 @@ import {
 import { useAuth } from '@/lib/auth';
 import { CLUB_ORDER, DEFAULT_LOFTS, clubSortIdx } from '@/lib/clubData';
 import { useConnections } from '@/lib/connections';
+import { useFollows } from '@/lib/follows';
+import { useView } from '@/lib/viewContext';
 import { useClubs } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
 import { supabase } from '@/lib/supabase';
@@ -157,6 +159,56 @@ export default function Settings() {
   const conn = useConnections();
   const [connEmail, setConnEmail] = useState('');
 
+  // ---- followers (spectator mode) ----
+  const foll = useFollows();
+  const view = useView();
+  const [follEmail, setFollEmail] = useState('');
+
+  const addFollow = async () => {
+    const email = follEmail.trim();
+    if (!email) { flash('Enter an email address.', true); return; }
+    setBusy(true);
+    const { status, error } = await foll.request(email);
+    setBusy(false);
+    if (error) { flash(error, true); return; }
+    const messages: Record<string, string> = {
+      requested: 'Request sent — they’ll get to approve you.',
+      already: 'You already follow / have a pending request for that player.',
+      self: "That's your own email.",
+      not_found: 'No AbsherMetrics account uses that email yet.',
+    };
+    const isErr = status === 'self' || status === 'not_found';
+    flash(messages[status ?? ''] ?? 'Done.', isErr);
+    if (status === 'requested') setFollEmail('');
+  };
+  const approveFoll = async (id: string) => {
+    setBusy(true);
+    const { error } = await foll.approve(id);
+    setBusy(false);
+    flash(error ?? 'Approved — they can now view your account.', !!error);
+  };
+  const removeFoll = (id: string) => {
+    Alert.alert('Remove follow', 'This ends the follow relationship.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          setBusy(true);
+          const { error } = await foll.remove(id);
+          setBusy(false);
+          if (error) flash(error, true);
+        },
+      },
+    ]);
+  };
+  const viewPlayer = (id: string) => {
+    view.setViewedUser(id);
+    router.push('/' as Href);
+  };
+  const follPerson = (f: { other: { name: string | null; email: string | null } }) =>
+    f.other.name || (f.other.email || '').split('@')[0] || 'Player';
+
   const addConnection = async () => {
     const email = connEmail.trim();
     if (!email) {
@@ -219,7 +271,8 @@ export default function Settings() {
         <Text style={[styles.msg, msg.bad ? styles.msgBad : styles.msgOk]}>{msg.text}</Text>
       ) : null}
 
-      {/* ACCOUNT */}
+      {/* ACCOUNT — your own; hidden while spectating another player */}
+      {!view.isViewingOther && (
       <Section title="ACCOUNT">
         <Text style={styles.label}>DISPLAY NAME</Text>
         <View style={styles.row}>
@@ -261,6 +314,7 @@ export default function Settings() {
           <Text style={styles.deleteTxt}>Delete account</Text>
         </Pressable>
       </Section>
+      )}
 
       {/* DATA */}
       <Section title="DATA">
@@ -386,6 +440,108 @@ export default function Settings() {
         )}
       </Section>
 
+      {/* FOLLOWERS (spectator mode) */}
+      <Section title="FOLLOWERS">
+        <Text style={styles.help}>
+          Let someone spectate your account — they see your full data read-only (a coach, a parent). Or
+          follow a player to view theirs. You approve every follower; only people you approve see your raw shots.
+        </Text>
+        <Text style={styles.label}>FOLLOW A PLAYER BY EMAIL</Text>
+        <View style={styles.row}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={follEmail}
+            onChangeText={setFollEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            placeholder="player@email.com"
+            placeholderTextColor={C.dim2}
+          />
+          <Pressable onPress={addFollow} style={styles.smallBtn} disabled={busy}>
+            <Text style={styles.smallBtnTxt}>Follow</Text>
+          </Pressable>
+        </View>
+
+        {foll.pendingIn.length > 0 && (
+          <>
+            <Text style={styles.connSub}>WANTS TO FOLLOW YOU</Text>
+            {foll.pendingIn.map((f) => (
+              <View key={f.id} style={styles.connRow}>
+                <View style={styles.connWho}>
+                  <Text style={styles.connName} numberOfLines={1}>{follPerson(f)}</Text>
+                  <Text style={styles.connEmail} numberOfLines={1}>{f.other.email}</Text>
+                </View>
+                <Pressable onPress={() => approveFoll(f.id)} style={[styles.connBtn, styles.connAccept]} disabled={busy}>
+                  <Text style={styles.connAcceptTxt}>Approve</Text>
+                </Pressable>
+                <Pressable onPress={() => removeFoll(f.id)} style={[styles.connBtn, styles.connGhost]} disabled={busy}>
+                  <Text style={styles.connGhostTxt}>Deny</Text>
+                </Pressable>
+              </View>
+            ))}
+          </>
+        )}
+
+        {foll.followers.length > 0 && (
+          <>
+            <Text style={styles.connSub}>FOLLOWING YOU</Text>
+            {foll.followers.map((f) => (
+              <View key={f.id} style={styles.connRow}>
+                <View style={styles.connWho}>
+                  <Text style={styles.connName} numberOfLines={1}>{follPerson(f)}</Text>
+                  <Text style={styles.connEmail} numberOfLines={1}>{f.other.email}</Text>
+                </View>
+                <Pressable onPress={() => removeFoll(f.id)} style={[styles.connBtn, styles.connGhost]} disabled={busy}>
+                  <Text style={styles.connGhostTxt}>Remove</Text>
+                </Pressable>
+              </View>
+            ))}
+          </>
+        )}
+
+        {foll.pendingOut.length > 0 && (
+          <>
+            <Text style={styles.connSub}>REQUESTED</Text>
+            {foll.pendingOut.map((f) => (
+              <View key={f.id} style={styles.connRow}>
+                <View style={styles.connWho}>
+                  <Text style={styles.connName} numberOfLines={1}>{follPerson(f)}</Text>
+                  <Text style={styles.connEmail} numberOfLines={1}>{f.other.email}</Text>
+                </View>
+                <Text style={styles.connTag}>Pending</Text>
+                <Pressable onPress={() => removeFoll(f.id)} style={[styles.connBtn, styles.connGhost]} disabled={busy}>
+                  <Text style={styles.connGhostTxt}>Cancel</Text>
+                </Pressable>
+              </View>
+            ))}
+          </>
+        )}
+
+        <Text style={styles.connSub}>YOU FOLLOW</Text>
+        {foll.following.length > 0 ? (
+          foll.following.map((f) => (
+            <View key={f.id} style={styles.connRow}>
+              <View style={styles.connWho}>
+                <Text style={styles.connName} numberOfLines={1}>{follPerson(f)}</Text>
+                <Text style={styles.connEmail} numberOfLines={1}>{f.other.email}</Text>
+              </View>
+              <Pressable onPress={() => viewPlayer(f.other.id)} style={[styles.connBtn, styles.connView]}>
+                <Text style={styles.connViewTxt}>View</Text>
+              </Pressable>
+              <Pressable onPress={() => removeFoll(f.id)} style={[styles.connBtn, styles.connGhost]} disabled={busy}>
+                <Text style={styles.connGhostTxt}>Unfollow</Text>
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.help}>You aren’t following anyone yet.</Text>
+        )}
+      </Section>
+
+      {/* MY CLUBS + APP — your own; hidden while spectating another player */}
+      {!view.isViewingOther && (
+      <>
       {/* MY CLUBS */}
       <Section title="MY CLUBS">
         <Text style={styles.help}>
@@ -447,6 +603,8 @@ export default function Settings() {
           />
         </View>
       </Section>
+      </>
+      )}
 
       <Text style={styles.foot}>AbsherMetrics</Text>
     </ScrollView>

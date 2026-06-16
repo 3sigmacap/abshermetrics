@@ -12,6 +12,7 @@ import { type ClubData } from '@/data';
 import { useAuth } from '@/lib/auth';
 import { CLUB_COLORS, CLUB_ORDER, clubColor, computeClubs } from '@/lib/clubData';
 import { supabase } from '@/lib/supabase';
+import { useView } from '@/lib/viewContext';
 import { type RawShot, type Session, SAMPLE_DATA } from '@/rawData';
 
 /**
@@ -41,6 +42,7 @@ const DataContext = createContext<DataState | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
+  const { viewedUserId } = useView();
   const [rawShots, setRawShots] = useState<RawShot[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!session) {
+    if (!session || !viewedUserId) {
       setRawShots([]);
       setSessions([]);
       setLoaded(false); // signed out / not restored yet — not a confirmed "empty account"
@@ -61,12 +63,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
+      // Scope to the VIEWED user (self by default; an approved followed player when
+      // spectating). Explicit user_id filter required now that follower-read RLS is
+      // permissive — an unfiltered select would mix in followed players' rows.
       const { data: srows, error: se } = await supabase
         .from('sessions')
         .select('*')
+        .eq('user_id', viewedUserId)
         .order('date', { ascending: true });
       if (se) throw se;
-      const { data: shotRows, error: she } = await supabase.from('shots').select('*');
+      const { data: shotRows, error: she } = await supabase
+        .from('shots')
+        .select('*')
+        .eq('user_id', viewedUserId);
       if (she) throw she;
 
       const sess: Session[] = (srows ?? []).map((s) => ({
@@ -121,7 +130,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setLoaded(true); // a fetch attempt for this signed-in user has completed
       setLoading(false);
     }
-  }, [session]);
+  }, [session, viewedUserId]);
 
   useEffect(() => {
     refresh();

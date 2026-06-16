@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/lib/auth';
+import { useView } from '@/lib/viewContext';
 import { DEFAULT_LOFTS } from '@/lib/clubData';
 import { supabase } from '@/lib/supabase';
 
@@ -45,10 +46,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const email = session?.user?.email ?? '';
-  const uid = session?.user?.id;
+  const { viewedUserId, selfId } = useView();
+  const uid = selfId; // writes ALWAYS target self; reads use the viewed user.
 
   const refresh = useCallback(async () => {
-    if (!uid) {
+    if (!viewedUserId) {
       setDisplayName('');
       setClubSpecs({});
       setPrefs({});
@@ -56,15 +58,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLoading(true);
-    // select('*') so it works even if the club_specs/prefs columns aren't added yet
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+    // Load the VIEWED user's profile (their lofts/in-bag drive their bag when
+    // spectating; self when not). select('*') tolerates missing columns.
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', viewedUserId).maybeSingle();
     if (!error && data) {
       setDisplayName((data.display_name as string) ?? '');
       setClubSpecs((data.club_specs as Record<string, ClubSpec>) ?? {});
       setPrefs((data.prefs as AppPrefs) ?? {});
+    } else if (!error) {
+      setDisplayName('');
+      setClubSpecs({});
+      setPrefs({});
     }
     setLoading(false);
-  }, [uid]);
+  }, [viewedUserId]);
 
   useEffect(() => {
     refresh();

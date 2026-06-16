@@ -8,13 +8,16 @@ import { ActivityIndicator, StyleSheet, View, type ColorValue } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SignInScreen from '@/components/SignInScreen';
+import ViewBar from '@/components/ViewBar';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { BagPublisher } from '@/lib/bagSummary';
 import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
+import { FollowsProvider, useFollows } from '@/lib/follows';
 import { PushRegistrar } from '@/lib/push';
 import { ProfileProvider } from '@/lib/profile';
 import { ShareImporter } from '@/lib/shareImport';
+import { ViewProvider } from '@/lib/viewContext';
 import { C } from '@/theme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -67,7 +70,9 @@ function AuthOverlay() {
 // are pushed routes (reached from Settings / Bag) with an in-screen back button.
 // The Settings tab carries a badge when connection requests are pending.
 function AppTabs() {
-  const { pendingCount } = useConnections();
+  const { pendingCount: connPending } = useConnections();
+  const { pendingCount: follPending } = useFollows();
+  const pendingCount = connPending + follPending;
   return (
     <Tabs
       screenOptions={{
@@ -108,23 +113,28 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ProfileProvider>
-        <ConnectionsProvider>
-          <DataProvider>
-            <StatusBar style="light" />
-            <View style={styles.root}>
-              <SafeAreaView style={styles.root} edges={['top']}>
-                <AppTabs />
-              </SafeAreaView>
-              <AuthOverlay />
-              <ScreenshotNav />
-              <BagPublisher />
-              <PushRegistrar />
-              <ShareImporter />
-            </View>
-          </DataProvider>
-        </ConnectionsProvider>
-      </ProfileProvider>
+      <FollowsProvider>
+        <ViewProvider>
+          <ProfileProvider>
+            <ConnectionsProvider>
+              <DataProvider>
+                <StatusBar style="light" />
+                <View style={styles.root}>
+                  <SafeAreaView style={styles.root} edges={['top']}>
+                    <ViewBar />
+                    <AppTabs />
+                  </SafeAreaView>
+                  <AuthOverlay />
+                  <ScreenshotNav />
+                  <BagPublisher />
+                  <PushRegistrar />
+                  <ShareImporter />
+                </View>
+              </DataProvider>
+            </ConnectionsProvider>
+          </ProfileProvider>
+        </ViewProvider>
+      </FollowsProvider>
     </AuthProvider>
   );
 }
