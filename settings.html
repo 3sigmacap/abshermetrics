@@ -203,6 +203,13 @@ input::placeholder{color:var(--dim2);}
       </div>
       <input type="checkbox" class="tg" id="reduceMotion">
     </div>
+    <div class="toggle-row" style="margin-top:14px">
+      <div class="t">
+        <div class="l">New-session alerts</div>
+        <div class="help" style="margin:2px 0 0">Get a notification + email when a player you follow or connect with uploads a new range session.</div>
+      </div>
+      <input type="checkbox" class="tg" id="uploadAlerts">
+    </div>
   </div>
 </div>
 
@@ -240,6 +247,7 @@ let clubSpecs = profile.clubSpecs || {};
 $('name').value = profile.displayName || '';
 $('email').textContent = profile.email || '—';
 $('reduceMotion').checked = !!profile.prefs?.reduceMotion;
+$('uploadAlerts').checked = profile.prefs?.uploadAlerts !== false; // default ON
 
 let dataClubs = [];
 try { dataClubs = (await loadClubData()).map((c) => c.club); } catch (_) { /* empty/new user */ }
@@ -313,6 +321,13 @@ $('saveClubs').addEventListener('click', async () => {
 
 $('reduceMotion').addEventListener('change', async (e) => {
   const next = { ...(profile.prefs || {}), reduceMotion: e.target.checked };
+  const { error } = await updatePrefs(next);
+  if (error) { e.target.checked = !e.target.checked; flash('Could not save preference: ' + error, true); }
+  else { profile.prefs = next; flash('Preference saved'); }
+});
+
+$('uploadAlerts').addEventListener('change', async (e) => {
+  const next = { ...(profile.prefs || {}), uploadAlerts: e.target.checked };
   const { error } = await updatePrefs(next);
   if (error) { e.target.checked = !e.target.checked; flash('Could not save preference: ' + error, true); }
   else { profile.prefs = next; flash('Preference saved'); }

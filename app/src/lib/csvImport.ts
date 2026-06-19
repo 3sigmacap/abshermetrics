@@ -152,5 +152,10 @@ export async function importCsvText(
       return { added: 0, error: 'Could not save shots (' + ie.message + ').' };
     }
   }
+  // Notify the uploader's approved followers + accepted connections that a new range
+  // session landed (push + email). Best-effort, fire-and-forget: must never block or
+  // fail the import. The function is idempotent (claims the session once) and verifies
+  // the caller owns the session, so a duplicate call is a harmless no-op.
+  void supabase.functions.invoke('notify-new-session', { body: { sessionId: sess.id } }).catch(() => {});
   return { added: rows.length, sessionLabel: label };
 }

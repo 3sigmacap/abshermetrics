@@ -375,6 +375,12 @@ export async function uploadCsvFiles(files, onProgress = () => {}) {
     }
     added += insertRows.length;
     sessionsAdded += 1;
+    // Notify the uploader's approved followers + accepted connections that a new range
+    // session landed (push + email). Fired per-session INSIDE the loop so a later file
+    // failing (early return below) can't drop notifications for sessions already saved.
+    // Best-effort, fire-and-forget — never blocks/fails the upload; the Edge Function is
+    // idempotent (claims each session once) and verifies the caller owns it.
+    supabase.functions.invoke('notify-new-session', { body: { sessionId: sess.id } }).catch(() => {});
   }
   await republishSummary();
   return { added, sessions: sessionsAdded };

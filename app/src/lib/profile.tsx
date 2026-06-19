@@ -19,6 +19,9 @@ export interface ClubSpec {
 }
 export interface AppPrefs {
   reduceMotion?: boolean;
+  /** Receive push + email when a player you follow/connect with uploads a session.
+   *  Undefined = on (default). Set false to opt out. */
+  uploadAlerts?: boolean;
 }
 
 interface ProfileState {
