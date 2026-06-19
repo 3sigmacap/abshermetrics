@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import BackBar from '@/components/BackBar';
+import Bounded from '@/components/Bounded';
 import { loadBagSummary, type BagSummaryClub } from '@/lib/bagSummary';
 import { r1 } from '@/lib/format';
 import { C } from '@/theme';
@@ -78,6 +79,7 @@ export default function ConnectionBag() {
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       <BackBar label="Connections" />
+      <Bounded>
       <Text style={styles.kicker}>CONNECTION</Text>
       <Text style={styles.title}>
         {title}
@@ -153,6 +155,7 @@ export default function ConnectionBag() {
           </Text>
         </>
       )}
+      </Bounded>
     </ScrollView>
   );
 }

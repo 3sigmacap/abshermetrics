@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { Circle, Line, Rect, Svg, Text as SvgText } from 'react-native-svg';
 
 import AverageShot, { type LaunchMeans } from '@/components/AverageShot';
+import Bounded from '@/components/Bounded';
 import { type ClubData } from '@/data';
 import { useClubs } from '@/lib/dataStore';
 import { fmt, mean, sd } from '@/lib/format';
@@ -353,6 +354,7 @@ export default function ClubDetail() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+      <Bounded>
       <Text style={styles.kicker}>DEEP DIVE</Text>
 
       {/* club picker chips */}
@@ -513,6 +515,7 @@ export default function ClubDetail() {
           </View>
         </>
       ) : null}
+      </Bounded>
     </ScrollView>
   );
 }

@@ -1,3 +1,7 @@
+/** Max content width. On phones (narrower than this) it's a no-op; on iPad it caps +
+ *  centers content so screens read as intentional tablet layouts, not stretched phone UI. */
+export const MAX_W = 760;
+
 /** AbsherMetrics palette + static club specs, mirrored from the web app. */
 export const C = {
   bg: '#070d0a',

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import BackBar from '@/components/BackBar';
+import Bounded from '@/components/Bounded';
 import { useAuth } from '@/lib/auth';
 import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
@@ -267,6 +268,7 @@ export default function RawData() {
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       <BackBar label="Settings" />
+      <Bounded>
       <Text style={styles.kicker}>GARMIN APPROACH R50</Text>
       <Text style={styles.title}>
         Raw <Text style={styles.titleAccent}>Shot Data</Text>
@@ -486,6 +488,7 @@ export default function RawData() {
       <Text style={styles.foot}>
         ABSHERMETRICS · raw launch-monitor export · Garmin Approach R50 · {fmt(totalCount, 0)} shots
       </Text>
+      </Bounded>
     </ScrollView>
   );
 }

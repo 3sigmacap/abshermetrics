@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import Bounded from '@/components/Bounded';
 import { useAuth } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { C } from '@/theme';
@@ -73,6 +74,7 @@ export default function SignInScreen() {
   return (
     <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <Bounded>
         <Text style={styles.brand}>
           ABSHER<Text style={{ color: C.accent }}>METRICS</Text>
         </Text>
@@ -158,6 +160,7 @@ export default function SignInScreen() {
         {!isSupabaseConfigured ? (
           <Text style={styles.err}>Backend not configured — see supabase/SETUP.md, then restart Metro.</Text>
         ) : null}
+        </Bounded>
       </ScrollView>
     </KeyboardAvoidingView>
   );

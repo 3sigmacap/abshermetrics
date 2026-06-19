@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import Bounded from '@/components/Bounded';
 import { ClubMultiSelect } from '@/components/ClubMultiSelect';
 import {
   ActivityIndicator,
@@ -605,6 +606,7 @@ export default function Dispersion() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+      <Bounded>
       <Text style={styles.kicker}>SIDE PROFILE + TOP-DOWN · TRUE 1:1 SCALE</Text>
       <Text style={styles.title}>
         2D <Text style={styles.titleAccent}>DISPERSION</Text> VIEWS
@@ -638,6 +640,7 @@ export default function Dispersion() {
         pan the top-down chart; double-tap to reset. (The side view exaggerates
         height for readability.)
       </Text>
+      </Bounded>
     </ScrollView>
   );
 }

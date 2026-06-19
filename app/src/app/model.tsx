@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import BackBar from '@/components/BackBar';
+import Bounded from '@/components/Bounded';
 import { C } from '@/theme';
 
 /**
@@ -124,6 +125,7 @@ export default function ModelScreen() {
   return (
     <ScrollView style={s.page} contentContainerStyle={s.content}>
       <BackBar label="Bag" />
+      <Bounded>
       <Kicker>THE ENGINE</Kicker>
       <H1>
         From launch numbers to <Text style={s.h1Accent}>ball flight</Text>
@@ -493,6 +495,7 @@ export default function ModelScreen() {
           yards and feet to match the rest of the site.
         </Text>
       </View>
+      </Bounded>
     </ScrollView>
   );
 }

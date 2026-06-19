@@ -2,6 +2,7 @@ import { Link, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import Bounded from '@/components/Bounded';
 import { type ClubData } from '@/data';
 import { useClubs, useData, useDataActions } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
@@ -168,6 +169,7 @@ export default function Overview() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+      <Bounded>
       <Text style={styles.kicker}>
         LAUNCH-MONITOR ANALYSIS · {d.nClubs} CLUBS · {d.totalShots} SHOTS
       </Text>
@@ -255,6 +257,7 @@ export default function Overview() {
       <Link href={'/model' as Href} style={styles.modelLink}>
         About the model →
       </Link>
+      </Bounded>
     </ScrollView>
   );
 }
