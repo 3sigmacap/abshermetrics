@@ -70,6 +70,13 @@ create policy "sessions own" on public.sessions
 
 create index if not exists sessions_user_idx on public.sessions (user_id);
 
+-- Set ONCE, by the notify-new-session Edge Function, when followers/connections have
+-- been notified that this session was uploaded. The function claims it atomically
+-- (update ... where notified_at is null) so each session can notify at most once —
+-- even if the client double-invokes or a stale id is replayed. Owner can't see/set it
+-- meaningfully; it's purely the function's idempotency + rate-limit ledger.
+alter table public.sessions add column if not exists notified_at timestamptz;
+
 -- ── shots (raw R50 launch rows) ────────────────────────────────────────────
 create table if not exists public.shots (
   id         uuid primary key default gen_random_uuid(),
@@ -203,6 +210,22 @@ $$;
 revoke all on function public.user_id_by_email(text) from public;
 revoke all on function public.user_id_by_email(text) from anon, authenticated;
 grant execute on function public.user_id_by_email(text) to service_role;
+
+-- Resolve a set of auth user ids -> their emails. SERVICE-ROLE ONLY (revoked from
+-- anon/authenticated to prevent harvesting). The notify-new-session Edge Function
+-- uses it to email a user's followers/connections that a new range session landed.
+create or replace function public.emails_for_users(p_ids uuid[])
+returns table (id uuid, email text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select u.id, u.email::text from auth.users u where u.id = any(p_ids);
+$$;
+revoke all on function public.emails_for_users(uuid[]) from public;
+revoke all on function public.emails_for_users(uuid[]) from anon, authenticated;
+grant execute on function public.emails_for_users(uuid[]) to service_role;
 
 -- ── bag_summaries (aggregate-only data a connection may read) ────────────────
 -- One row per user. summary = array of per-club objects (Overview columns + the

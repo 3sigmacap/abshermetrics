@@ -602,6 +602,20 @@ export default function Settings() {
             thumbColor="#0a120d"
           />
         </View>
+        <View style={[styles.toggleRow, { marginTop: 14 }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.toggleLabel}>New-session alerts</Text>
+            <Text style={styles.help}>Get a notification + email when a player you follow or connect with uploads a new range session.</Text>
+          </View>
+          <Switch
+            value={profile.prefs.uploadAlerts !== false}
+            onValueChange={(v) => {
+              void profile.updatePrefs({ uploadAlerts: v });
+            }}
+            trackColor={{ true: C.accent, false: C.line2 }}
+            thumbColor="#0a120d"
+          />
+        </View>
       </Section>
       </>
       )}
