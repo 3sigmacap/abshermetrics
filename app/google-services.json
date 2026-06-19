@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "380457862197",
+    "project_id": "abshermetrics",
+    "storage_bucket": "abshermetrics.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380457862197:android:27e19a5fe8c2c474af1d7c",
+        "android_client_info": {
+          "package_name": "com.abshermetrics.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5VGFryWUKtK05A6an_36sjXhhL5QGpqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
