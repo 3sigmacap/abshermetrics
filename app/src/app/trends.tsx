@@ -12,6 +12,7 @@ import {
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import Bounded from '@/components/Bounded';
 import { attributeAvgCarryChange, simulateFlight } from '@/engine';
 import { useRawData } from '@/lib/dataStore';
 import { fmt, mean, sd } from '@/lib/format';
@@ -619,6 +620,7 @@ export default function Trends() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+      <Bounded>
       <Text style={styles.kicker}>WHAT CHANGED — AND WHY</Text>
       <Text style={styles.title}>
         Performance <Text style={styles.titleAccent}>Analytics</Text>
@@ -737,6 +739,7 @@ export default function Trends() {
         <Text style={styles.footText}>ABSHERMETRICS · performance analytics</Text>
         <Text style={styles.footText}>{sessions.length} sessions</Text>
       </View>
+      </Bounded>
     </ScrollView>
   );
 }

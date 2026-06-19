@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import Bounded from '@/components/Bounded';
 import { useFollows } from '@/lib/follows';
 import { useProfile } from '@/lib/profile';
 import { C } from '@/theme';
@@ -69,6 +70,7 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <Bounded>
         <Text style={styles.brand}>
           ABSHER<Text style={{ color: C.accent }}>METRICS</Text>
         </Text>
@@ -124,6 +126,7 @@ export default function OnboardingScreen() {
             <Text style={styles.btnTxt}>Get started</Text>
           )}
         </Pressable>
+        </Bounded>
       </ScrollView>
     </KeyboardAvoidingView>
   );

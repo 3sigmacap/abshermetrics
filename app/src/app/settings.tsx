@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import Bounded from '@/components/Bounded';
 import { useAuth } from '@/lib/auth';
 import { CLUB_ORDER, DEFAULT_LOFTS, clubSortIdx } from '@/lib/clubData';
 import { useConnections } from '@/lib/connections';
@@ -267,6 +268,7 @@ export default function Settings() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+      <Bounded>
       {msg ? (
         <Text style={[styles.msg, msg.bad ? styles.msgBad : styles.msgOk]}>{msg.text}</Text>
       ) : null}
@@ -621,6 +623,7 @@ export default function Settings() {
       )}
 
       <Text style={styles.foot}>AbsherMetrics</Text>
+      </Bounded>
     </ScrollView>
   );
 }

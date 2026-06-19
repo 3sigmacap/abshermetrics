@@ -2,14 +2,14 @@
   "expo": {
     "name": "AbsherMetrics",
     "slug": "abshermetrics",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "abshermetrics",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.abshermetrics.app",
-      "supportsTablet": false,
+      "supportsTablet": true,
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

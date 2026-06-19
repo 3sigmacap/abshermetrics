@@ -13,6 +13,7 @@ import {
 import { Line, Polyline, Rect, Svg } from 'react-native-svg';
 
 import BackBar from '@/components/BackBar';
+import Bounded from '@/components/Bounded';
 import { buildSummary, loadBagSummary, type BagSummaryClub } from '@/lib/bagSummary';
 import { clubSortIdx } from '@/lib/clubData';
 import { useConnections } from '@/lib/connections';
@@ -113,6 +114,7 @@ export default function Compare() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+      <Bounded>
       <BackBar label="Bag" />
       <Text style={styles.kicker}>COMPARE</Text>
       <Text style={styles.title}>
@@ -283,6 +285,7 @@ export default function Compare() {
           )}
         </>
       )}
+      </Bounded>
     </ScrollView>
   );
 }
