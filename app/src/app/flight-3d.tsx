@@ -10,6 +10,7 @@ import { Circle, G, Line, Path, Polygon, Svg } from 'react-native-svg';
 
 import { type ClubData } from '@/data';
 import { useClubs } from '@/lib/dataStore';
+import { lockDefaultOrientation } from '@/lib/orientation';
 import { C } from '@/theme';
 
 /* ------------------------------------------------------------------ *
@@ -92,7 +93,8 @@ export default function Flight3D() {
     useCallback(() => {
       ScreenOrientation.unlockAsync().catch(() => {});
       return () => {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+        // Restore the app default (iPad keeps landscape; phones go back to portrait).
+        lockDefaultOrientation();
       };
     }, []),
   );

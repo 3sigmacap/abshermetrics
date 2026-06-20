@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs, useRouter, type Href } from 'expo-router';
-import * as ScreenOrientation from 'expo-screen-orientation';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View, type ColorValue } from 'react-native';
@@ -15,6 +14,7 @@ import { BagPublisher } from '@/lib/bagSummary';
 import { ConnectionsProvider, useConnections } from '@/lib/connections';
 import { DataProvider } from '@/lib/dataStore';
 import { FollowsProvider, useFollows } from '@/lib/follows';
+import { lockDefaultOrientation } from '@/lib/orientation';
 import { PushRegistrar } from '@/lib/push';
 import { ProfileProvider, useProfile } from '@/lib/profile';
 import { ShareImporter } from '@/lib/shareImport';
@@ -123,9 +123,10 @@ function AppTabs() {
 }
 
 export default function RootLayout() {
-  // Portrait everywhere; the 3D screen unlocks landscape on focus (see flight-3d.tsx).
+  // iPad rotates freely (landscape support); phones stay portrait. The 3D screen
+  // unlocks landscape on focus and restores this default on blur (see flight-3d.tsx).
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+    lockDefaultOrientation();
   }, []);
 
   return (
