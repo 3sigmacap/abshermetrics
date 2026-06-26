@@ -8,6 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import raw from '@/shared/raw-shots.json';
 
 export interface RawShot {
+  /** DB row id — present on shots loaded from Supabase (lets the user delete one). */
+  id?: string;
   session: string;
   session_label?: string;
   ts?: string;

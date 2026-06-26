@@ -22,6 +22,7 @@ import { fmt } from '@/lib/format';
 import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
 import { takePendingShared } from '@/lib/pendingShared';
 import { useProfile } from '@/lib/profile';
+import { useView } from '@/lib/viewContext';
 // @ts-ignore — plain-JS shared module (no type declarations)
 import { deviceLabel, parseDeviceFile, numericClubs } from '@/shared/device-adapters.js';
 import { orderIdx, type RawShot } from '@/rawData';
@@ -30,7 +31,7 @@ import { C } from '@/theme';
 const mono = 'monospace';
 
 // ---- column model (mirrors COLS in raw-data.html) ----
-type ColType = 'idx' | 'date' | 'club' | 'excl' | 'num';
+type ColType = 'idx' | 'date' | 'club' | 'excl' | 'num' | 'del';
 interface Col {
   key: string;
   label: string;
@@ -56,6 +57,7 @@ const COLS: Col[] = [
   { key: 'axis', label: 'Spin Axis', unit: '°', type: 'num', dp: 1, signed: true, w: 88 },
   { key: 'apex', label: 'Apex', unit: 'ft', type: 'num', dp: 1, w: 74 },
   { key: 'dev', label: 'Lateral', unit: 'yd', type: 'num', dp: 1, signed: true, w: 78 },
+  { key: '_del', label: '', unit: '', type: 'del', w: 52 },
 ];
 
 // Each table row = a RawShot tagged with display index + resolved color.
@@ -89,8 +91,19 @@ export default function RawData() {
   const [uploadMsg, setUploadMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const { deleteAllData } = useDataActions();
+  const { deleteAllData, deleteShot } = useDataActions();
+  const { isViewingOther } = useView();
   const { prefs, updatePrefs, loading: profileLoading } = useProfile();
+
+  const confirmDeleteShot = useCallback(
+    (row: Row) => {
+      Alert.alert('Delete shot', `Permanently delete this ${row.club} shot? This can’t be undone.`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => { if (row.id) void deleteShot(row.id); } },
+      ]);
+    },
+    [deleteShot],
+  );
   // One-time "map your wedges" prompt: number-only club codes pending a mapping + the
   // file texts to re-import once mapped.
   const [mapping, setMapping] = useState<{ need: Record<string, string[]>; texts: string[] } | null>(null);
@@ -453,6 +466,9 @@ export default function RawData() {
             {/* header */}
             <View style={[styles.tr, styles.headRow]}>
               {COLS.map((c) => {
+                if (c.type === 'del') {
+                  return <View key={c.key} style={[styles.thCell, { width: c.w }]} />;
+                }
                 const sorted = c.key === sortKey;
                 const left = c.type === 'idx' || c.type === 'date' || c.type === 'club';
                 const center = c.type === 'excl';
@@ -540,6 +556,21 @@ export default function RawData() {
                             </View>
                           ) : (
                             <Text style={styles.inBadge}>✓</Text>
+                          )}
+                        </View>
+                      );
+                    }
+                    if (c.type === 'del') {
+                      // Delete this shot (own data only — hidden while spectating).
+                      return (
+                        <View key={c.key} style={[styles.delCellWrap, { width: c.w }]}>
+                          {isViewingOther ? null : (
+                            <Pressable
+                              onPress={() => confirmDeleteShot(r)}
+                              hitSlop={8}
+                              style={styles.delBtn}>
+                              <Text style={styles.delTxt}>✕</Text>
+                            </Pressable>
                           )}
                         </View>
                       );
@@ -789,4 +820,8 @@ const styles = StyleSheet.create({
   mapChipTxtOn: { color: '#0a120d', fontWeight: '700' },
   mapSaveBtn: { backgroundColor: C.accent, borderRadius: 10, paddingVertical: 13, alignItems: 'center', marginTop: 20 },
   mapSaveTxt: { color: '#0a120d', fontWeight: '800', fontSize: 16 },
+  // ---- per-shot delete ----
+  delCellWrap: { alignItems: 'center', justifyContent: 'center' },
+  delBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#5e2b2b' },
+  delTxt: { color: C.bad, fontSize: 13, fontWeight: '700' },
 });
