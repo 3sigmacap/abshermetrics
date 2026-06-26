@@ -1,6 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -78,6 +78,105 @@ function numText(v: unknown, c: Col): string {
   if (c.signed && n > 0) s = '+' + s;
   return s;
 }
+
+// Per-column width style objects, precomputed once so cells don't allocate a fresh
+// { width } object on every render.
+const COL_W: Record<string, { width: number }> = {};
+COLS.forEach((c) => {
+  COL_W[c.key] = { width: c.w };
+});
+
+// One table row, MEMOIZED. A filter/sort/search/typing change re-runs the parent, but a
+// row whose `row` reference is unchanged (every surviving row after a chip toggle) skips
+// re-render entirely — turning a "re-render hundreds of rows" toggle into "touch only the
+// rows that actually changed". `isViewingOther` + `onDelete` are stable references.
+const TableRow = memo(function TableRow({
+  row,
+  isViewingOther,
+  onDelete,
+}: {
+  row: Row;
+  isViewingOther: boolean;
+  onDelete: (r: Row) => void;
+}) {
+  const ex = !!row.excluded;
+  return (
+    <View style={styles.bodyTr}>
+      {COLS.map((c) => {
+        const dim = ex && c.type !== 'excl';
+        const w = COL_W[c.key];
+        if (c.type === 'idx') {
+          return (
+            <Text key={c.key} style={[styles.td, styles.idxCell, w, dim && styles.exDim]}>
+              {row._idx}
+            </Text>
+          );
+        }
+        if (c.type === 'date') {
+          return (
+            <Text
+              key={c.key}
+              numberOfLines={1}
+              style={[styles.td, styles.alLeft, styles.dateCell, w, dim && styles.exDim]}>
+              {row.session_label || row.date || '—'}
+            </Text>
+          );
+        }
+        if (c.type === 'club') {
+          return (
+            <View key={c.key} style={[styles.clubCellWrap, w, dim && styles.exDim]}>
+              <View style={[styles.sw, { backgroundColor: row._color }]} />
+              <Text numberOfLines={1} style={styles.clubTxt}>
+                {row.club}
+              </Text>
+            </View>
+          );
+        }
+        if (c.type === 'device') {
+          return (
+            <View key={c.key} style={[styles.deviceCellWrap, w, dim && styles.exDim]}>
+              <Text numberOfLines={1} style={styles.deviceBadge}>
+                {deviceLabel((row.device as string) || 'garmin_r50')}
+              </Text>
+            </View>
+          );
+        }
+        if (c.type === 'excl') {
+          return (
+            <View key={c.key} style={[styles.exCellWrap, w]}>
+              {ex ? (
+                <View style={styles.exBadge}>
+                  <Text style={styles.exBadgeTxt}>Excluded</Text>
+                </View>
+              ) : (
+                <Text style={styles.inBadge}>✓</Text>
+              )}
+            </View>
+          );
+        }
+        if (c.type === 'del') {
+          return (
+            <View key={c.key} style={[styles.delCellWrap, w]}>
+              {isViewingOther ? null : (
+                <Pressable onPress={() => onDelete(row)} hitSlop={8} style={styles.delBtn}>
+                  <Text style={styles.delTxt}>✕</Text>
+                </Pressable>
+              )}
+            </View>
+          );
+        }
+        const raw = (row as Record<string, unknown>)[c.key];
+        const n = Number(raw);
+        const neg = c.signed && !Number.isNaN(n) && n < 0;
+        return (
+          <Text key={c.key} style={[styles.td, styles.alRight, w, neg && styles.neg, dim && styles.exDim]}>
+            {numText(raw, c)}
+          </Text>
+        );
+      })}
+    </View>
+  );
+});
 
 export default function RawData() {
   const { shots, sessions, colors, loading, refresh } = useRawData();
@@ -202,10 +301,17 @@ export default function RawData() {
   }, [rows]);
   const deviceLine = deviceLabels.length ? deviceLabels.join(' · ') : 'Garmin R50';
 
+  // Defer the table's filter inputs so a chip tap / keystroke updates the chip (urgent)
+  // immediately while the heavier table recompute + re-render runs as a NON-BLOCKING
+  // transition — the tap feels instant instead of waiting ~1s for the rows to update.
+  const deferredQuery = useDeferredValue(query);
+  const deferredClubState = useDeferredValue(clubState);
+  const deferredSessState = useDeferredValue(sessState);
+
   const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     let out = rows.filter(
-      (r) => clubState[r.club] && (r.session ? sessState[r.session] !== false : true),
+      (r) => deferredClubState[r.club] && (r.session ? deferredSessState[r.session] !== false : true),
     );
     if (q) {
       out = out.filter(
@@ -244,7 +350,7 @@ export default function RawData() {
       return (x - y) * dir;
     });
     return sorted;
-  }, [rows, clubState, sessState, query, sortKey, sortDir]);
+  }, [rows, deferredClubState, deferredSessState, deferredQuery, sortKey, sortDir]);
 
   // Import already-read file texts with the given club mappings. PRE-SCANS for number-
   // only wedges still needing a mapping (no inserts yet) — if any, opens the one-time
@@ -535,105 +641,12 @@ export default function RawData() {
               </View>
             ) : (
               shown.map((r) => (
-                <View key={r._idx} style={[styles.tr, styles.bodyRow]}>
-                  {COLS.map((c) => {
-                    const ex = !!r.excluded;
-                    const dim = ex && c.type !== 'excl';
-                    if (c.type === 'idx') {
-                      return (
-                        <Text
-                          key={c.key}
-                          style={[styles.td, styles.idxCell, { width: c.w }, dim && styles.exDim]}>
-                          {r._idx}
-                        </Text>
-                      );
-                    }
-                    if (c.type === 'date') {
-                      return (
-                        <Text
-                          key={c.key}
-                          numberOfLines={1}
-                          style={[
-                            styles.td,
-                            styles.alLeft,
-                            styles.dateCell,
-                            { width: c.w },
-                            dim && styles.exDim,
-                          ]}>
-                          {r.session_label || r.date || '—'}
-                        </Text>
-                      );
-                    }
-                    if (c.type === 'club') {
-                      return (
-                        <View
-                          key={c.key}
-                          style={[styles.clubCellWrap, { width: c.w }, dim && styles.exDim]}>
-                          <View style={[styles.sw, { backgroundColor: r._color }]} />
-                          <Text numberOfLines={1} style={styles.clubTxt}>
-                            {r.club}
-                          </Text>
-                        </View>
-                      );
-                    }
-                    if (c.type === 'device') {
-                      return (
-                        <View
-                          key={c.key}
-                          style={[styles.deviceCellWrap, { width: c.w }, dim && styles.exDim]}>
-                          <Text numberOfLines={1} style={styles.deviceBadge}>
-                            {deviceLabel((r.device as string) || 'garmin_r50')}
-                          </Text>
-                        </View>
-                      );
-                    }
-                    if (c.type === 'excl') {
-                      return (
-                        <View key={c.key} style={[styles.exCellWrap, { width: c.w }]}>
-                          {ex ? (
-                            <View style={styles.exBadge}>
-                              <Text style={styles.exBadgeTxt}>Excluded</Text>
-                            </View>
-                          ) : (
-                            <Text style={styles.inBadge}>✓</Text>
-                          )}
-                        </View>
-                      );
-                    }
-                    if (c.type === 'del') {
-                      // Delete this shot (own data only — hidden while spectating).
-                      return (
-                        <View key={c.key} style={[styles.delCellWrap, { width: c.w }]}>
-                          {isViewingOther ? null : (
-                            <Pressable
-                              onPress={() => confirmDeleteShot(r)}
-                              hitSlop={8}
-                              style={styles.delBtn}>
-                              <Text style={styles.delTxt}>✕</Text>
-                            </Pressable>
-                          )}
-                        </View>
-                      );
-                    }
-                    // numeric
-                    const raw = (r as Record<string, unknown>)[c.key];
-                    const n = Number(raw);
-                    const neg = c.signed && !Number.isNaN(n) && n < 0;
-                    return (
-                      <Text
-                        key={c.key}
-                        style={[
-                          styles.td,
-                          styles.alRight,
-                          { width: c.w },
-                          neg && styles.neg,
-                          dim && styles.exDim,
-                        ]}>
-                        {numText(raw, c)}
-                      </Text>
-                    );
-                  })}
-                </View>
+                <TableRow
+                  key={r.id ?? r._idx}
+                  row={r}
+                  isViewingOther={isViewingOther}
+                  onDelete={confirmDeleteShot}
+                />
               ))
             )}
           </View>
@@ -790,6 +803,13 @@ const styles = StyleSheet.create({
   arrow: { color: C.accent, fontSize: 9 },
 
   bodyRow: { borderBottomWidth: 1, borderBottomColor: '#142219' },
+  // Merged tr + bodyRow so each memoized row uses a single stable style reference.
+  bodyTr: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#142219',
+  },
   td: {
     fontFamily: mono,
     fontSize: 13,
