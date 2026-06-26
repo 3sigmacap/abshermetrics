@@ -51,24 +51,32 @@ function val(raw) {
 // devices. The regular "<n>i / <n>w / <n>h" pattern is handled generically; explicit
 // aliases cover named clubs. UNKNOWN codes pass through UPPERCASED (visible, not
 // silently mis-merged) — extend GC3_CLUB_ALIASES as new device codes are confirmed.
+// Lettered codes auto-map (unambiguous). "4H" → "4 Hybrid" is handled by the <n>h regex.
 const GC3_CLUB_ALIASES = {
-  // Confirmed from sample files. Driver / hybrids / wedges to be added from a file
-  // that contains them (so we don't guess the device's abbreviations).
-  // e.g. 'd': 'Driver', 'dr': 'Driver', 'pw': 'Pitching Wedge', ...
+  dr: 'Driver', d: 'Driver', driver: 'Driver',
+  pw: 'Pitching Wedge', gw: 'Gap Wedge', aw: 'Approach Wedge', sw: 'Sand Wedge', lw: 'Lob Wedge',
 };
 
-function normalizeClub(rawClub) {
+/**
+ * Normalize a device club label to a canonical app club name so the same club merges
+ * across devices. Resolution order:
+ *   1. the user's saved per-device mapping (clubMap) — e.g. GC3 "52" → "Gap Wedge"
+ *   2. known lettered aliases (Dr, Pw, …)
+ *   3. the "<n>i / <n>w / <n>h" pattern → "<n> Iron/Wood/Hybrid"
+ *   4. a NUMBER-ONLY code (a wedge loft like "52") → left RAW so the importer can ask
+ *      the user to map it once (then (1) resolves it forever, across devices)
+ *   5. an unknown lettered code → kept visible (UPPERCASED), never silently mis-merged.
+ */
+function normalizeClub(rawClub, clubMap) {
   const raw = String(rawClub == null ? '' : rawClub).trim().replace(/[<>]/g, '').slice(0, 40);
-  if (!raw) return raw;
+  if (!raw) return '';
   const key = raw.toLowerCase().replace(/\s+/g, '');
+  if (clubMap && clubMap[key]) return clubMap[key];
   if (GC3_CLUB_ALIASES[key]) return GC3_CLUB_ALIASES[key];
-  // "<n>i" → "<n> Iron", "<n>w" → "<n> Wood", "<n>h" → "<n> Hybrid"
   const m = key.match(/^(\d{1,2})\s*(i|w|h)$/);
-  if (m) {
-    const kind = { i: 'Iron', w: 'Wood', h: 'Hybrid' }[m[2]];
-    return `${m[1]} ${kind}`;
-  }
-  return raw.toUpperCase(); // unknown — keep visible until its mapping is confirmed
+  if (m) return `${m[1]} ${{ i: 'Iron', w: 'Wood', h: 'Hybrid' }[m[2]]}`;
+  if (/^\d+$/.test(raw)) return raw; // number-only wedge → needs a one-time mapping
+  return raw.toUpperCase();
 }
 
 // ── session assembly (shared by all adapters) ──────────────────────────────────
@@ -213,7 +221,7 @@ const foresightGC3 = {
       (/(^|,)\s*Peak Height\s*(,|$)/m.test(text) && /(^|,)\s*Spin Axis Tilt\s*(,|$)/m.test(text))
     );
   },
-  parse(text) {
+  parse(text, clubMap) {
     const lines = text.replace(/^﻿/, '').split(/\r?\n/);
     const out = [];
     let club = null; // current block's normalized club
@@ -233,9 +241,10 @@ const foresightGC3 = {
       }
       // Per-club summary row — skip (it's an aggregate, not a shot)
       if (cells[0] === 'Average') continue;
-      // Data row: a numeric shot index in col 0 (with a header + current club in scope).
-      // Checked BEFORE the club-header so it can't be mistaken for one.
-      if (/^\d+$/.test(cells[0]) && header && club) {
+      // Data row: a numeric shot index in col 0 AND a date in col 1 (header + club in
+      // scope). The col-1 date is what distinguishes a data row from a number-only club
+      // header like "52," (which has an EMPTY col 1).
+      if (/^\d+$/.test(cells[0]) && cells[1] && header && club) {
         const get = (name) => {
           const idx = header[name];
           return idx == null ? undefined : cells[idx];
@@ -252,10 +261,12 @@ const foresightGC3 = {
         if (out.length >= MAX_ROWS) break;
         continue;
       }
-      // Club-header row: a LONE non-numeric label in col 0 (e.g. "9i", "3w") with every
-      // other cell empty — so a numeric index or a partial data row can't become a club.
-      if (cells[0] && !/^\d+$/.test(cells[0]) && cells.slice(1).every((c) => !c)) {
-        club = normalizeClub(cells[0]) || 'Unknown';
+      // Club-header row: a LONE label in col 0 (every other cell empty) — e.g. "9i",
+      // "3w", "Dr", "Pw", AND number-only wedges like "52". The empty col 1 (no date) is
+      // what keeps it from being read as a data row. A partial data row (values in later
+      // cells) won't match, so garbage can't silently become a club.
+      if (cells[0] && cells.slice(1).every((c) => !c)) {
+        club = normalizeClub(cells[0], clubMap) || 'Unknown';
       }
     }
     return buildSession(out);
@@ -279,7 +290,7 @@ export function deviceLabel(id) {
  * session's worth of normalized shots (each tagged with the device slug), and returns
  * { device, label, shots }. Throws if the format isn't recognized.
  */
-export function parseDeviceFile(text) {
+export function parseDeviceFile(text, opts = {}) {
   if (typeof text !== 'string') throw new Error('No file content to read.');
   if (text.length > MAX_FILE_BYTES) throw new Error('File is too large (max 10 MB).');
   const adapter = ADAPTERS.find((a) => {
@@ -292,8 +303,22 @@ export function parseDeviceFile(text) {
   if (!adapter) {
     throw new Error('Unrecognized file — not a supported launch-monitor export.');
   }
-  const shots = adapter.parse(text).map((s) => ({ ...s, device: adapter.id }));
+  // The user's saved per-device club mapping (e.g. { foresight_gc3: { "52": "Gap Wedge" } }).
+  const clubMap = opts.clubMaps && opts.clubMaps[adapter.id];
+  const shots = adapter.parse(text, clubMap).map((s) => ({ ...s, device: adapter.id }));
   return { device: adapter.id, label: adapter.label, shots };
+}
+
+/** Unique club codes in these shots that are PURE NUMBERS (e.g. "52") — number-only GC3
+ *  wedge lofts that aren't mapped yet and need a one-time user mapping to a canonical
+ *  club. The importer collects these and the UI prompts for them before inserting. */
+export function numericClubs(shots) {
+  const set = new Set();
+  for (const s of shots || []) {
+    const c = String(s && s.club != null ? s.club : '');
+    if (/^\d+$/.test(c)) set.add(c);
+  }
+  return [...set];
 }
 
 // DB columns a shot row carries (besides user_id / session_id). A WHITELIST, so the

@@ -22,6 +22,9 @@ export interface AppPrefs {
   /** Receive push + email when a player you follow/connect with uploads a session.
    *  Undefined = on (default). Set false to opt out. */
   uploadAlerts?: boolean;
+  /** Per-device mapping of a launch monitor's number-only club code to a canonical club
+   *  (e.g. { foresight_gc3: { "52": "Gap Wedge" } }). Set once, applied to all imports. */
+  clubMap?: Record<string, Record<string, string>>;
 }
 
 interface ProfileState {

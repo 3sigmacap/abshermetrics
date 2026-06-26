@@ -6,7 +6,7 @@
 // Faithful port of the mobile app's app/src/lib/dataStore.tsx. RLS guarantees the
 // queries only ever return the current user's own rows.
 import { supabase, getSession } from './auth.js';
-import { parseDeviceFile, toShotRow } from './device-adapters.js';
+import { parseDeviceFile, toShotRow, numericClubs } from './device-adapters.js';
 import {
   computeClubs, CLUB_ORDER, CLUB_COLORS, clubColor, clubSortIdx,
 } from './club-compute.js';
@@ -240,7 +240,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB per file
  * becomes one session. The device is auto-detected per file. Returns {added, error?,
  * sessions, devices}. onProgress(msg) gets status text.
  */
-export async function uploadCsvFiles(files, onProgress = () => {}) {
+export async function uploadCsvFiles(files, onProgress = () => {}, clubMaps = {}) {
   const session = await getSession();
   if (!session) return { added: 0, error: 'You must be signed in to upload.' };
   const uid = session.user.id;
@@ -254,7 +254,7 @@ export async function uploadCsvFiles(files, onProgress = () => {}) {
     }
     const txt = await file.text();
     try {
-      const { device, shots } = parseDeviceFile(txt);
+      const { device, shots } = parseDeviceFile(txt, { clubMaps });
       if (shots.length) fileEntries.push({ device, shots });
       else lastErr = 'No valid shot rows found in "' + (file.name ?? 'file') + '".';
     } catch (e) {
@@ -263,6 +263,18 @@ export async function uploadCsvFiles(files, onProgress = () => {}) {
     }
   }
   if (!fileEntries.length) return { added: 0, error: lastErr || 'No valid shot rows found in those files.' };
+
+  // Number-only clubs (e.g. GC3 "52") need a one-time user mapping before we import
+  // anything — collect them per device and let the caller prompt, then re-upload.
+  const need = {};
+  for (const { device, shots } of fileEntries) {
+    for (const code of numericClubs(shots)) (need[device] ||= new Set()).add(code);
+  }
+  if (Object.keys(need).length) {
+    const needsMapping = {};
+    for (const d of Object.keys(need)) needsMapping[d] = [...need[d]];
+    return { added: 0, needsMapping };
+  }
 
   let added = 0;
   let sessionsAdded = 0;
