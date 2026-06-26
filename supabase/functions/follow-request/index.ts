@@ -49,7 +49,12 @@ Deno.serve(async (req) => {
 
     // Caller (follower) display info — stored on the row so the followed user can
     // see WHO is asking to follow them without reading the caller's profile.
-    const followerName = (user.user_metadata?.display_name as string) ?? null;
+    const fmeta = (user.user_metadata ?? {}) as Record<string, unknown>;
+    const followerName =
+      (fmeta.display_name as string) ||
+      (fmeta.full_name as string) ||
+      (fmeta.name as string) ||
+      null;
     const followerEmail = user.email ?? null;
     const callerName = followerName || (followerEmail || '').split('@')[0] || 'Someone';
 
