@@ -18,6 +18,8 @@ import { useAuth } from '@/lib/auth';
 import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
 import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
+// @ts-ignore — plain-JS shared module (no type declarations)
+import { deviceLabel } from '@/shared/device-adapters.js';
 import { orderIdx, type RawShot } from '@/rawData';
 import { C } from '@/theme';
 
@@ -230,6 +232,7 @@ export default function RawData() {
       let added = 0;
       let sessions = 0;
       let lastErr: string | undefined;
+      const devices = new Set<string>();
       for (const asset of res.assets) {
         if (asset.size && asset.size > MAX_FILE_BYTES) {
           lastErr = 'Skipped "' + (asset.name ?? 'file') + '": larger than 10 MB.';
@@ -241,6 +244,7 @@ export default function RawData() {
         else {
           added += r.added;
           sessions += 1;
+          if (r.device) devices.add(r.device);
         }
       }
       if (sessions === 0) {
@@ -249,7 +253,8 @@ export default function RawData() {
         return;
       }
       await refresh(); // reload from the cloud
-      setUploadMsg('Added ' + added + ' shots' + (lastErr ? ' · ' + lastErr : '') + '.');
+      const devs = [...devices].map(deviceLabel).join(', ');
+      setUploadMsg('Added ' + added + ' shots' + (devs ? ' (' + devs + ')' : '') + (lastErr ? ' · ' + lastErr : '') + '.');
     } catch (err) {
       setUploadMsg('Could not import (' + (err as Error).message + ').');
     } finally {

@@ -101,6 +101,30 @@ create table if not exists public.shots (
 
 alter table public.shots enable row level security;
 
+-- ── multi-device support (added when a 2nd launch monitor, the Foresight GC3, was
+-- introduced). Every shot/session records WHICH device produced it. All data prior to
+-- this is Garmin R50, so the column is NOT NULL DEFAULT 'garmin_r50' — which backfills
+-- every existing row automatically. Slugs are owned by the client device registry
+-- (device-adapters.js); the DB just stores the text.
+alter table public.sessions add column if not exists device text not null default 'garmin_r50';
+alter table public.shots    add column if not exists device text not null default 'garmin_r50';
+
+-- Optional club-head / impact metrics. NULL for ball-only devices/sessions (the R50,
+-- and ball-only GC3 sessions). The PHYSICS ENGINE NEVER USES THESE — it computes
+-- trajectory from ball data only. These are stored for display/analysis when present.
+alter table public.shots add column if not exists club_speed        double precision; -- mph
+alter table public.shots add column if not exists club_speed_impact double precision; -- mph (at impact)
+alter table public.shots add column if not exists smash             double precision; -- smash factor (ratio)
+alter table public.shots add column if not exists attack_angle      double precision; -- deg (angle of attack)
+alter table public.shots add column if not exists club_path         double precision; -- deg
+alter table public.shots add column if not exists face_to_path      double precision; -- deg
+alter table public.shots add column if not exists lie_angle         double precision; -- deg
+alter table public.shots add column if not exists dynamic_loft      double precision; -- deg
+alter table public.shots add column if not exists closure_rate      double precision; -- deg/s
+alter table public.shots add column if not exists horiz_impact      double precision; -- face impact, horizontal
+alter table public.shots add column if not exists vert_impact       double precision; -- face impact, vertical
+alter table public.shots add column if not exists face_to_target    double precision; -- deg
+
 drop policy if exists "shots own" on public.shots;
 create policy "shots own" on public.shots
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
