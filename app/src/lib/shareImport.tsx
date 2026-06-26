@@ -27,6 +27,11 @@ export function ShareImporter() {
   const { session } = useAuth();
   const router = useRouter();
   const busy = useRef(false);
+  // expo-share-intent delivers the SAME share twice (once via onNewIntent, once via the
+  // app-becomes-active refresh). Remember the last share's signature + time so we import
+  // it exactly once — without this a single share created a duplicate (and a race left
+  // one of the two sessions empty).
+  const lastShare = useRef<{ sig: string; at: number }>({ sig: '', at: 0 });
 
   useEffect(() => {
     if (!hasShareIntent || busy.current) return;
@@ -35,6 +40,17 @@ export function ShareImporter() {
     if (!files.length && !sharedText) return;
     const uid = session?.user?.id;
     if (!uid) return; // not signed in yet — re-runs when the session loads
+
+    // De-dupe the double delivery: same content within a few seconds = ignore the repeat.
+    const sig = files.length
+      ? files.map((f) => `${f.fileName ?? ''}:${f.size ?? ''}:${f.path ?? ''}`).join('|')
+      : `text:${sharedText.length}`;
+    const now = Date.now();
+    if (lastShare.current.sig === sig && now - lastShare.current.at < 6000) {
+      resetShareIntent();
+      return;
+    }
+    lastShare.current = { sig, at: now };
 
     busy.current = true;
     // Confirm receipt IMMEDIATELY — if you don't see this right after sharing, the file
