@@ -20,6 +20,7 @@ import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
 import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
 import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
+import { takePendingShared } from '@/lib/pendingShared';
 import { useProfile } from '@/lib/profile';
 // @ts-ignore — plain-JS shared module (no type declarations)
 import { deviceLabel, parseDeviceFile, numericClubs } from '@/shared/device-adapters.js';
@@ -89,7 +90,7 @@ export default function RawData() {
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { deleteAllData } = useDataActions();
-  const { prefs, updatePrefs } = useProfile();
+  const { prefs, updatePrefs, loading: profileLoading } = useProfile();
   // One-time "map your wedges" prompt: number-only club codes pending a mapping + the
   // file texts to re-import once mapped.
   const [mapping, setMapping] = useState<{ need: Record<string, string[]>; texts: string[] } | null>(null);
@@ -326,6 +327,19 @@ export default function RawData() {
       setBusy(false);
     }
   }, [mapping, picks, prefs, updatePrefs, runImport]);
+
+  // Files handed off from the OS "share to AbsherMetrics" flow (see ShareImporter) —
+  // import them through the same path (incl. the wedge-mapping prompt). Waits until the
+  // profile (and its saved club mappings) has loaded so already-mapped wedges don't
+  // re-prompt; takePendingShared() consumes the hand-off exactly once.
+  useEffect(() => {
+    if (!userId || profileLoading) return;
+    const texts = takePendingShared();
+    if (!texts || !texts.length) return;
+    setBusy(true);
+    setUploadMsg('Importing ' + texts.length + ' shared file(s)…');
+    runImport(texts, (prefs.clubMap as Record<string, Record<string, string>>) || {}).finally(() => setBusy(false));
+  }, [userId, profileLoading, prefs, runImport]);
 
   if (loading) {
     return (
