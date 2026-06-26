@@ -332,12 +332,15 @@ export const SHOT_COLUMNS = [
   'vert_impact', 'face_to_target',
 ];
 
-/** Build a DB shot row from a parsed shot + base ids ({user_id, session_id}). Omits
- *  absent fields so the column takes its default (NULL). */
+/** Build a DB shot row from a parsed shot + base ids ({user_id, session_id}). EVERY
+ *  SHOT_COLUMNS key is present (null when the shot lacks it) so a bulk insert of many
+ *  shots has uniform keys — PostgREST rejects an array whose objects differ in keys
+ *  (PGRST102). (The pre-refactor importer set every column with explicit null too.) */
 export function toShotRow(shot, base) {
   const row = { ...base };
   for (const c of SHOT_COLUMNS) {
-    if (shot[c] !== undefined && shot[c] !== null) row[c] = shot[c];
+    const v = shot[c];
+    row[c] = v === undefined ? null : v;
   }
   return row;
 }
