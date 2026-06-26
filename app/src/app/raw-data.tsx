@@ -374,9 +374,9 @@ export default function RawData() {
       if (!texts || !texts.length) return;
       setBusy(true);
       setUploadMsg('Importing ' + texts.length + ' shared file(s)…');
-      runImport(texts, (prefs.clubMap as Record<string, Record<string, string>>) || {}).finally(() =>
-        setBusy(false),
-      );
+      runImport(texts, (prefs.clubMap as Record<string, Record<string, string>>) || {})
+        .catch((e) => Alert.alert('Import error', e instanceof Error ? e.message : String(e)))
+        .finally(() => setBusy(false));
     };
     tryConsume(); // a share that arrived before this screen mounted
     return subscribePendingShared(tryConsume); // …or one that arrives while it's already open

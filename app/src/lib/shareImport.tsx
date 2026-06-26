@@ -37,6 +37,11 @@ export function ShareImporter() {
     if (!uid) return; // not signed in yet — re-runs when the session loads
 
     busy.current = true;
+    // Confirm receipt IMMEDIATELY — if you don't see this right after sharing, the file
+    // never reached AbsherMetrics (an OS / share-target problem, not the import itself).
+    const recvNames = files.map((f) => f.fileName || (f.path || '').split('/').pop() || 'file').join(', ');
+    Alert.alert('Importing shared file', (recvNames || 'shared text') + ' …');
+
     void (async () => {
       const texts: string[] = [];
       const diag: string[] = []; // per-file outcome → a clear message if nothing imports
