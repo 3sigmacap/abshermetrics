@@ -19,7 +19,7 @@ import { CLUB_ORDER, DEFAULT_LOFTS, clubSortIdx } from '@/lib/clubData';
 import { useConnections } from '@/lib/connections';
 import { useFollows } from '@/lib/follows';
 import { useView } from '@/lib/viewContext';
-import { useClubs } from '@/lib/dataStore';
+import { useClubs, useDataActions } from '@/lib/dataStore';
 import { useProfile } from '@/lib/profile';
 import { supabase } from '@/lib/supabase';
 import { C } from '@/theme';
@@ -60,6 +60,7 @@ export default function Settings() {
   // Club list is DATA-DRIVEN: the standard bag PLUS any club found in the user's
   // own shots (e.g. a Driver from an uploaded session), longest first.
   const { clubs: dataClubs } = useClubs();
+  const { deleteAllData, hasData } = useDataActions();
   const clubsOrdered = useMemo(() => {
     const set = new Set<string>(CLUB_ORDER);
     dataClubs.forEach((c) => set.add(c.club));
@@ -136,6 +137,26 @@ export default function Settings() {
               return;
             }
             await signOut();
+          },
+        },
+      ],
+    );
+  };
+
+  const deleteAllShots = () => {
+    Alert.alert(
+      'Delete all Shot Data',
+      'This permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete all',
+          style: 'destructive',
+          onPress: async () => {
+            setBusy(true);
+            const { error } = await deleteAllData();
+            setBusy(false);
+            flash(error ?? 'All shot data deleted.', !!error);
           },
         },
       ],
@@ -328,6 +349,11 @@ export default function Settings() {
           </View>
           <MaterialCommunityIcons name="chevron-right" size={22} color={C.dim2} />
         </Pressable>
+        {!view.isViewingOther && hasData ? (
+          <Pressable onPress={deleteAllShots} style={styles.deleteShotsBtn} disabled={busy}>
+            <Text style={styles.deleteShotsTxt}>Delete all Shot Data</Text>
+          </Pressable>
+        ) : null}
       </Section>
 
       {/* CONNECTIONS */}
@@ -665,6 +691,8 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: C.accent, borderRadius: 9, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
   saveBtnTxt: { color: '#0a120d', fontWeight: '800', fontSize: 15 },
   navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  deleteShotsBtn: { marginTop: 14, borderWidth: 1, borderColor: '#5e2b2b', borderRadius: 8, paddingVertical: 11, alignItems: 'center' },
+  deleteShotsTxt: { color: C.bad, fontWeight: '700', fontSize: 14 },
   navText: { flex: 1 },
   navLabel: { color: C.ink, fontSize: 15, fontWeight: '600', marginBottom: 2 },
   connSub: { fontFamily: mono, fontSize: 10, letterSpacing: 1, color: C.dim2, marginTop: 14, marginBottom: 4 },
