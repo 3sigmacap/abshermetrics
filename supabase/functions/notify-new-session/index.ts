@@ -189,9 +189,15 @@ Deno.serve(async (req) => {
     const { data: meProf } = await admin.from('profiles').select('display_name').eq('id', uploader).maybeSingle();
     // Deliberately NO email-local-part fallback — that would surface a piece of the
     // uploader's email in messages to followers/connections. Generic label instead.
+    // Prefer the profile name the user set, then any name the OAuth provider gave us
+    // (Google → full_name/name; Apple → display_name). NEVER the email local-part — that
+    // would leak part of the uploader's address to followers. Generic label as last resort.
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
     const uploaderName =
       (meProf?.display_name as string) ||
-      (user.user_metadata?.display_name as string) ||
+      (meta.display_name as string) ||
+      (meta.full_name as string) ||
+      (meta.name as string) ||
       'A player';
     const label = (claimed.label as string) || 'a new range session';
 
