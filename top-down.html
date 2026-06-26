@@ -184,7 +184,7 @@ function topDraw(){
   });
   if(!any){el(topSvg,'text',{x:TW/2,y:TH/2,fill:'#7a9486','font-family':'IBM Plex Mono','font-size':13,'text-anchor':'middle'}).textContent='Select a club';return;}
   // pad extents a little so paths aren't flush to the edge
-  const xMax=maxX*1.04;
+  const xMax=Math.max(maxX*1.04,1); // floor so the px/yd divisor can't be 0 (degenerate extent)
   const zPad=Math.max((maxZ-minZ)*0.08,2);
   let zLo=minZ-zPad, zHi=maxZ+zPad;
   if(zHi-zLo<8){const c=(zHi+zLo)/2;zLo=c-4;zHi=c+4;} // floor so a dead-straight set still has scale
@@ -198,7 +198,7 @@ function topDraw(){
   // turf
   el(topSvg,'rect',{x:tM.l,y:tM.t,width:pW,height:pH,fill:'#16271d'});
   // carry grid (vertical lines)
-  const xs=niceStep(xMax,6);
+  const xs=Math.max(niceStep(xMax,6),1e-6); // never 0 → grid loop always terminates
   for(let x=0;x<=xMax+0.5;x+=xs){const gx=sx(x);el(topSvg,'line',{x1:gx,y1:tM.t,x2:gx,y2:tM.t+pH,stroke:'#23402f'});
     el(topSvg,'text',{x:gx,y:tM.t+pH+18,fill:'#7a9486','font-family':'IBM Plex Mono','font-size':11,'text-anchor':'middle'}).textContent=Math.round(x);}
   // lateral grid (horizontal lines), include 0 centerline — same step as carry since 1:1
@@ -264,13 +264,13 @@ function sideDraw(){
     consume(d.mean); if(showShots) d.shots.forEach(consume);
   });
   if(!any){el(side,'text',{x:SW/2,y:SH/2,fill:'#7a9486','font-family':'IBM Plex Mono','font-size':13,'text-anchor':'middle'}).textContent='Select a club';return;}
-  const xMax=maxX*1.04, yMax=maxY*1.10;
+  const xMax=Math.max(maxX*1.04,1), yMax=Math.max(maxY*1.10,1); // floor so x/xMax, y/yMax can't be NaN
   const ssx=x=>SM.l+x/xMax*sPW, ssy=y=>SM.t+sPH-y/yMax*sPH;
   el(side,'rect',{x:SM.l,y:ssy(0),width:sPW,height:SH-ssy(0),fill:'#16271d'});
-  const xs=niceStep(xMax,6);
+  const xs=Math.max(niceStep(xMax,6),1e-6);
   for(let x=0;x<=xMax+0.5;x+=xs){const gx=ssx(x);el(side,'line',{x1:gx,y1:SM.t,x2:gx,y2:ssy(0),stroke:'#23402f'});
     el(side,'text',{x:gx,y:ssy(0)+18,fill:'#7a9486','font-family':'IBM Plex Mono','font-size':11,'text-anchor':'middle'}).textContent=Math.round(x);}
-  const ys=niceStep(yMax,4);
+  const ys=Math.max(niceStep(yMax,4),1e-6);
   for(let y=0;y<=yMax+0.5;y+=ys){const gy=ssy(y);el(side,'line',{x1:SM.l,y1:gy,x2:SW-SM.r,y2:gy,stroke:'#1c3325','stroke-dasharray':'2 5'});
     el(side,'text',{x:SM.l-6,y:gy+4,fill:'#7a9486','font-family':'IBM Plex Mono','font-size':10,'text-anchor':'end'}).textContent=Math.round(y);}
   DATA.forEach(d=>{

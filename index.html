@@ -168,10 +168,10 @@ function render(data){
   const totalShots = data.reduce((s,c)=>s+c.stats.length,0);
   const nClubs = data.length;
   const carriesDisp = disp.map(c=>M[c.club].carry);
-  const longest = Math.max(...carriesDisp);
-  const shortest = Math.min(...carriesDisp);
-  const longClub = disp.find(c=>M[c.club].carry===longest).club;
-  const shortClub = disp.find(c=>M[c.club].carry===shortest).club;
+  const longest = carriesDisp.length ? Math.max(...carriesDisp) : 0;
+  const shortest = carriesDisp.length ? Math.min(...carriesDisp) : 0;
+  const longClub = disp.find(c=>M[c.club].carry===longest)?.club ?? '—';
+  const shortClub = disp.find(c=>M[c.club].carry===shortest)?.club ?? '—';
   const abbr = {"3 Wood":"3W","Pitching Wedge":"PW","Gap Wedge":"GW","Sand Wedge":"SW"};
   const ab = c => abbr[c]||c;
 

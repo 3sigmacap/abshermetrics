@@ -31,7 +31,7 @@ import { C } from '@/theme';
 const mono = 'monospace';
 
 // ---- column model (mirrors COLS in raw-data.html) ----
-type ColType = 'idx' | 'date' | 'club' | 'excl' | 'num' | 'del';
+type ColType = 'idx' | 'date' | 'club' | 'device' | 'excl' | 'num' | 'del';
 interface Col {
   key: string;
   label: string;
@@ -45,6 +45,7 @@ const COLS: Col[] = [
   { key: '_idx', label: '#', unit: '', type: 'idx', w: 46 },
   { key: 'date', label: 'Date', unit: '', type: 'date', w: 150 },
   { key: 'club', label: 'Club', unit: '', type: 'club', w: 124 },
+  { key: 'device', label: 'Device', unit: '', type: 'device', w: 96 },
   { key: 'excluded', label: 'In Model', unit: '', type: 'excl', w: 84 },
   { key: 'bs', label: 'Ball Spd', unit: 'mph', type: 'num', dp: 1, w: 84 },
   { key: 'carry', label: 'Carry', unit: 'yd', type: 'num', dp: 1, w: 74 },
@@ -192,6 +193,14 @@ export default function RawData() {
 
   const totalCount = rows.length;
   const exclCount = useMemo(() => rows.filter((r) => r.excluded).length, [rows]);
+  // Distinct launch monitors present in the data — drives the kicker/footer label
+  // and matches the per-row Device badge (legacy rows with no device read as R50).
+  const deviceLabels = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => set.add((r.device as string) || 'garmin_r50'));
+    return [...set].map((d) => deviceLabel(d));
+  }, [rows]);
+  const deviceLine = deviceLabels.length ? deviceLabels.join(' · ') : 'Garmin R50';
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -220,6 +229,12 @@ export default function RawData() {
       }
       if (sortKey === 'excluded') {
         const d = ((a.excluded ? 1 : 0) - (b.excluded ? 1 : 0)) * dir;
+        return d || (a.ts || '').localeCompare(b.ts || '');
+      }
+      if (sortKey === 'device') {
+        const d =
+          ((a.device as string) || 'garmin_r50').localeCompare((b.device as string) || 'garmin_r50') *
+          dir;
         return d || (a.ts || '').localeCompare(b.ts || '');
       }
       let x = Number((a as Record<string, unknown>)[sortKey]);
@@ -366,7 +381,7 @@ export default function RawData() {
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       <BackBar label="Settings" />
       <Bounded>
-      <Text style={styles.kicker}>GARMIN APPROACH R50</Text>
+      <Text style={styles.kicker}>{deviceLine.toUpperCase()}</Text>
       <Text style={styles.title}>
         Raw <Text style={styles.titleAccent}>Shot Data</Text>
       </Text>
@@ -470,7 +485,8 @@ export default function RawData() {
                   return <View key={c.key} style={[styles.thCell, { width: c.w }]} />;
                 }
                 const sorted = c.key === sortKey;
-                const left = c.type === 'idx' || c.type === 'date' || c.type === 'club';
+                const left =
+                  c.type === 'idx' || c.type === 'date' || c.type === 'club' || c.type === 'device';
                 const center = c.type === 'excl';
                 return (
                   <Pressable
@@ -547,6 +563,17 @@ export default function RawData() {
                         </View>
                       );
                     }
+                    if (c.type === 'device') {
+                      return (
+                        <View
+                          key={c.key}
+                          style={[styles.deviceCellWrap, { width: c.w }, dim && styles.exDim]}>
+                          <Text numberOfLines={1} style={styles.deviceBadge}>
+                            {deviceLabel((r.device as string) || 'garmin_r50')}
+                          </Text>
+                        </View>
+                      );
+                    }
                     if (c.type === 'excl') {
                       return (
                         <View key={c.key} style={[styles.exCellWrap, { width: c.w }]}>
@@ -601,7 +628,7 @@ export default function RawData() {
       </View>
 
       <Text style={styles.foot}>
-        ABSHERMETRICS · raw launch-monitor export · Garmin Approach R50 · {fmt(totalCount, 0)} shots
+        ABSHERMETRICS · raw launch-monitor export · {deviceLine} · {fmt(totalCount, 0)} shots
       </Text>
       </Bounded>
 
@@ -773,6 +800,20 @@ const styles = StyleSheet.create({
   },
   sw: { width: 9, height: 9, borderRadius: 5, marginRight: 7 },
   clubTxt: { fontSize: 14, color: C.ink, fontWeight: '600', flexShrink: 1 },
+
+  deviceCellWrap: { paddingHorizontal: 10, paddingVertical: 9, justifyContent: 'center' },
+  deviceBadge: {
+    fontFamily: mono,
+    fontSize: 10,
+    color: C.dim,
+    borderWidth: 1,
+    borderColor: C.line2,
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+  },
 
   exCellWrap: { alignItems: 'center', justifyContent: 'center', paddingVertical: 9 },
   exBadge: {

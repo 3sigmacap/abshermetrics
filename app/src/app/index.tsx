@@ -59,14 +59,16 @@ function buildRows(clubs: ClubData[], getLoft: (club: string) => number | null) 
     };
   });
   const carries = rows.map((r) => r.carry);
-  const longest = Math.max(...carries);
-  const shortest = Math.min(...carries);
+  // Guard the empty case: Math.max(...[]) is -Infinity and the find() below would miss
+  // (the non-null assertion does NOT protect at runtime → a crash). Default safely.
+  const longest = carries.length ? Math.max(...carries) : 0;
+  const shortest = carries.length ? Math.min(...carries) : 0;
   return {
     rows,
     longest,
     shortest,
-    longClub: rows.find((r) => r.carry === longest)!.club,
-    shortClub: rows.find((r) => r.carry === shortest)!.club,
+    longClub: rows.find((r) => r.carry === longest)?.club ?? '—',
+    shortClub: rows.find((r) => r.carry === shortest)?.club ?? '—',
     nClubs: clubs.length,
     totalShots: clubs.reduce((s, c) => s + c.stats.length, 0),
   };

@@ -55,6 +55,8 @@ thead th.del-col,tbody td.del-col{text-align:center;padding:4px 6px;}
 html.am-readonly .shotdel{display:none;}
 .exbadge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:#ff9d9d;border:1px solid #5e2b2b;background:#2a1414;border-radius:5px;padding:2px 7px;}
 .inbadge{color:var(--dim2);font-size:13px;}
+.devbadge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);border:1px solid var(--line2);border-radius:5px;padding:2px 6px;white-space:nowrap;}
+thead th.device-col,tbody td.device-col{text-align:left;}
 tr.exrow td:not(.excl-col){opacity:.42;}
 tr.exrow:hover td{background:#1a121233;}
 .empty{padding:40px 20px;text-align:center;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
@@ -87,7 +89,7 @@ tr.exrow:hover td{background:#1a121233;}
 
 <div class="page">
 <a href="settings.html" style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:14px" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--dim)'">&lsaquo; Settings</a>
-<div class="kicker">Garmin Approach R50</div>
+<div class="kicker" id="kicker">Garmin R50</div>
 <h1 class="big">Raw <span>Shot Data</span></h1>
 <p class="lead">Every individual shot exactly as measured by the launch monitor — no smoothing, no modeling. Tap any column header to sort; filter by club or session. Shots marked <span class="exbadge">Excluded</span> were dropped during cleaning (mishits/outliers) and don't feed the charts, averages, or 3D flight.</p>
 
@@ -117,7 +119,7 @@ tr.exrow:hover td{background:#1a121233;}
   </div>
 </div>
 
-<div class="foot"><span>ABSHERMETRICS · raw launch-monitor export</span><span>Garmin Approach R50</span></div>
+<div class="foot"><span>ABSHERMETRICS · raw launch-monitor export</span><span id="footDevices">Garmin R50</span></div>
 </div>
 
 <script type="module">
@@ -130,6 +132,7 @@ const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
   {key:'date',  label:'Date',     unit:'',     type:'date'},
   {key:'club',  label:'Club',     unit:'',     type:'club'},
+  {key:'device',label:'Device',   unit:'',     type:'device'},
   {key:'excluded', label:'In Model', unit:'', type:'excl'},
   {key:'bs',    label:'Ball Spd', unit:'mph',  dp:1},
   {key:'carry', label:'Carry',    unit:'yd',   dp:1},
@@ -192,6 +195,11 @@ if(__loaded){
 document.getElementById('totalCount').textContent=ROWS.length;
 const exclCount=ROWS.filter(r=>r.excluded).length;
 if(exclCount)document.getElementById('exclNote').textContent='· '+exclCount+' excluded';
+// Reflect the launch monitor(s) actually present in the data (legacy rows → R50).
+const devLabels=[...new Set(ROWS.map(r=>r.device||'garmin_r50'))].map(deviceLabel);
+const devLine=devLabels.length?devLabels.join(' · '):'Garmin R50';
+document.getElementById('kicker').textContent=devLine;
+document.getElementById('footDevices').textContent=devLine;
 
 // ---- build header ----
 const headRow=document.getElementById('headRow');
@@ -200,6 +208,7 @@ COLS.forEach(c=>{
   th.dataset.key=c.key;
   if(c.type==='del'){ th.className='del-col'; headRow.appendChild(th); return; }
   if(c.type==='club')th.className='club-col';
+  if(c.type==='device')th.className='device-col';
   if(c.type==='idx')th.className='idx-col';
   if(c.type==='date')th.className='idx-col';
   th.innerHTML=c.label+(c.unit?' <span class="unit">'+c.unit+'</span>':'')+' <span class="arrow">▾</span>';
@@ -348,6 +357,7 @@ const fmt=(v,c,row)=>{
       : '<span class="inbadge" title="Used in all charts, averages, and the model">✓</span>';
   }
   if(c.type==='del'){ return row.id?'<button class="shotdel" data-id="'+esc(row.id)+'" title="Delete shot" aria-label="Delete shot">✕</button>':''; }
+  if(c.type==='device')return '<span class="devbadge">'+esc(deviceLabel(row.device||'garmin_r50'))+'</span>';
   if(v===undefined||v===null||v==='')return '—';
   if(c.type==='idx')return v;
   if(c.type==='club')return '<span class="sw" style="background:'+row._color+'"></span>'+esc(v);
@@ -370,6 +380,7 @@ function render(){
     if(sortKey==='club'){const d=(orderIdx(a.club)-orderIdx(b.club))*sortDir; return d|| (a.ts||'').localeCompare(b.ts||'');}
     if(sortKey==='date'){return ((a.ts||'').localeCompare(b.ts||''))*sortDir;}
     if(sortKey==='excluded'){const d=((a.excluded?1:0)-(b.excluded?1:0))*sortDir; return d|| (a.ts||'').localeCompare(b.ts||'');}
+    if(sortKey==='device'){const d=((a.device||'garmin_r50')).localeCompare(b.device||'garmin_r50')*sortDir; return d|| (a.ts||'').localeCompare(b.ts||'');}
     let x=Number(a[sortKey]),y=Number(b[sortKey]);
     if(Number.isNaN(x))x=-Infinity;if(Number.isNaN(y))y=-Infinity;
     return (x-y)*sortDir;
@@ -387,6 +398,7 @@ function render(){
       return '<tr'+(r.excluded?' class="exrow"':'')+'>'+COLS.map(c=>{
         let cls='';
         if(c.type==='club')cls=' class="club-col"';
+        else if(c.type==='device')cls=' class="device-col"';
         else if(c.type==='idx'||c.type==='date')cls=' class="idx-col"';
         else if(c.type==='excl')cls=' class="excl-col"';
         else if(c.type==='del')cls=' class="del-col"';

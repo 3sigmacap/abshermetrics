@@ -62,6 +62,8 @@ export async function fetchUserData() {
     label: s.label,
     date: s.date ?? '',
     n: 0,
+    // Legacy rows (imported before the device column) default to R50.
+    device: s.device ?? 'garmin_r50',
   }));
   const labelOf = {};
   const dateOf = {};
@@ -89,6 +91,8 @@ export async function fetchUserData() {
     total: r.total ?? undefined,
     dev: r.dev ?? undefined,
     excluded: Boolean(r.excluded),
+    // Tag each shot with the launch monitor it came from (legacy rows → R50).
+    device: r.device ?? 'garmin_r50',
   }));
 
   // session shot counts (for the raw-data session chips)
