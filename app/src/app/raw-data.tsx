@@ -21,7 +21,6 @@ import { FilterMenu } from '@/components/FilterMenu';
 import { useAuth } from '@/lib/auth';
 import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
 import { useDataActions, useRawData } from '@/lib/dataStore';
-import { fmt } from '@/lib/format';
 import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
 import { subscribePendingShared, takePendingShared } from '@/lib/pendingShared';
 import { useProfile } from '@/lib/profile';
@@ -197,11 +196,10 @@ export default function RawData() {
   const [query, setQuery] = useState('');
   const [uploadMsg, setUploadMsg] = useState('');
   const [busy, setBusy] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   // Measured height of the table area → gives the FlatList a bounded viewport so it
   // virtualizes (only on-screen rows exist in the native tree).
   const [tableH, setTableH] = useState(0);
-  const { deleteAllData, deleteShot } = useDataActions();
+  const { deleteShot } = useDataActions();
   const { isViewingOther } = useView();
   const { prefs, updatePrefs, loading: profileLoading } = useProfile();
 
@@ -226,26 +224,6 @@ export default function RawData() {
   // file texts to re-import once mapped.
   const [mapping, setMapping] = useState<{ need: Record<string, string[]>; texts: string[] } | null>(null);
   const [picks, setPicks] = useState<Record<string, string>>({}); // "device|code" → club
-
-  const confirmDeleteAll = useCallback(() => {
-    Alert.alert(
-      'Delete all data',
-      'This permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete all',
-          style: 'destructive',
-          onPress: async () => {
-            setDeleting(true);
-            const { error } = await deleteAllData();
-            setDeleting(false);
-            if (error) Alert.alert('Could not delete', error);
-          },
-        },
-      ],
-    );
-  }, [deleteAllData]);
 
   // Table rows = each RawShot tagged with display index + resolved color.
   const rows = useMemo<Row[]>(
@@ -619,19 +597,6 @@ export default function RawData() {
         <Text style={styles.uploadTxt}>{busy ? '… working' : '+ Upload session CSV'}</Text>
       </Pressable>
       {uploadMsg ? <Text style={styles.uploadMsg}>{uploadMsg}</Text> : null}
-
-      {totalCount > 0 ? (
-        <Pressable
-          onPress={confirmDeleteAll}
-          disabled={deleting}
-          style={[styles.deleteAllBtn, deleting && styles.uploadBusy]}>
-          <Text style={styles.deleteAllTxt}>{deleting ? '… deleting' : 'Delete all data'}</Text>
-        </Pressable>
-      ) : null}
-
-      <Text style={styles.foot}>
-        ABSHERMETRICS · raw launch-monitor export · {deviceLine} · {fmt(totalCount, 0)} shots
-      </Text>
       </Bounded>
       </ScrollView>
 
