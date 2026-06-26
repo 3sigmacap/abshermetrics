@@ -75,8 +75,26 @@ function resample(p: Pt3[] | undefined, n: number): number[] {
 const r1arr = (a: number[]) => a.map((v) => Math.round(v * 10) / 10);
 const num = (v: unknown) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
 
+// Memoize simulateFlight: identical launch inputs → identical flight. Keyed by rounded
+// inputs so re-computing clubs after an import/delete only re-simulates genuinely NEW
+// shots — the existing hundreds return instantly from cache (the dominant cost in
+// computeClubs is this per-shot integration). Result objects are only ever READ by
+// computeClub (resample/derived), never mutated, so sharing a cached object is safe.
+const _simCache = new Map<string, ReturnType<typeof simulateFlight>>();
 function sim(launch: { bs: number; la: number; spin: number; axis: number; dir: number }) {
-  return simulateFlight(
+  const key =
+    Math.round(launch.bs * 10) +
+    '|' +
+    Math.round(launch.la * 10) +
+    '|' +
+    Math.round(launch.spin) +
+    '|' +
+    Math.round((launch.axis || 0) * 10) +
+    '|' +
+    Math.round((launch.dir || 0) * 10);
+  const hit = _simCache.get(key);
+  if (hit) return hit;
+  const r = simulateFlight(
     {
       ballSpeedMph: launch.bs,
       launchDeg: launch.la,
@@ -86,6 +104,9 @@ function sim(launch: { bs: number; la: number; spin: number; axis: number; dir: 
     },
     { rollout: true },
   );
+  if (_simCache.size > 4000) _simCache.clear(); // bound memory on huge accounts
+  _simCache.set(key, r);
+  return r;
 }
 
 /** Compute one club's ClubData from its raw shots (must have bs/la/spin). */
