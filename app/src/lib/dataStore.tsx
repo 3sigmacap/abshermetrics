@@ -83,6 +83,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         id: s.id as string,
         label: s.label as string,
         date: (s.date as string) ?? '',
+        // Legacy rows (imported before the device column) default to R50.
+        device: (s.device as string) ?? 'garmin_r50',
       }));
       const labelOf: Record<string, string> = {};
       const dateOf: Record<string, string> = {};
@@ -110,6 +112,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         total: r.total ?? undefined,
         dev: r.dev ?? undefined,
         excluded: Boolean(r.excluded),
+        // Tag each shot with the launch monitor it came from (legacy rows → R50).
+        device: (r.device as string) ?? 'garmin_r50',
       }));
 
       // Chronological order by the earliest shot TIME, not just date — two sessions

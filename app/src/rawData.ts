@@ -29,6 +29,8 @@ export interface RawShot {
   cs?: number;
   smash?: number;
   excluded?: boolean;
+  /** Launch-monitor slug this shot came from ("garmin_r50" | "foresight_gc3" | …). */
+  device?: string;
   [k: string]: unknown;
 }
 
@@ -39,6 +41,8 @@ export interface Session {
   start?: string;
   n?: number;
   _uploaded?: boolean;
+  /** Launch monitor this session was imported from. */
+  device?: string;
 }
 
 const BASE = raw as unknown as {

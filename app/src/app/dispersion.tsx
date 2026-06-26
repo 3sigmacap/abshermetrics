@@ -107,7 +107,7 @@ function TopDown({
       }
     });
 
-    const xMax = maxX * 1.04;
+    const xMax = Math.max(maxX * 1.04, 1); // floor so the px/yd divisor can't be 0 (degenerate extent)
     const zPad = Math.max((maxZ - minZ) * 0.08, 2);
     let zLo = minZ - zPad;
     let zHi = maxZ + zPad;
@@ -135,7 +135,7 @@ function TopDown({
     );
 
     // carry grid (vertical lines + labels)
-    const xs = niceStep(xMax, 6);
+    const xs = Math.max(niceStep(xMax, 6), 1e-6); // never 0 → grid loop always terminates
     for (let x = 0; x <= xMax + 0.5; x += xs) {
       const gx = sx(x);
       nodes.push(
@@ -349,8 +349,8 @@ function Side({
 
     const sPW = SW - SM.l - SM.r;
     const sPH = SH - SM.t - SM.b;
-    const xMax = maxX * 1.04;
-    const yMax = maxY * 1.1;
+    const xMax = Math.max(maxX * 1.04, 1); // floor so x/xMax and y/yMax can't be NaN (degenerate extent)
+    const yMax = Math.max(maxY * 1.1, 1);
     const ssx = (x: number) => SM.l + (x / xMax) * sPW;
     const ssy = (y: number) => SM.t + sPH - (y / yMax) * sPH;
 
@@ -369,7 +369,7 @@ function Side({
       />,
     );
 
-    const xs = niceStep(xMax, 6);
+    const xs = Math.max(niceStep(xMax, 6), 1e-6); // never 0 → grid loop always terminates
     for (let x = 0; x <= xMax + 0.5; x += xs) {
       const gx = ssx(x);
       nodes.push(
@@ -389,7 +389,7 @@ function Side({
       );
     }
 
-    const ys = niceStep(yMax, 4);
+    const ys = Math.max(niceStep(yMax, 4), 1e-6);
     for (let y = 0; y <= yMax + 0.5; y += ys) {
       const gy = ssy(y);
       nodes.push(

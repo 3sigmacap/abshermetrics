@@ -6,13 +6,14 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View, type ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
 import OnboardingScreen from '@/components/OnboardingScreen';
 import SignInScreen from '@/components/SignInScreen';
 import ViewBar from '@/components/ViewBar';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { BagPublisher } from '@/lib/bagSummary';
 import { ConnectionsProvider, useConnections } from '@/lib/connections';
-import { DataProvider } from '@/lib/dataStore';
+import { DataProvider, useData } from '@/lib/dataStore';
 import { FollowsProvider, useFollows } from '@/lib/follows';
 import { lockDefaultOrientation } from '@/lib/orientation';
 import { PushRegistrar } from '@/lib/push';
@@ -122,6 +123,32 @@ function AppTabs() {
   );
 }
 
+// All screen content + overlays, wrapped in an ErrorBoundary so a render crash in any
+// screen shows a recoverable panel (re-fetching data on retry) instead of a dead grey
+// screen. Lives inside DataProvider so `refresh` is available and context survives.
+function AppShell() {
+  const { refresh } = useData();
+  return (
+    <ErrorBoundary
+      onReset={() => {
+        void refresh();
+      }}>
+      <View style={styles.root}>
+        <SafeAreaView style={styles.root} edges={['top']}>
+          <ViewBar />
+          <AppTabs />
+        </SafeAreaView>
+        <AuthOverlay />
+        <OnboardingOverlay />
+        <ScreenshotNav />
+        <BagPublisher />
+        <PushRegistrar />
+        <ShareImporter />
+      </View>
+    </ErrorBoundary>
+  );
+}
+
 export default function RootLayout() {
   // iPad rotates freely (landscape support); phones stay portrait. The 3D screen
   // unlocks landscape on focus and restores this default on blur (see flight-3d.tsx).
@@ -137,18 +164,7 @@ export default function RootLayout() {
             <ConnectionsProvider>
               <DataProvider>
                 <StatusBar style="light" />
-                <View style={styles.root}>
-                  <SafeAreaView style={styles.root} edges={['top']}>
-                    <ViewBar />
-                    <AppTabs />
-                  </SafeAreaView>
-                  <AuthOverlay />
-                  <OnboardingOverlay />
-                  <ScreenshotNav />
-                  <BagPublisher />
-                  <PushRegistrar />
-                  <ShareImporter />
-                </View>
+                <AppShell />
               </DataProvider>
             </ConnectionsProvider>
           </ProfileProvider>
