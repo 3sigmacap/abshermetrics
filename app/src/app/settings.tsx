@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -56,6 +57,9 @@ export default function Settings() {
   const [pw, setPw] = useState('');
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Type-to-confirm guard for the bulk shot-data delete.
+  const [delOpen, setDelOpen] = useState(false);
+  const [delText, setDelText] = useState('');
 
   // Club list is DATA-DRIVEN: the standard bag PLUS any club found in the user's
   // own shots (e.g. a Driver from an uploaded session), longest first.
@@ -144,23 +148,16 @@ export default function Settings() {
   };
 
   const deleteAllShots = () => {
-    Alert.alert(
-      'Delete all Shot Data',
-      'This permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete all',
-          style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            const { error } = await deleteAllData();
-            setBusy(false);
-            flash(error ?? 'All shot data deleted.', !!error);
-          },
-        },
-      ],
-    );
+    setDelText('');
+    setDelOpen(true);
+  };
+  const confirmDeleteAllShots = async () => {
+    setBusy(true);
+    const { error } = await deleteAllData();
+    setBusy(false);
+    setDelOpen(false);
+    setDelText('');
+    flash(error ?? 'All shot data deleted.', !!error);
   };
 
   const saveClubs = async () => {
@@ -286,6 +283,8 @@ export default function Settings() {
 
   const connPerson = (c: { other: { name: string | null; email: string | null } }) =>
     c.other.name || c.other.email?.split('@')[0] || 'Player';
+
+  const canDeleteShots = delText.trim() === 'DELETE MY SHOT DATA';
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content}>
@@ -649,6 +648,51 @@ export default function Settings() {
       )}
 
       <Text style={styles.foot}>AbsherMetrics</Text>
+
+      {/* Type-to-confirm guard for the irreversible bulk delete. */}
+      <Modal visible={delOpen} transparent animationType="fade" onRequestClose={() => setDelOpen(false)}>
+        <View style={styles.delOverlay}>
+          <View style={styles.delCard}>
+            <Text style={styles.delTitle}>Delete all Shot Data</Text>
+            <Text style={styles.delWarn}>
+              This permanently deletes ALL your shots and sessions. Your account stays. This
+              cannot be undone.
+            </Text>
+            <Text style={styles.delPrompt}>
+              Type <Text style={styles.delPhrase}>DELETE MY SHOT DATA</Text> to confirm.
+            </Text>
+            <TextInput
+              style={styles.delInput}
+              value={delText}
+              onChangeText={setDelText}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              placeholder="DELETE MY SHOT DATA"
+              placeholderTextColor={C.dim2}
+            />
+            <View style={styles.delBtnRow}>
+              <Pressable
+                onPress={() => {
+                  setDelOpen(false);
+                  setDelText('');
+                }}
+                style={styles.delCancel}>
+                <Text style={styles.delCancelTxt}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmDeleteAllShots}
+                disabled={!canDeleteShots || busy}
+                style={[styles.delConfirm, (!canDeleteShots || busy) && styles.delConfirmOff]}>
+                {busy ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.delConfirmTxt}>Delete</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
       </Bounded>
     </ScrollView>
   );
@@ -712,4 +756,21 @@ const styles = StyleSheet.create({
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   toggleLabel: { color: C.ink, fontSize: 15, fontWeight: '600', marginBottom: 2 },
   foot: { fontFamily: mono, fontSize: 11, color: C.dim2, textAlign: 'center', marginTop: 8 },
+  // ---- type-to-confirm delete modal ----
+  delOverlay: { flex: 1, backgroundColor: '#070d0af2', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  delCard: { width: '100%', maxWidth: 460, borderWidth: 1, borderColor: '#5e2b2b', borderRadius: 14, backgroundColor: C.panel, padding: 20 },
+  delTitle: { color: C.bad, fontSize: 20, fontWeight: '800', marginBottom: 8 },
+  delWarn: { color: C.dim, fontFamily: mono, fontSize: 12, lineHeight: 18, marginBottom: 14 },
+  delPrompt: { color: C.ink, fontSize: 13, marginBottom: 8 },
+  delPhrase: { color: C.bad, fontFamily: mono, fontWeight: '700' },
+  delInput: {
+    backgroundColor: C.bg, borderWidth: 1, borderColor: C.line2, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 11, color: C.ink, fontSize: 15, fontFamily: mono, letterSpacing: 0.5,
+  },
+  delBtnRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 10, marginTop: 18 },
+  delCancel: { paddingVertical: 11, paddingHorizontal: 18, borderRadius: 9 },
+  delCancelTxt: { color: C.dim, fontWeight: '700', fontSize: 14 },
+  delConfirm: { backgroundColor: C.bad, paddingVertical: 11, paddingHorizontal: 22, borderRadius: 9, minWidth: 96, alignItems: 'center' },
+  delConfirmOff: { opacity: 0.4 },
+  delConfirmTxt: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
