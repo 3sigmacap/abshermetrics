@@ -49,6 +49,10 @@ tbody tr:hover td{background:#10201733;}
 .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:baseline;}
 .neg{color:#ff9d9d;}
 thead th.excl-col,tbody td.excl-col{text-align:center;}
+thead th.del-col,tbody td.del-col{text-align:center;padding:4px 6px;}
+.shotdel{background:transparent;border:1px solid #5e2b2b;color:var(--bad);border-radius:50%;width:24px;height:24px;line-height:1;cursor:pointer;font-size:12px;padding:0;transition:.15s;}
+.shotdel:hover{background:#3a1a1a;border-color:var(--bad);}
+html.am-readonly .shotdel{display:none;}
 .exbadge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:#ff9d9d;border:1px solid #5e2b2b;background:#2a1414;border-radius:5px;padding:2px 7px;}
 .inbadge{color:var(--dim2);font-size:13px;}
 tr.exrow td:not(.excl-col){opacity:.42;}
@@ -117,7 +121,7 @@ tr.exrow:hover td{background:#1a121233;}
 </div>
 
 <script type="module">
-import { loadRawData, uploadCsvFiles, deleteAllData, escapeHtml as esc } from './user-data.js';
+import { loadRawData, uploadCsvFiles, deleteAllData, deleteShot, escapeHtml as esc } from './user-data.js';
 import { deviceLabel } from './device-adapters.js';
 import { CLUB_ORDER, DEFAULT_LOFTS } from './club-compute.js';
 import { loadProfile, updatePrefs } from './profile.js';
@@ -138,6 +142,7 @@ const COLS=[
   {key:'axis',  label:'Spin Axis',unit:'°',    dp:1, signed:true},
   {key:'apex',  label:'Apex',     unit:'ft',   dp:1},
   {key:'dev',   label:'Lateral',  unit:'yd',   dp:1, signed:true},
+  {key:'_del',  label:'',         unit:'',     type:'del'},
 ];
 
 let ROWS=[];           // flat list of every shot, each tagged with club + color
@@ -193,12 +198,27 @@ const headRow=document.getElementById('headRow');
 COLS.forEach(c=>{
   const th=document.createElement('th');
   th.dataset.key=c.key;
+  if(c.type==='del'){ th.className='del-col'; headRow.appendChild(th); return; }
   if(c.type==='club')th.className='club-col';
   if(c.type==='idx')th.className='idx-col';
   if(c.type==='date')th.className='idx-col';
   th.innerHTML=c.label+(c.unit?' <span class="unit">'+c.unit+'</span>':'')+' <span class="arrow">▾</span>';
   th.onclick=()=>setSort(c.key);
   headRow.appendChild(th);
+});
+
+// Per-shot delete (own data only — the .shotdel button is hidden via CSS when spectating;
+// RLS also blocks deleting another player's shots). Delegated so it survives re-renders.
+document.getElementById('body').addEventListener('click',async(e)=>{
+  const btn=e.target.closest('.shotdel'); if(!btn)return;
+  const id=btn.dataset.id; if(!id)return;
+  if(!window.confirm('Delete this shot?\n\nThis permanently removes it. This cannot be undone.'))return;
+  btn.disabled=true; btn.textContent='…';
+  const { error }=await deleteShot(id);
+  if(error){ btn.disabled=false; btn.textContent='✕'; alert('Could not delete: '+error); return; }
+  const i=ROWS.findIndex(r=>r.id===id); if(i>=0)ROWS.splice(i,1);
+  document.getElementById('totalCount').textContent=ROWS.length;
+  render();
 });
 
 // ---- club filter chips ----
@@ -327,6 +347,7 @@ const fmt=(v,c,row)=>{
       ? '<span class="exbadge" title="Dropped during cleaning — not used in the charts, averages, or 3D flight">Excluded</span>'
       : '<span class="inbadge" title="Used in all charts, averages, and the model">✓</span>';
   }
+  if(c.type==='del'){ return row.id?'<button class="shotdel" data-id="'+esc(row.id)+'" title="Delete shot" aria-label="Delete shot">✕</button>':''; }
   if(v===undefined||v===null||v==='')return '—';
   if(c.type==='idx')return v;
   if(c.type==='club')return '<span class="sw" style="background:'+row._color+'"></span>'+esc(v);
@@ -368,6 +389,7 @@ function render(){
         if(c.type==='club')cls=' class="club-col"';
         else if(c.type==='idx'||c.type==='date')cls=' class="idx-col"';
         else if(c.type==='excl')cls=' class="excl-col"';
+        else if(c.type==='del')cls=' class="del-col"';
         else {
           const n=Number(r[c.key]);
           cls=(c.signed&&n<0)?' class="neg"':'';

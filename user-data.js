@@ -71,6 +71,7 @@ export async function fetchUserData() {
   });
 
   const shots = (shotRows ?? []).map((r) => ({
+    id: r.id,
     session: r.session_id ?? '',
     session_label: labelOf[r.session_id] ?? '',
     date: dateOf[r.session_id] ?? '',
@@ -227,6 +228,17 @@ export async function deleteAllData() {
   } catch (e) {
     return { error: e?.message ?? 'Failed to delete data' };
   }
+}
+
+/** Delete ONE shot by id (e.g. a launch-monitor error). RLS scopes it to the owner, so
+ *  this can only ever delete your own shots. Republishes the bag summary afterward so
+ *  connections see the corrected averages. */
+export async function deleteShot(id) {
+  if (!id) return { error: 'Missing shot id' };
+  const { error } = await supabase.from('shots').delete().eq('id', id);
+  if (error) return { error: error.message };
+  await republishSummary();
+  return {};
 }
 
 // ── launch-monitor file upload ──────────────────────────────────────────────

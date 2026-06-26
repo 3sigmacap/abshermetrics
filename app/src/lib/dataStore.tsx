@@ -36,6 +36,7 @@ interface DataState {
   loadSampleData: () => Promise<{ error?: string }>;
   /** Delete ALL of the signed-in user's shots + sessions (keeps the account). */
   deleteAllData: () => Promise<{ error?: string }>;
+  deleteShot: (id: string) => Promise<{ error?: string }>;
 }
 
 const DataContext = createContext<DataState | undefined>(undefined);
@@ -91,6 +92,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
 
       const shots: RawShot[] = (shotRows ?? []).map((r) => ({
+        id: r.id as string,
         session: (r.session_id as string) ?? '',
         session_label: labelOf[r.session_id as string] ?? '',
         date: dateOf[r.session_id as string] ?? '',
@@ -196,6 +198,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [session, refresh]);
 
+  // Delete ONE shot (e.g. a launch-monitor error). RLS scopes it to the owner. Removes
+  // it locally immediately so the table updates without a full reload.
+  const deleteShot = useCallback(
+    async (id: string): Promise<{ error?: string }> => {
+      if (!session) return { error: 'Not signed in' };
+      const { error } = await supabase.from('shots').delete().eq('id', id);
+      if (error) return { error: error.message };
+      setRawShots((prev) => prev.filter((s) => s.id !== id));
+      return {};
+    },
+    [session],
+  );
+
   const clubs = useMemo(() => computeClubs(rawShots), [rawShots]);
   const colors = useMemo(() => {
     const m: Record<string, string> = { ...CLUB_COLORS };
@@ -218,8 +233,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       refresh,
       loadSampleData,
       deleteAllData,
+      deleteShot,
     }),
-    [rawShots, sessions, clubs, colors, loading, loaded, error, refresh, loadSampleData, deleteAllData],
+    [rawShots, sessions, clubs, colors, loading, loaded, error, refresh, loadSampleData, deleteAllData, deleteShot],
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
@@ -256,8 +272,9 @@ export function useRawData(): {
 export function useDataActions(): {
   loadSampleData: () => Promise<{ error?: string }>;
   deleteAllData: () => Promise<{ error?: string }>;
+  deleteShot: (id: string) => Promise<{ error?: string }>;
   hasData: boolean;
 } {
-  const { loadSampleData, deleteAllData, rawShots } = useData();
-  return { loadSampleData, deleteAllData, hasData: rawShots.length > 0 };
+  const { loadSampleData, deleteAllData, deleteShot, rawShots } = useData();
+  return { loadSampleData, deleteAllData, deleteShot, hasData: rawShots.length > 0 };
 }
