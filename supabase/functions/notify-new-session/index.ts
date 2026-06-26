@@ -200,13 +200,16 @@ Deno.serve(async (req) => {
       (meta.name as string) ||
       'A player';
     const label = (claimed.label as string) || 'a new range session';
+    // Parenthetical for the push body (mirrors the email). Empty when there's no real
+    // session label, so we never render "a new range session (a new range session)".
+    const labelSuffix = (claimed.label as string) ? ` (${claimed.label as string})` : '';
 
     // ── Push (one batched Expo send to all target devices) ──
     const { data: toks } = await admin.from('push_tokens').select('token').in('user_id', targets);
     const tokens = ((toks ?? []) as { token: string }[]).map((t) => t.token).filter(Boolean);
     await sendExpoPush(tokens, {
       title: 'New range session',
-      body: `${uploaderName} just uploaded a new range session.`,
+      body: `${uploaderName} just uploaded a new range session${labelSuffix}.`,
       data: { type: 'new_session', userId: uploader, sessionId },
     });
 
