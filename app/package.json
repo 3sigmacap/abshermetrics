@@ -47,11 +47,12 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "patch-package": "^8.0.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "sync-shared": "node ./scripts/sync-shared.js",
-    "postinstall": "node ./scripts/sync-shared.js",
+    "postinstall": "patch-package && node ./scripts/sync-shared.js",
     "prestart": "node ./scripts/sync-shared.js",
     "preandroid": "node ./scripts/sync-shared.js",
     "preios": "node ./scripts/sync-shared.js",

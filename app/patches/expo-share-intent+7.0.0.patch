@@ -1,0 +1,65 @@
+diff --git a/node_modules/expo-share-intent/android/src/main/java/expo/modules/shareintent/ExpoShareIntentModule.kt b/node_modules/expo-share-intent/android/src/main/java/expo/modules/shareintent/ExpoShareIntentModule.kt
+index 0153c89..db0c93f 100644
+--- a/node_modules/expo-share-intent/android/src/main/java/expo/modules/shareintent/ExpoShareIntentModule.kt
++++ b/node_modules/expo-share-intent/android/src/main/java/expo/modules/shareintent/ExpoShareIntentModule.kt
+@@ -66,13 +66,24 @@ class ExpoShareIntentModule : Module() {
+                     "filePath" to instance?.getAbsolutePath(uri),
+                 )
+             }
+-            val queryResult: Cursor = resolver.query(uri, null, null, null, null)!!
+-            queryResult.moveToFirst()
+-            val fileName = queryResult.getString(queryResult.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+-            val fileSize = queryResult.getString(queryResult.getColumnIndex(OpenableColumns.SIZE))
+-            queryResult.close()
++            // PATCHED (abshermetrics): some content providers (e.g. the Foresight app)
++            // return a null cursor / null mimeType / omit the OpenableColumns. Upstream's
++            // !! and unchecked getColumnIndex hard-crash the app (gray screen) on those —
++            // tolerate them with safe fallbacks so the share still reaches JS.
++            val queryResult: Cursor? = resolver.query(uri, null, null, null, null)
++            var fileName: String? = null
++            var fileSize: String? = null
++            if (queryResult != null) {
++                if (queryResult.moveToFirst()) {
++                    val nameIndex = queryResult.getColumnIndex(OpenableColumns.DISPLAY_NAME)
++                    if (nameIndex >= 0) fileName = queryResult.getString(nameIndex)
++                    val sizeIndex = queryResult.getColumnIndex(OpenableColumns.SIZE)
++                    if (sizeIndex >= 0) fileSize = queryResult.getString(sizeIndex)
++                }
++                queryResult.close()
++            }
+ 
+-            val mimeType = resolver.getType(uri)!!
++            val mimeType = resolver.getType(uri) ?: "application/octet-stream"
+ 
+             var mediaWidth: String? = null;
+             var mediaHeight: String? = null;
+@@ -298,10 +309,12 @@ class ExpoShareIntentModule : Module() {
+             try {
+                 cursor = resolver.query(uri, projection, selection, selectionArgs, null)
+                 if (cursor != null && cursor.moveToFirst()) {
+-                    val columnIndex = cursor.getColumnIndexOrThrow(column)
+-                    val fileName = cursor.getString(columnIndex)
+-                    Log.i("FileDirectory", "File name: $fileName")
+-                    targetFile = File(context.cacheDir, fileName)
++                    val columnIndex = cursor.getColumnIndex(column)
++                    if (columnIndex >= 0) {
++                        val fileName = cursor.getString(columnIndex)
++                        Log.i("FileDirectory", "File name: $fileName")
++                        targetFile = File(context.cacheDir, fileName)
++                    }
+                 }
+             } finally {
+                 cursor?.close()
+@@ -335,8 +348,10 @@ class ExpoShareIntentModule : Module() {
+         try {
+             cursor = resolver.query(uri, projection, selection, selectionArgs, null)
+             if (cursor != null && cursor.moveToFirst()) {
+-                val columnIndex = cursor.getColumnIndexOrThrow(column)
+-                return cursor.getString(columnIndex)
++                val columnIndex = cursor.getColumnIndex(column)
++                if (columnIndex >= 0) {
++                    return cursor.getString(columnIndex)
++                }
+             }
+         } finally {
+             cursor?.close()
