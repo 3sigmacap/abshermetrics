@@ -6,6 +6,7 @@
 // Faithful port of the mobile app's app/src/lib/dataStore.tsx. RLS guarantees the
 // queries only ever return the current user's own rows.
 import { supabase, getSession } from './auth.js';
+import { parseDeviceFile, toShotRow } from './device-adapters.js';
 import {
   computeClubs, CLUB_ORDER, CLUB_COLORS, clubColor, clubSortIdx,
 } from './club-compute.js';
@@ -228,143 +229,56 @@ export async function deleteAllData() {
   }
 }
 
-// ── CSV upload (byte-faithful port of app/src/app/raw-data.tsx) ──────────────
-// Each uploaded file = one session. Garmin R50 export column -> internal key.
-const FIELD_MAP = {
-  'Ball Speed': 'bs',
-  'Launch Angle': 'la',
-  'Launch Direction': 'ld',
-  Backspin: 'bspin',
-  Sidespin: 'sspin',
-  'Spin Rate': 'spin',
-  'Spin Axis': 'axis',
-  'Apex Height': 'apex',
-  'Carry Distance': 'carry',
-  'Total Distance': 'total',
-  'Carry Deviation Distance': 'dev',
-  'Club Speed': 'cs',
-  'Smash Factor': 'smash',
-};
-// Abuse guards: RLS scopes uploads to the uploader, so these protect memory + DB quota.
+// ── launch-monitor file upload ──────────────────────────────────────────────
+// Parsing is device-agnostic and SHARED with the native app (device-adapters.js,
+// repo root). Each uploaded file = one session, tagged with its auto-detected device
+// (Garmin R50, Foresight GC3, …). Abuse guard only: RLS scopes uploads to the uploader.
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB per file
-const MAX_ROWS = 10_000; // per file
-
-function parseCSV(text) {
-  const lines = text
-    .replace(/^﻿/, '') // strip UTF-8 BOM
-    .split(/\r?\n/)
-    .filter((l) => l.trim().length);
-  if (lines.length < 2) return [];
-  const head = lines[0].split(',').map((h) => h.trim());
-  // detect & skip a units row (second row where the Date cell is empty)
-  let start = 1;
-  const secondCells = lines[1].split(',');
-  if (!secondCells[0].trim()) start = 2;
-  const out = [];
-  for (let i = start; i < lines.length; i++) {
-    const cells = lines[i].split(',');
-    const row = {};
-    head.forEach((h, j) => (row[h] = (cells[j] || '').trim()));
-    if (!row['Date']) continue;
-    // strip < > and cap length so a club name can never inject markup downstream
-    const o = { session: '', club: (row['Club Type'] || '').trim().replace(/[<>]/g, '').slice(0, 40) };
-    for (const [csvName, key] of Object.entries(FIELD_MAP)) {
-      if (row[csvName] !== undefined && row[csvName] !== '') {
-        const n = parseFloat(row[csvName]);
-        const r = Math.round(n * 100) / 100;
-        // round THEN check: Number.isFinite rejects NaN AND Infinity (e.g. "1e308").
-        if (Number.isFinite(r)) o[key] = r;
-      }
-    }
-    // parse date: "06/05/26 15:24:33 PM" — discard AM/PM, build in LOCAL time, yr=2000+YY
-    const ds = (row['Date'] || '').replace(/\s*(AM|PM)\s*$/i, '').trim();
-    const m = ds.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
-    if (m) {
-      const yr = 2000 + +m[3];
-      o._ts = new Date(yr, +m[1] - 1, +m[2], +m[4], +m[5], +m[6]);
-    } else {
-      o._ts = new Date();
-    }
-    out.push(o);
-    if (out.length >= MAX_ROWS) break;
-  }
-  return out;
-}
-
-function sessionFromFile(shots) {
-  const valid = shots.filter((s) => s._ts);
-  if (!valid.length) return [];
-  valid.sort((a, b) => a._ts.getTime() - b._ts.getTime());
-  const startD = valid[0]._ts;
-  const pad = (n) => String(n).padStart(2, '0');
-  const sid =
-    startD.getFullYear() + '-' + pad(startD.getMonth() + 1) + '-' + pad(startD.getDate()) +
-    '_' + pad(startD.getHours()) + pad(startD.getMinutes()) + '_u';
-  const label =
-    startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
-    ' · ' +
-    startD.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const dateISO =
-    startD.getFullYear() + '-' + pad(startD.getMonth() + 1) + '-' + pad(startD.getDate());
-  return valid.map((s) => {
-    const ts = s._ts.toISOString();
-    const { _ts, ...rest } = s;
-    return { ...rest, session: sid, session_label: label, date: dateISO, ts };
-  });
-}
 
 /**
- * Upload CSV File objects (from an <input type=file multiple>). Each file becomes
- * one session. Returns {added, error?, sessions}. onProgress(msg) gets status text.
- * cs/smash are parsed but NEVER inserted; excluded defaults false server-side.
+ * Upload launch-monitor File objects (from an <input type=file multiple>). Each file
+ * becomes one session. The device is auto-detected per file. Returns {added, error?,
+ * sessions, devices}. onProgress(msg) gets status text.
  */
 export async function uploadCsvFiles(files, onProgress = () => {}) {
   const session = await getSession();
   if (!session) return { added: 0, error: 'You must be signed in to upload.' };
   const uid = session.user.id;
 
-  const fileShots = [];
+  const fileEntries = []; // [{ device, shots }]
+  let lastErr = '';
   for (const file of files) {
     if (file.size && file.size > MAX_FILE_BYTES) {
       onProgress('Skipped "' + (file.name ?? 'file') + '": larger than 10 MB.');
       continue;
     }
     const txt = await file.text();
-    const parsed = sessionFromFile(parseCSV(txt));
-    if (parsed.length) fileShots.push(parsed);
+    try {
+      const { device, shots } = parseDeviceFile(txt);
+      if (shots.length) fileEntries.push({ device, shots });
+      else lastErr = 'No valid shot rows found in "' + (file.name ?? 'file') + '".';
+    } catch (e) {
+      lastErr = (e && e.message) || 'Unrecognized file format.';
+      onProgress('Skipped "' + (file.name ?? 'file') + '": ' + lastErr);
+    }
   }
-  if (!fileShots.length) return { added: 0, error: 'No valid shot rows found in those files.' };
+  if (!fileEntries.length) return { added: 0, error: lastErr || 'No valid shot rows found in those files.' };
 
   let added = 0;
   let sessionsAdded = 0;
-  for (const parsedShots of fileShots) {
-    const first = parsedShots[0];
+  const devices = new Set();
+  for (const { device, shots } of fileEntries) {
+    const first = shots[0];
     const label = first.session_label || first.session;
     const date = first.date ?? null;
     const { data: sess, error: se } = await supabase
       .from('sessions')
-      .insert({ user_id: uid, label, date })
+      .insert({ user_id: uid, label, date, device })
       .select('id')
       .single();
     if (se || !sess) return { added, error: 'Could not save session (' + (se?.message ?? 'unknown error') + ').' };
 
-    const insertRows = parsedShots.map((s) => ({
-      user_id: uid,
-      session_id: sess.id,
-      club: s.club,
-      ts: s.ts ?? null,
-      bs: s.bs ?? null,
-      la: s.la ?? null,
-      ld: s.ld ?? null,
-      bspin: s.bspin ?? null,
-      sspin: s.sspin ?? null,
-      spin: s.spin ?? null,
-      axis: s.axis ?? null,
-      apex: s.apex ?? null,
-      carry: s.carry ?? null,
-      total: s.total ?? null,
-      dev: s.dev ?? null,
-    }));
+    const insertRows = shots.map((s) => toShotRow(s, { user_id: uid, session_id: sess.id }));
     for (let i = 0; i < insertRows.length; i += CHUNK) {
       const { error: ie } = await supabase.from('shots').insert(insertRows.slice(i, i + CHUNK));
       if (ie) {
@@ -375,6 +289,7 @@ export async function uploadCsvFiles(files, onProgress = () => {}) {
     }
     added += insertRows.length;
     sessionsAdded += 1;
+    devices.add(device);
     // Notify the uploader's approved followers + accepted connections that a new range
     // session landed (push + email). Fired per-session INSIDE the loop so a later file
     // failing (early return below) can't drop notifications for sessions already saved.
@@ -383,5 +298,5 @@ export async function uploadCsvFiles(files, onProgress = () => {}) {
     supabase.functions.invoke('notify-new-session', { body: { sessionId: sess.id } }).catch(() => {});
   }
   await republishSummary();
-  return { added, sessions: sessionsAdded };
+  return { added, sessions: sessionsAdded, devices: [...devices] };
 }

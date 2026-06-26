@@ -19,12 +19,12 @@ const appRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(appRoot, '..');
 const outDir = path.join(appRoot, 'src', 'shared');
 
-const FILES = ['flight-engine.js', 'shots.json', 'raw-shots.json'];
+const FILES = ['flight-engine.js', 'device-adapters.js', 'shots.json', 'raw-shots.json'];
 
 fs.mkdirSync(outDir, { recursive: true });
 
-const BANNER =
-  '// AUTO-GENERATED COPY — do not edit. Source of truth: <repo-root>/flight-engine.js\n' +
+const banner = (name) =>
+  `// AUTO-GENERATED COPY — do not edit. Source of truth: <repo-root>/${name}\n` +
   '// Regenerate with `npm run sync-shared` (runs automatically before start/build).\n';
 
 let copied = 0;
@@ -36,7 +36,7 @@ for (const name of FILES) {
   }
   const dest = path.join(outDir, name);
   if (name.endsWith('.js')) {
-    fs.writeFileSync(dest, BANNER + fs.readFileSync(src, 'utf8'));
+    fs.writeFileSync(dest, banner(name) + fs.readFileSync(src, 'utf8'));
   } else {
     fs.copyFileSync(src, dest); // JSON must stay valid JSON — no banner
   }

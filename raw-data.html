@@ -118,6 +118,7 @@ tr.exrow:hover td{background:#1a121233;}
 
 <script type="module">
 import { loadRawData, uploadCsvFiles, deleteAllData, escapeHtml as esc } from './user-data.js';
+import { deviceLabel } from './device-adapters.js';
 import { renderError } from './empty-state.js';
 const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
@@ -249,7 +250,8 @@ document.getElementById('fileInput').onchange=async(e)=>{
   catch(err){ res={added:0,error:(err&&err.message)||'Upload failed.'}; }
   uploadBtn.disabled=false; uploadBtn.style.opacity='';
   if(res.error){ msg.textContent=res.error; if(!res.added)return; }
-  msg.textContent='Added '+res.added+' shots. Refreshing…';
+  const devs=(res.devices||[]).map(deviceLabel).join(', ');
+  msg.textContent='Added '+res.added+' shots'+(devs?' ('+devs+')':'')+'. Refreshing…';
   setTimeout(()=>location.reload(),350);
 };
 
