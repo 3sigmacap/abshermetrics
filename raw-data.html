@@ -119,6 +119,8 @@ tr.exrow:hover td{background:#1a121233;}
 <script type="module">
 import { loadRawData, uploadCsvFiles, deleteAllData, escapeHtml as esc } from './user-data.js';
 import { deviceLabel } from './device-adapters.js';
+import { CLUB_ORDER, DEFAULT_LOFTS } from './club-compute.js';
+import { loadProfile, updatePrefs } from './profile.js';
 import { renderError } from './empty-state.js';
 const COLS=[
   {key:'_idx',  label:'#',        unit:'',     type:'idx'},
@@ -238,7 +240,44 @@ buildSessionChips();
 const msg=document.getElementById('uploadMsg');
 const uploadBtn=document.getElementById('uploadBtn');
 uploadBtn.onclick=()=>document.getElementById('fileInput').click();
-// Real CSV -> Supabase upload (each file = one session). Caps + parsing live in user-data.js.
+// Per-user, per-device club mapping (e.g. a GC3 "52" → "Gap Wedge"). Lazy-loaded from
+// the profile prefs; updated when the user maps a number-only wedge for the first time.
+let clubMaps=null;
+async function getClubMaps(){ if(clubMaps===null){ const p=await loadProfile(); clubMaps=(p.prefs&&p.prefs.clubMap)||{}; } return clubMaps; }
+
+// One-time prompt to map number-only wedge codes (52/56/60) to a canonical club. Returns
+// { device: { code: clubName } } or null if cancelled. Smart-defaults by matching loft.
+function promptClubMappings(need){
+  return new Promise((resolve)=>{
+    const ov=document.createElement('div');
+    ov.style.cssText="position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:#070d0af2;padding:24px;font-family:'Barlow Condensed',sans-serif;";
+    const card=document.createElement('div');
+    card.style.cssText='max-width:460px;width:100%;border:1px solid var(--line2);border-radius:14px;background:var(--panel);padding:24px 22px;';
+    const selCss='background:#081109;border:1px solid var(--line2);border-radius:8px;color:var(--ink);font-family:inherit;font-size:15px;padding:8px 10px;flex:1;';
+    let rows='';
+    const items=[];
+    for(const [device,codes] of Object.entries(need)){
+      for(const code of codes){
+        const id='map_'+device+'_'+code;
+        const def=CLUB_ORDER.find(c=>DEFAULT_LOFTS[c]===Number(code))||'Gap Wedge';
+        rows+='<div style="display:flex;align-items:center;gap:10px;margin:12px 0;"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:13px;color:var(--dim);min-width:96px;">'+esc(deviceLabel(device))+' <b style="color:var(--accent)">'+esc(code)+'°</b> →</span><select id="'+id+'" style="'+selCss+'">'+CLUB_ORDER.map(c=>'<option value="'+esc(c)+'"'+(c===def?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></div>';
+        items.push({device,code,id});
+      }
+    }
+    card.innerHTML='<div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;letter-spacing:1px;margin-bottom:6px;">MAP YOUR WEDGES</div>'+
+      '<p style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;line-height:1.6;color:var(--dim);margin:0 0 8px;">Your launch monitor labels some wedges by loft. Match each to a club — asked once, then saved for every future upload.</p>'+
+      rows+
+      '<button id="mapSave" style="width:100%;margin-top:14px;font-family:\'Bebas Neue\',sans-serif;font-size:20px;letter-spacing:1px;color:var(--bg);background:var(--accent);border:none;border-radius:10px;padding:11px;cursor:pointer;">Save & import</button>';
+    ov.appendChild(card); document.body.appendChild(ov);
+    card.querySelector('#mapSave').onclick=()=>{
+      const out={};
+      for(const {device,code,id} of items){ (out[device]||(out[device]={}))[code]=card.querySelector('#'+id).value; }
+      ov.remove(); resolve(out);
+    };
+  });
+}
+
+// Real upload (each file = one session). Number-only wedges trigger a one-time mapping.
 document.getElementById('fileInput').onchange=async(e)=>{
   const files=[...(e.target.files||[])];
   e.target.value='';
@@ -246,8 +285,20 @@ document.getElementById('fileInput').onchange=async(e)=>{
   uploadBtn.disabled=true; uploadBtn.style.opacity='.6';
   msg.textContent='Parsing '+files.length+' file(s)…';
   let res;
-  try{ res=await uploadCsvFiles(files,m=>{msg.textContent=m;}); }
-  catch(err){ res={added:0,error:(err&&err.message)||'Upload failed.'}; }
+  try{
+    let maps=await getClubMaps();
+    res=await uploadCsvFiles(files,m=>{msg.textContent=m;},maps);
+    while(res&&res.needsMapping){
+      msg.textContent='Map your wedges to continue…';
+      const chosen=await promptClubMappings(res.needsMapping);
+      for(const [device,m2] of Object.entries(chosen)) maps[device]={...(maps[device]||{}),...m2};
+      const p=await loadProfile();
+      await updatePrefs({...(p.prefs||{}),clubMap:maps});
+      clubMaps=maps;
+      msg.textContent='Saved. Importing…';
+      res=await uploadCsvFiles(files,m=>{msg.textContent=m;},maps);
+    }
+  }catch(err){ res={added:0,error:(err&&err.message)||'Upload failed.'}; }
   uploadBtn.disabled=false; uploadBtn.style.opacity='';
   if(res.error){ msg.textContent=res.error; if(!res.added)return; }
   const devs=(res.devices||[]).map(deviceLabel).join(', ');

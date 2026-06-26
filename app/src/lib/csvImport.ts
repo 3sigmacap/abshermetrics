@@ -7,7 +7,7 @@
 import { supabase } from '@/lib/supabase';
 // @ts-ignore — plain-JS shared module (no type declarations). src/shared/ is a
 // generated copy of repo-root device-adapters.js (see scripts/sync-shared.js).
-import { parseDeviceFile, toShotRow } from '@/shared/device-adapters.js';
+import { parseDeviceFile, toShotRow, numericClubs } from '@/shared/device-adapters.js';
 
 // Abuse guard. RLS already scopes any uploaded data to the uploader's own account, so
 // this protects device memory + the shared DB quota, not isolation.
@@ -23,17 +23,22 @@ const CHUNK = 500;
 export async function importCsvText(
   text: string,
   userId: string,
-): Promise<{ added: number; sessionLabel?: string; device?: string; error?: string }> {
+  clubMaps: Record<string, Record<string, string>> = {},
+): Promise<{ added: number; sessionLabel?: string; device?: string; needsMapping?: string[]; error?: string }> {
   let device: string;
   let shots: Array<Record<string, unknown>>;
   try {
-    const res = parseDeviceFile(text);
+    const res = parseDeviceFile(text, { clubMaps });
     device = res.device;
     shots = res.shots;
   } catch (e) {
     return { added: 0, error: e instanceof Error ? e.message : 'Unrecognized file.' };
   }
   if (!shots.length) return { added: 0, error: 'No valid shot rows found in that file.' };
+
+  // Number-only clubs (e.g. GC3 "52") need a one-time mapping before we insert anything.
+  const need = numericClubs(shots) as string[];
+  if (need.length) return { added: 0, device, needsMapping: need };
 
   const first = shots[0];
   const label = (first.session_label as string) || (first.session as string);

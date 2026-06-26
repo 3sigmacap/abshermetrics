@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,11 +16,13 @@ import {
 import BackBar from '@/components/BackBar';
 import Bounded from '@/components/Bounded';
 import { useAuth } from '@/lib/auth';
+import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
 import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
 import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
+import { useProfile } from '@/lib/profile';
 // @ts-ignore — plain-JS shared module (no type declarations)
-import { deviceLabel } from '@/shared/device-adapters.js';
+import { deviceLabel, parseDeviceFile, numericClubs } from '@/shared/device-adapters.js';
 import { orderIdx, type RawShot } from '@/rawData';
 import { C } from '@/theme';
 
@@ -86,6 +89,11 @@ export default function RawData() {
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { deleteAllData } = useDataActions();
+  const { prefs, updatePrefs } = useProfile();
+  // One-time "map your wedges" prompt: number-only club codes pending a mapping + the
+  // file texts to re-import once mapped.
+  const [mapping, setMapping] = useState<{ need: Record<string, string[]>; texts: string[] } | null>(null);
+  const [picks, setPicks] = useState<Record<string, string>>({}); // "device|code" → club
 
   const confirmDeleteAll = useCallback(() => {
     Alert.alert(
@@ -209,37 +217,42 @@ export default function RawData() {
     return sorted;
   }, [rows, clubState, sessState, query, sortKey, sortDir]);
 
-  const onUpload = useCallback(async () => {
-    try {
-      setBusy(true);
-      if (!userId) {
-        setUploadMsg('You must be signed in to upload.');
-        setBusy(false);
+  // Import already-read file texts with the given club mappings. PRE-SCANS for number-
+  // only wedges still needing a mapping (no inserts yet) — if any, opens the one-time
+  // prompt and returns (so re-importing after mapping can't double-insert). Else inserts.
+  const runImport = useCallback(
+    async (texts: string[], maps: Record<string, Record<string, string>>) => {
+      const need: Record<string, Set<string>> = {};
+      for (const txt of texts) {
+        try {
+          const { device, shots } = parseDeviceFile(txt, { clubMaps: maps });
+          for (const code of numericClubs(shots) as string[]) {
+            (need[device] || (need[device] = new Set())).add(code);
+          }
+        } catch {
+          /* unrecognized file — importCsvText reports it in the insert pass below */
+        }
+      }
+      if (Object.keys(need).length) {
+        const need2: Record<string, string[]> = {};
+        const initPicks: Record<string, string> = {};
+        for (const d of Object.keys(need)) {
+          need2[d] = [...need[d]];
+          for (const code of need2[d]) {
+            initPicks[d + '|' + code] = CLUB_ORDER.find((c) => DEFAULT_LOFTS[c] === Number(code)) || 'Gap Wedge';
+          }
+        }
+        setPicks(initPicks);
+        setMapping({ need: need2, texts });
+        setUploadMsg('Map your wedges to continue…');
         return;
       }
-      const res = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'text/comma-separated-values', 'application/csv', '*/*'],
-        multiple: true,
-        copyToCacheDirectory: true,
-      });
-      if (res.canceled || !res.assets || !res.assets.length) {
-        setBusy(false);
-        return;
-      }
-      setUploadMsg('Importing ' + res.assets.length + ' file(s)…');
-      // Each file = one session — imported via the shared importer (same path the
-      // "share to AbsherMetrics" handler uses).
       let added = 0;
       let sessions = 0;
       let lastErr: string | undefined;
       const devices = new Set<string>();
-      for (const asset of res.assets) {
-        if (asset.size && asset.size > MAX_FILE_BYTES) {
-          lastErr = 'Skipped "' + (asset.name ?? 'file') + '": larger than 10 MB.';
-          continue;
-        }
-        const txt = asset.base64 ? decodeBase64Utf8(asset.base64) : await new File(asset.uri).text();
-        const r = await importCsvText(txt, userId);
+      for (const txt of texts) {
+        const r = await importCsvText(txt, userId as string, maps);
         if (r.error) lastErr = r.error;
         else {
           added += r.added;
@@ -249,18 +262,70 @@ export default function RawData() {
       }
       if (sessions === 0) {
         setUploadMsg(lastErr || 'No valid shot rows found in those files.');
-        setBusy(false);
         return;
       }
-      await refresh(); // reload from the cloud
+      await refresh();
       const devs = [...devices].map(deviceLabel).join(', ');
       setUploadMsg('Added ' + added + ' shots' + (devs ? ' (' + devs + ')' : '') + (lastErr ? ' · ' + lastErr : '') + '.');
+    },
+    [userId, refresh],
+  );
+
+  const onUpload = useCallback(async () => {
+    try {
+      setBusy(true);
+      if (!userId) {
+        setUploadMsg('You must be signed in to upload.');
+        return;
+      }
+      const res = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv', '*/*'],
+        multiple: true,
+        copyToCacheDirectory: true,
+      });
+      if (res.canceled || !res.assets || !res.assets.length) return;
+      setUploadMsg('Importing ' + res.assets.length + ' file(s)…');
+      const texts: string[] = [];
+      let skipErr: string | undefined;
+      for (const asset of res.assets) {
+        if (asset.size && asset.size > MAX_FILE_BYTES) {
+          skipErr = 'Skipped "' + (asset.name ?? 'file') + '": larger than 10 MB.';
+          continue;
+        }
+        texts.push(asset.base64 ? decodeBase64Utf8(asset.base64) : await new File(asset.uri).text());
+      }
+      if (!texts.length) {
+        setUploadMsg(skipErr || 'No files to import.');
+        return;
+      }
+      await runImport(texts, (prefs.clubMap as Record<string, Record<string, string>>) || {});
     } catch (err) {
       setUploadMsg('Could not import (' + (err as Error).message + ').');
     } finally {
       setBusy(false);
     }
-  }, [userId, refresh]);
+  }, [userId, prefs, runImport]);
+
+  // Save the chosen wedge mappings to the profile (cross-device, asked once), then import.
+  const saveMapping = useCallback(async () => {
+    if (!mapping) return;
+    setBusy(true);
+    try {
+      const maps: Record<string, Record<string, string>> = JSON.parse(JSON.stringify(prefs.clubMap || {}));
+      for (const [k, club] of Object.entries(picks)) {
+        const i = k.indexOf('|');
+        const device = k.slice(0, i);
+        const code = k.slice(i + 1);
+        (maps[device] || (maps[device] = {}))[code] = club;
+      }
+      await updatePrefs({ clubMap: maps });
+      const texts = mapping.texts;
+      setMapping(null);
+      await runImport(texts, maps);
+    } finally {
+      setBusy(false);
+    }
+  }, [mapping, picks, prefs, updatePrefs, runImport]);
 
   if (loading) {
     return (
@@ -494,6 +559,48 @@ export default function RawData() {
         ABSHERMETRICS · raw launch-monitor export · Garmin Approach R50 · {fmt(totalCount, 0)} shots
       </Text>
       </Bounded>
+
+      {/* One-time "map your wedges" prompt for number-only club codes (e.g. GC3 "52"). */}
+      <Modal visible={!!mapping} transparent animationType="fade" onRequestClose={() => setMapping(null)}>
+        <View style={styles.mapOverlay}>
+          <View style={styles.mapCard}>
+            <Text style={styles.mapTitle}>Map your wedges</Text>
+            <Text style={styles.mapSub}>
+              Your launch monitor labels some wedges by loft. Match each to a club — asked
+              once, then saved for every future upload.
+            </Text>
+            {mapping
+              ? Object.entries(mapping.need).flatMap(([device, codes]) =>
+                  codes.map((code) => {
+                    const k = device + '|' + code;
+                    return (
+                      <View key={k} style={styles.mapRow}>
+                        <Text style={styles.mapCode}>
+                          {deviceLabel(device)} <Text style={{ color: C.accent }}>{code}°</Text>
+                        </Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mapChips}>
+                          {CLUB_ORDER.map((club) => (
+                            <Pressable
+                              key={club}
+                              onPress={() => setPicks((p) => ({ ...p, [k]: club }))}
+                              style={[styles.mapChip, picks[k] === club && styles.mapChipOn]}>
+                              <Text style={[styles.mapChipTxt, picks[k] === club && styles.mapChipTxtOn]}>
+                                {club}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    );
+                  }),
+                )
+              : null}
+            <Pressable onPress={saveMapping} disabled={busy} style={[styles.mapSaveBtn, busy && { opacity: 0.6 }]}>
+              {busy ? <ActivityIndicator color="#0a120d" /> : <Text style={styles.mapSaveTxt}>Save &amp; import</Text>}
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -654,4 +761,18 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: C.line,
   },
+  // ---- "map your wedges" modal ----
+  mapOverlay: { flex: 1, backgroundColor: '#070d0af2', alignItems: 'center', justifyContent: 'center', padding: 22 },
+  mapCard: { width: '100%', maxWidth: 460, borderWidth: 1, borderColor: C.line2, borderRadius: 14, backgroundColor: C.panel, padding: 20 },
+  mapTitle: { color: C.ink, fontSize: 20, fontWeight: '800', marginBottom: 6 },
+  mapSub: { color: C.dim, fontFamily: mono, fontSize: 12, lineHeight: 18, marginBottom: 8 },
+  mapRow: { marginTop: 12 },
+  mapCode: { color: C.dim, fontFamily: mono, fontSize: 13, marginBottom: 6 },
+  mapChips: { flexGrow: 0 },
+  mapChip: { borderWidth: 1, borderColor: C.line2, backgroundColor: C.bg2, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7, marginRight: 7 },
+  mapChipOn: { borderColor: C.accent, backgroundColor: C.accent },
+  mapChipTxt: { color: C.dim, fontSize: 13 },
+  mapChipTxtOn: { color: '#0a120d', fontWeight: '700' },
+  mapSaveBtn: { backgroundColor: C.accent, borderRadius: 10, paddingVertical: 13, alignItems: 'center', marginTop: 20 },
+  mapSaveTxt: { color: '#0a120d', fontWeight: '800', fontSize: 16 },
 });
