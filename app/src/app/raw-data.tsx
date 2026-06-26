@@ -17,6 +17,7 @@ import {
 
 import BackBar from '@/components/BackBar';
 import Bounded from '@/components/Bounded';
+import { FilterMenu } from '@/components/FilterMenu';
 import { useAuth } from '@/lib/auth';
 import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
 import { useDataActions, useRawData } from '@/lib/dataStore';
@@ -318,6 +319,45 @@ export default function RawData() {
   }, [rows]);
   const deviceLine = deviceLabels.length ? deviceLabels.join(' · ') : 'Garmin R50';
 
+  // Compact club + session filters (same menu pattern as the 2D/3D club picker) so long
+  // filter lists collapse to one line each instead of filling the screen with chips.
+  const clubItems = useMemo(
+    () => clubKeys.map((c) => ({ key: c, label: c, color: colors[c] || C.dim })),
+    [clubKeys, colors],
+  );
+  const sessionItems = useMemo(
+    () =>
+      sessions.map((s) => ({
+        key: s.id,
+        label: `${s.label}${s._uploaded ? ' •' : ''} (${sessionCounts[s.id] || 0})`,
+        color: C.accent2,
+      })),
+    [sessions, sessionCounts],
+  );
+  const toggleClub = useCallback((c: string) => setClubState((s) => ({ ...s, [c]: !s[c] })), []);
+  const setAllClubs = useCallback(
+    (on: boolean) =>
+      setClubState((s) => {
+        const n = { ...s };
+        clubKeys.forEach((c) => (n[c] = on));
+        return n;
+      }),
+    [clubKeys],
+  );
+  const toggleSession = useCallback(
+    (id: string) => setSessState((st) => ({ ...st, [id]: st[id] === false })),
+    [],
+  );
+  const setAllSessions = useCallback(
+    (on: boolean) =>
+      setSessState((st) => {
+        const n = { ...st };
+        sessions.forEach((s) => (n[s.id] = on));
+        return n;
+      }),
+    [sessions],
+  );
+
   // Defer the table's filter inputs so a chip tap / keystroke updates the chip (urgent)
   // immediately while the heavier table recompute + re-render runs as a NON-BLOCKING
   // transition — the tap feels instant instead of waiting ~1s for the rows to update.
@@ -550,59 +590,34 @@ export default function RawData() {
         </Text>
       </View>
 
-      {/* club filter chips */}
-      <View style={styles.chipWrap}>
-        {clubKeys.map((club) => {
-          const on = clubState[club];
-          const col = colors[club] || C.dim;
-          return (
-            <Pressable
-              key={club}
-              onPress={() => setClubState((s) => ({ ...s, [club]: !s[club] }))}
-              style={[
-                styles.chip,
-                on
-                  ? { backgroundColor: col, borderColor: col }
-                  : { backgroundColor: C.bg2, borderColor: C.line2 },
-              ]}>
-              <Text style={[styles.chipTxt, on ? styles.chipTxtOn : styles.chipTxtOff]}>
-                {club}
-              </Text>
-            </Pressable>
-          );
-        })}
+      {/* compact club + session filters (same menu pattern as the 2D/3D screens) */}
+      <View style={styles.filterRow}>
+        <FilterMenu
+          label="CLUBS"
+          title="Clubs"
+          noun="clubs"
+          items={clubItems}
+          isOn={(k) => !!clubState[k]}
+          onToggle={toggleClub}
+          onSetAll={setAllClubs}
+        />
+        <FilterMenu
+          label="SESSIONS"
+          title="Sessions"
+          noun="sessions"
+          items={sessionItems}
+          isOn={(k) => sessState[k] !== false}
+          onToggle={toggleSession}
+          onSetAll={setAllSessions}
+        />
       </View>
 
-      {/* sessions + upload */}
-      <Text style={[styles.lbl, styles.sessLbl]}>SESSIONS</Text>
-      <View style={styles.chipWrap}>
-        {sessions.map((s) => {
-          const on = sessState[s.id] !== false;
-          const n = sessionCounts[s.id] || 0;
-          return (
-            <Pressable
-              key={s.id}
-              onPress={() => setSessState((st) => ({ ...st, [s.id]: st[s.id] === false }))}
-              style={[
-                styles.chip,
-                on
-                  ? { backgroundColor: C.accent2, borderColor: C.accent2 }
-                  : { backgroundColor: C.bg2, borderColor: C.line2 },
-              ]}>
-              <Text style={[styles.chipTxt, on ? styles.chipTxtOn : styles.chipTxtOff]}>
-                {s.label}
-                {s._uploaded ? ' •' : ''} ({n})
-              </Text>
-            </Pressable>
-          );
-        })}
-        <Pressable
-          onPress={onUpload}
-          disabled={busy}
-          style={[styles.chip, styles.uploadChip, busy && styles.uploadBusy]}>
-          <Text style={styles.uploadTxt}>{busy ? '… working' : '+ Upload session CSV'}</Text>
-        </Pressable>
-      </View>
+      <Pressable
+        onPress={onUpload}
+        disabled={busy}
+        style={[styles.chip, styles.uploadChip, styles.uploadStandalone, busy && styles.uploadBusy]}>
+        <Text style={styles.uploadTxt}>{busy ? '… working' : '+ Upload session CSV'}</Text>
+      </Pressable>
       {uploadMsg ? <Text style={styles.uploadMsg}>{uploadMsg}</Text> : null}
 
       {totalCount > 0 ? (
@@ -788,6 +803,8 @@ const styles = StyleSheet.create({
   countDim: { color: C.dim2 },
 
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 18 },
+  uploadStandalone: { alignSelf: 'flex-start', marginTop: 14 },
   chip: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 11, paddingVertical: 6 },
   chipTxt: { fontFamily: mono, fontSize: 11 },
   chipTxtOn: { color: '#0a120d', fontWeight: '600' },
