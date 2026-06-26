@@ -4,6 +4,8 @@ import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } fro
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
+  type ListRenderItemInfo,
   Modal,
   Pressable,
   ScrollView,
@@ -60,6 +62,10 @@ const COLS: Col[] = [
   { key: 'dev', label: 'Lateral', unit: 'yd', type: 'num', dp: 1, signed: true, w: 78 },
   { key: '_del', label: '', unit: '', type: 'del', w: 52 },
 ];
+
+// Total table width = sum of column widths. The horizontal ScrollView scrolls this; the
+// header row and every body row are exactly this wide so they align + scroll together.
+const TOTAL_W = COLS.reduce((s, c) => s + c.w, 0);
 
 // Each table row = a RawShot tagged with display index + resolved color.
 interface Row extends RawShot {
@@ -191,6 +197,9 @@ export default function RawData() {
   const [uploadMsg, setUploadMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Measured height of the table area → gives the FlatList a bounded viewport so it
+  // virtualizes (only on-screen rows exist in the native tree).
+  const [tableH, setTableH] = useState(0);
   const { deleteAllData, deleteShot } = useDataActions();
   const { isViewingOther } = useView();
   const { prefs, updatePrefs, loading: profileLoading } = useProfile();
@@ -204,6 +213,14 @@ export default function RawData() {
     },
     [deleteShot],
   );
+  // Stable renderItem / keyExtractor for the virtualized table body.
+  const renderRow = useCallback(
+    ({ item }: ListRenderItemInfo<Row>) => (
+      <TableRow row={item} isViewingOther={isViewingOther} onDelete={confirmDeleteShot} />
+    ),
+    [isViewingOther, confirmDeleteShot],
+  );
+  const keyExtractor = useCallback((r: Row) => String(r.id ?? r._idx), []);
   // One-time "map your wedges" prompt: number-only club codes pending a mapping + the
   // file texts to re-import once mapped.
   const [mapping, setMapping] = useState<{ need: Record<string, string[]>; texts: string[] } | null>(null);
@@ -497,8 +514,12 @@ export default function RawData() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <View style={styles.page}>
       <BackBar label="Settings" />
+      <ScrollView
+        style={styles.controlsScroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
       <Bounded>
       <Text style={styles.kicker}>{deviceLine.toUpperCase()}</Text>
       <Text style={styles.title}>
@@ -593,10 +614,18 @@ export default function RawData() {
         </Pressable>
       ) : null}
 
-      {/* table */}
-      <View style={styles.tableWrap}>
+      <Text style={styles.foot}>
+        ABSHERMETRICS · raw launch-monitor export · {deviceLine} · {fmt(totalCount, 0)} shots
+      </Text>
+      </Bounded>
+      </ScrollView>
+
+      {/* Virtualized table — its OWN scroll area below the controls. Giving the FlatList a
+          measured, bounded height is what lets it virtualize: only the on-screen rows ever
+          exist in the native view tree, so filter/sort/scroll stay fast at any shot count. */}
+      <View style={styles.tableArea} onLayout={(e) => setTableH(e.nativeEvent.layout.height)}>
         <ScrollView horizontal showsHorizontalScrollIndicator>
-          <View>
+          <View style={{ width: TOTAL_W, height: tableH }}>
             {/* header */}
             <View style={[styles.tr, styles.headRow]}>
               {COLS.map((c) => {
@@ -629,34 +658,37 @@ export default function RawData() {
               })}
             </View>
 
-            {/* body */}
-            {shots.length === 0 ? (
-              <View style={styles.emptyRow}>
-                <Text style={styles.emptyTitle}>No shots yet</Text>
-                <Text style={styles.emptyHint}>Upload a session CSV above, or load sample data from the Bag tab.</Text>
-              </View>
-            ) : shown.length === 0 ? (
-              <View style={styles.emptyRow}>
-                <Text style={styles.empty}>No shots match.</Text>
-              </View>
-            ) : (
-              shown.map((r) => (
-                <TableRow
-                  key={r.id ?? r._idx}
-                  row={r}
-                  isViewingOther={isViewingOther}
-                  onDelete={confirmDeleteShot}
+            {/* virtualized body */}
+            <View style={styles.tableBody}>
+              {shots.length === 0 ? (
+                <View style={styles.emptyRow}>
+                  <Text style={styles.emptyTitle}>No shots yet</Text>
+                  <Text style={styles.emptyHint}>
+                    Upload a session CSV above, or load sample data from the Bag tab.
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={shown}
+                  renderItem={renderRow}
+                  keyExtractor={keyExtractor}
+                  style={styles.flatList}
+                  initialNumToRender={20}
+                  maxToRenderPerBatch={20}
+                  windowSize={11}
+                  removeClippedSubviews={false}
+                  keyboardShouldPersistTaps="handled"
+                  ListEmptyComponent={
+                    <View style={styles.emptyRow}>
+                      <Text style={styles.empty}>No shots match.</Text>
+                    </View>
+                  }
                 />
-              ))
-            )}
+              )}
+            </View>
           </View>
         </ScrollView>
       </View>
-
-      <Text style={styles.foot}>
-        ABSHERMETRICS · raw launch-monitor export · {deviceLine} · {fmt(totalCount, 0)} shots
-      </Text>
-      </Bounded>
 
       {/* One-time "map your wedges" prompt for number-only club codes (e.g. GC3 "52"). */}
       <Modal visible={!!mapping} transparent animationType="fade" onRequestClose={() => setMapping(null)}>
@@ -699,7 +731,7 @@ export default function RawData() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -783,6 +815,20 @@ const styles = StyleSheet.create({
     marginTop: 16,
     overflow: 'hidden',
   },
+  // Controls (title/chips/etc.) scroll independently and take only the space they need,
+  // leaving the rest of the screen to the virtualized table below.
+  controlsScroll: { flexGrow: 0, flexShrink: 1 },
+  // The table fills the remaining height; its measured height bounds the FlatList. minHeight
+  // guarantees it never collapses to nothing when the controls are tall (many sessions).
+  tableArea: {
+    flex: 1,
+    minHeight: 220,
+    backgroundColor: C.bg2,
+    borderTopWidth: 1,
+    borderTopColor: C.line2,
+  },
+  tableBody: { flex: 1 },
+  flatList: { flex: 1 },
   tr: { flexDirection: 'row', alignItems: 'center' },
   headRow: {
     backgroundColor: '#0c1712',
