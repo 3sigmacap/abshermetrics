@@ -20,7 +20,7 @@ import { CLUB_ORDER, DEFAULT_LOFTS } from '@/lib/clubData';
 import { useDataActions, useRawData } from '@/lib/dataStore';
 import { fmt } from '@/lib/format';
 import { importCsvText, MAX_FILE_BYTES } from '@/lib/csvImport';
-import { takePendingShared } from '@/lib/pendingShared';
+import { subscribePendingShared, takePendingShared } from '@/lib/pendingShared';
 import { useProfile } from '@/lib/profile';
 import { useView } from '@/lib/viewContext';
 // @ts-ignore — plain-JS shared module (no type declarations)
@@ -290,12 +290,19 @@ export default function RawData() {
         }
       }
       if (sessions === 0) {
-        setUploadMsg(lastErr || 'No valid shot rows found in those files.');
+        const failMsg = lastErr || 'No valid shot rows found in that file.';
+        setUploadMsg(failMsg);
+        Alert.alert('Import failed', failMsg);
         return;
       }
       await refresh();
       const devs = [...devices].map(deviceLabel).join(', ');
       setUploadMsg('Added ' + added + ' shots' + (devs ? ' (' + devs + ')' : '') + (lastErr ? ' · ' + lastErr : '') + '.');
+      Alert.alert(
+        'Import complete',
+        'Added ' + added + ' shot' + (added === 1 ? '' : 's') + (devs ? ' from ' + devs : '') + '.' +
+          (lastErr ? '\n\nNote: ' + lastErr : ''),
+      );
     },
     [userId, refresh],
   );
@@ -361,12 +368,18 @@ export default function RawData() {
   // profile (and its saved club mappings) has loaded so already-mapped wedges don't
   // re-prompt; takePendingShared() consumes the hand-off exactly once.
   useEffect(() => {
-    if (!userId || profileLoading) return;
-    const texts = takePendingShared();
-    if (!texts || !texts.length) return;
-    setBusy(true);
-    setUploadMsg('Importing ' + texts.length + ' shared file(s)…');
-    runImport(texts, (prefs.clubMap as Record<string, Record<string, string>>) || {}).finally(() => setBusy(false));
+    const tryConsume = () => {
+      if (!userId || profileLoading) return;
+      const texts = takePendingShared();
+      if (!texts || !texts.length) return;
+      setBusy(true);
+      setUploadMsg('Importing ' + texts.length + ' shared file(s)…');
+      runImport(texts, (prefs.clubMap as Record<string, Record<string, string>>) || {}).finally(() =>
+        setBusy(false),
+      );
+    };
+    tryConsume(); // a share that arrived before this screen mounted
+    return subscribePendingShared(tryConsume); // …or one that arrives while it's already open
   }, [userId, profileLoading, prefs, runImport]);
 
   if (loading) {

@@ -14,8 +14,13 @@ import { setPendingShared } from '@/lib/pendingShared';
  * the providers (see _layout). Reads the file(s) and hands them to the Raw Data screen,
  * which runs them through the SAME path as a manual upload — auto-detecting the device
  * and showing the one-time wedge-mapping prompt when a number-only club needs mapping
- * (so a shared GC3 file works exactly like an in-app upload). If shared while signed
- * out, it re-runs once the session is restored.
+ * (so a shared GC3 file works exactly like an in-app upload).
+ *
+ * Deliberately does NOT pre-filter shared files by MIME/extension: the OS already routed
+ * the file to us, and launch-monitor exports can arrive as text/plain, octet-stream, or a
+ * content:// URI with no extension (which is exactly why a shared Foresight GC3 file used
+ * to get silently dropped). We read whatever was shared and let the parser decide; if
+ * nothing readable came through, we say so out loud (no silent failures).
  */
 export function ShareImporter() {
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
@@ -26,35 +31,56 @@ export function ShareImporter() {
   useEffect(() => {
     if (!hasShareIntent || busy.current) return;
     const files = shareIntent?.files ?? [];
-    if (!files.length) return;
+    const sharedText = (shareIntent?.text ?? '').trim();
+    if (!files.length && !sharedText) return;
     const uid = session?.user?.id;
     if (!uid) return; // not signed in yet — re-runs when the session loads
 
     busy.current = true;
     void (async () => {
       const texts: string[] = [];
-      let lastErr: string | undefined;
-      for (const f of files) {
-        const name = (f.fileName || f.path || '').toString();
-        const isCsv = /csv/i.test(f.mimeType || '') || /\.csv$/i.test(name);
-        if (!isCsv) continue;
-        if (f.size && f.size > MAX_FILE_BYTES) {
-          lastErr = `"${f.fileName ?? 'file'}" is larger than 10 MB.`;
-          continue;
+      const diag: string[] = []; // per-file outcome → a clear message if nothing imports
+      try {
+        for (const f of files) {
+          const name = (f.fileName || f.path || 'file').toString();
+          const short = name.split('/').pop() || name;
+          if (f.size && f.size > MAX_FILE_BYTES) {
+            diag.push(`• ${short}: larger than 10 MB — skipped`);
+            continue;
+          }
+          try {
+            const text = await new File(f.path).text();
+            if (text && text.trim()) {
+              texts.push(text);
+              diag.push(`• ${short}: read OK (${text.length} chars, ${f.mimeType || 'no type'})`);
+            } else {
+              diag.push(`• ${short}: file was empty`);
+            }
+          } catch (e) {
+            diag.push(`• ${short}: could not read — ${e instanceof Error ? e.message : 'error'}`);
+          }
         }
-        try {
-          texts.push(await new File(f.path).text());
-        } catch (e) {
-          lastErr = e instanceof Error ? e.message : 'Could not read the shared file.';
+        // Some share targets deliver the CSV as plain text instead of a file attachment.
+        if (!texts.length && sharedText) {
+          texts.push(sharedText);
+          diag.push(`• shared text: ${sharedText.length} chars`);
         }
+      } finally {
+        resetShareIntent();
+        busy.current = false;
       }
-      resetShareIntent();
-      busy.current = false;
+
       if (!texts.length) {
-        Alert.alert('Import failed', lastErr || 'That file isn’t a supported launch-monitor CSV.');
+        Alert.alert(
+          'Couldn’t open the shared file',
+          'AbsherMetrics received the share but couldn’t read a file from it.\n\n' +
+            (diag.join('\n') || 'No file or text was attached.'),
+        );
         return;
       }
-      // Hand off to Raw Data — same import + wedge-mapping flow as a manual upload.
+      // Hand to Raw Data — it runs the same import + wedge-mapping flow and shows a
+      // success/failure alert when it finishes. The subscription in pendingShared makes
+      // sure it fires even if Raw Data is already mounted.
       setPendingShared(texts);
       router.push('/raw-data');
     })();
