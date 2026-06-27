@@ -108,7 +108,6 @@ tr.exrow:hover td{background:#1a121233;}
   <input type="file" id="fileInput" accept=".csv" multiple style="display:none">
 </div>
 <div id="uploadMsg" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin:-4px 0 10px;min-height:14px"></div>
-<button class="cchip" id="deleteAllBtn" type="button" style="display:none;border:1px solid #5e2b2b;color:var(--bad);background:transparent;margin:0 0 12px;font-weight:600">Delete all data</button>
 
 <div class="tablewrap">
   <div class="tscroll">
@@ -119,11 +118,10 @@ tr.exrow:hover td{background:#1a121233;}
   </div>
 </div>
 
-<div class="foot"><span>ABSHERMETRICS · raw launch-monitor export</span><span id="footDevices">Garmin R50</span></div>
 </div>
 
 <script type="module">
-import { loadRawData, uploadCsvFiles, deleteAllData, deleteShot, escapeHtml as esc } from './user-data.js';
+import { loadRawData, uploadCsvFiles, deleteShot, escapeHtml as esc } from './user-data.js';
 import { deviceLabel } from './device-adapters.js';
 import { CLUB_ORDER, DEFAULT_LOFTS } from './club-compute.js';
 import { loadProfile, updatePrefs } from './profile.js';
@@ -199,7 +197,6 @@ if(exclCount)document.getElementById('exclNote').textContent='· '+exclCount+' e
 const devLabels=[...new Set(ROWS.map(r=>r.device||'garmin_r50'))].map(deviceLabel);
 const devLine=devLabels.length?devLabels.join(' · '):'Garmin R50';
 document.getElementById('kicker').textContent=devLine;
-document.getElementById('footDevices').textContent=devLine;
 
 // ---- build header ----
 const headRow=document.getElementById('headRow');
@@ -334,20 +331,6 @@ document.getElementById('fileInput').onchange=async(e)=>{
   msg.textContent='Added '+res.added+' shots'+(devs?' ('+devs+')':'')+'. Refreshing…';
   setTimeout(()=>location.reload(),350);
 };
-
-// Delete all data (keeps the account) — shown only when there is data.
-const delBtn=document.getElementById('deleteAllBtn');
-if(delBtn && ROWS.length){
-  delBtn.style.display='';
-  delBtn.onclick=async()=>{
-    const ok=window.confirm('Delete all data\n\nThis permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.');
-    if(!ok)return;
-    delBtn.disabled=true; delBtn.textContent='… deleting';
-    const {error}=await deleteAllData();
-    if(error){ delBtn.disabled=false; delBtn.textContent='Delete all data'; alert('Could not delete: '+error); return; }
-    location.reload();
-  };
-}
 
 const fmt=(v,c,row)=>{
   if(c.type==='date'){return '<span style="color:var(--dim)">'+esc(row.session_label||row.date||'—')+'</span>';}
