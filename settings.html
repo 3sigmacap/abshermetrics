@@ -141,6 +141,7 @@ input::placeholder{color:var(--dim2);}
       </div>
       <div class="chev">›</div>
     </a>
+    <button id="delShotsBtn" type="button" style="width:100%;margin-top:12px;border:1px solid #5e2b2b;color:var(--bad);background:transparent;border-radius:8px;padding:11px;font-weight:700;font-family:inherit;font-size:14px;cursor:pointer">Delete all Shot Data</button>
   </div>
 </div>
 
@@ -216,12 +217,26 @@ input::placeholder{color:var(--dim2);}
 <div class="foot">AbsherMetrics</div>
 </div>
 
+<!-- Type-to-confirm guard for the irreversible bulk delete. -->
+<div id="delShotsModal" style="display:none;position:fixed;inset:0;z-index:9000;background:#070d0af2;align-items:center;justify-content:center;padding:24px;font-family:'Barlow Condensed',sans-serif">
+  <div style="max-width:460px;width:100%;border:1px solid #5e2b2b;border-radius:14px;background:var(--panel);padding:22px">
+    <div style="color:var(--bad);font-size:24px;font-weight:800;letter-spacing:.5px;margin-bottom:8px">Delete all Shot Data</div>
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;color:var(--dim);margin:0 0 14px">This permanently deletes ALL your shots and sessions. Your account stays. This cannot be undone.</p>
+    <p style="font-size:15px;color:var(--ink);margin:0 0 8px">Type <b style="color:var(--bad);font-family:'IBM Plex Mono',monospace">DELETE MY SHOT DATA</b> to confirm.</p>
+    <input id="delShotsInput" type="text" placeholder="DELETE MY SHOT DATA" autocapitalize="characters" autocomplete="off" spellcheck="false" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:11px 12px;color:var(--ink);font-size:15px;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px">
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+      <button id="delShotsCancel" type="button" style="background:transparent;border:none;color:var(--dim);font-weight:700;font-size:14px;padding:11px 18px;cursor:pointer;font-family:inherit">Cancel</button>
+      <button id="delShotsConfirm" type="button" disabled style="background:var(--bad);color:#0a120d;border:none;border-radius:9px;padding:11px 22px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;opacity:.4">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import {
   loadProfile, updateName, saveClubSpecs, updatePrefs, changePassword, deleteAccount,
   sanitizeLoft, loftOf, inBagOf, DEFAULT_LOFTS,
 } from './profile.js';
-import { loadClubData, escapeHtml } from './user-data.js';
+import { loadClubData, escapeHtml, deleteAllData } from './user-data.js';
 import { CLUB_ORDER, clubSortIdx } from './club-compute.js';
 import { signOut } from './auth.js';
 import {
@@ -238,6 +253,32 @@ function flash(text, bad = false) {
   el.className = 'flash ' + (bad ? 'bad' : 'ok');
   clearTimeout(flash._t);
   flash._t = setTimeout(() => { el.className = 'flash'; }, 3200);
+}
+
+// ---- delete all shot data (type-to-confirm) ----
+{
+  const delBtn = $('delShotsBtn');
+  const delModal = $('delShotsModal');
+  const delInput = $('delShotsInput');
+  const delOk = $('delShotsConfirm');
+  const delCancel = $('delShotsCancel');
+  const PHRASE = 'DELETE MY SHOT DATA';
+  const setOk = (on) => { delOk.disabled = !on; delOk.style.opacity = on ? '1' : '.4'; };
+  const closeModal = () => { delModal.style.display = 'none'; delInput.value = ''; setOk(false); };
+  if (delBtn && delModal) {
+    delBtn.onclick = () => { delInput.value = ''; setOk(false); delModal.style.display = 'flex'; delInput.focus(); };
+    delCancel.onclick = closeModal;
+    delModal.onclick = (e) => { if (e.target === delModal) closeModal(); };
+    delInput.oninput = () => setOk(delInput.value.trim() === PHRASE);
+    delOk.onclick = async () => {
+      if (delInput.value.trim() !== PHRASE) return;
+      delOk.disabled = true; delOk.textContent = '…';
+      const { error } = await deleteAllData();
+      if (error) { delOk.textContent = 'Delete'; flash('Could not delete: ' + error, true); return; }
+      flash('All shot data deleted.');
+      setTimeout(() => location.reload(), 600);
+    };
+  }
 }
 
 // ---- load profile + the user's clubs (data-driven bag) ----
